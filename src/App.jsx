@@ -83,32 +83,19 @@ function KatanaLogo({ size = 36 }) {
   if (!url) return null;
 
   if (size >= 40) {
-    // Homepage: big, white removed, golden glow so it reads well on black
     return (
       <img
         src={url}
         alt="katanapdf"
-        style={{
-          width: "min(520px, 85vw)",
-          height: "auto",
-          objectFit: "contain",
-          display: "block",
-          filter: "drop-shadow(0 0 6px #FFD700) drop-shadow(0 0 14px rgba(255,215,0,0.35))",
-        }}
+        style={{ width: "min(520px, 85vw)", height: "auto", objectFit: "contain", display: "block" }}
       />
     );
   }
-  // Toolbar: small, white removed, subtle glow
   return (
     <img
       src={url}
       alt="katanapdf"
-      style={{
-        height: size * 1.5,
-        width: "auto",
-        objectFit: "contain",
-        filter: "drop-shadow(0 0 2px #FFD700)",
-      }}
+      style={{ height: size * 1.5, width: "auto", objectFit: "contain" }}
     />
   );
 }
