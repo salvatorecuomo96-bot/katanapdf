@@ -779,7 +779,11 @@ export default function App() {
               <option value="Courier New, monospace">Courier</option>
               <option value="Georgia, serif">Georgia</option>
             </select>
-            <input type="number" value={fontSize} min={6} max={120} onChange={e => setFontSize(parseInt(e.target.value) || 12)} style={{ ...tbSelect, width: 52, textAlign: "center" }} />
+            <select value={fontSize} onChange={e => setFontSize(parseInt(e.target.value))} style={{ ...tbSelect, width: 58, textAlign: "center" }}>
+              {[6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
             <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? "#e63946" : "#1a1a1a", color: isBold ? "#fff" : "#888" }}>B</button>
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? "#e63946" : "#1a1a1a", color: isItalic ? "#fff" : "#888" }}>I</button>
             <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
