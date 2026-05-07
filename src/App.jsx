@@ -10,9 +10,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 const SCALE = 2;
 
 function KatanaLogo({ size = 36 }) {
-  const [url, setUrl] = useState(null);
+  // Homepage (size=44): show logo big. Toolbar (size=26): show small with white removed.
+  const [processedUrl, setProcessedUrl] = useState(null);
 
   useEffect(() => {
+    if (size >= 40) return; // homepage: use raw image, no processing needed on dark bg
     const img = new Image();
     img.onload = () => {
       try {
@@ -25,23 +27,30 @@ function KatanaLogo({ size = 36 }) {
         const d = imageData.data;
         for (let i = 0; i < d.length; i += 4) {
           const r = d[i], g = d[i + 1], b = d[i + 2];
-          if (r > 230 && g > 230 && b > 230) {
-            d[i + 3] = 0;
-          } else if (r > 200 && g > 200 && b > 200) {
-            d[i + 3] = Math.round((255 - Math.min(r, g, b)) * 4);
-          }
+          if (r > 230 && g > 230 && b > 230) { d[i + 3] = 0; }
+          else if (r > 200 && g > 200 && b > 200) { d[i + 3] = Math.round((255 - Math.min(r, g, b)) * 4); }
         }
         ctx.putImageData(imageData, 0, 0);
-        setUrl(canvas.toDataURL("image/png"));
-      } catch { setUrl("/logo.png"); }
+        setProcessedUrl(canvas.toDataURL("image/png"));
+      } catch { setProcessedUrl("/logo.png"); }
     };
-    img.onerror = () => setUrl(null);
+    img.onerror = () => setProcessedUrl(null);
     img.src = "/logo.png";
-  }, []);
+  }, [size]);
 
-  if (!url) return null;
-  const h = size >= 40 ? size * 7.5 : size * 1.5;
-  return <img src={url} alt="katanapdf" style={{ height: h, width: "auto", objectFit: "contain" }} />;
+  if (size >= 40) {
+    // Homepage: large logo, raw image on dark background (no white removal needed)
+    return (
+      <img
+        src="/logo.png"
+        alt="katanapdf"
+        style={{ width: "min(480px, 80vw)", height: "auto", objectFit: "contain", display: "block" }}
+      />
+    );
+  }
+  // Toolbar: small, white-removed
+  if (!processedUrl) return null;
+  return <img src={processedUrl} alt="katanapdf" style={{ height: size * 1.5, width: "auto", objectFit: "contain" }} />;
 }
 function KatanaLogoSVG({ size = 36 }) {
   return (
@@ -941,18 +950,13 @@ export default function App() {
   return (
     <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#0f0f0f", userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
       {isNoFile ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "radial-gradient(ellipse at 50% 40%, #1c1c1c 0%, #080808 100%)" }}>
-          <AdSlot slot="1234567890" style={{ width: "100%", maxWidth: 728, marginBottom: 32 }} />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, marginBottom: 32 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0a0a0a" }}>
+          <div style={{ marginBottom: 40 }}>
             <KatanaLogo size={44} />
-            <h1 style={{ fontSize: 58, fontWeight: 900, color: "#fff", letterSpacing: -2.5, margin: 0, fontFamily: "Georgia, serif" }}>
-              katana<span style={{ color: "#e63946" }}>pdf</span>
-            </h1>
           </div>
           <label style={{ padding: "14px 52px", background: "#e63946", color: "#fff", borderRadius: 10, cursor: "pointer", fontSize: 15, fontWeight: 700, boxShadow: "0 8px 32px rgba(230,57,70,0.4)" }}>
             Open PDF <input type="file" accept=".pdf" onChange={handleFile} style={{ display: "none" }} />
           </label>
-          <AdSlot slot="0987654321" style={{ width: "100%", maxWidth: 728, marginTop: 40 }} />
         </div>
       ) : (
         <>
