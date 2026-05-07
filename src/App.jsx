@@ -12,40 +12,48 @@ const SCALE = 2;
 function KatanaLogo({ size = 36 }) {
   return (
     <svg width={size * 6} height={size * 1.8} viewBox="0 0 300 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* ── KATANA (top) ── */}
-      {/* Tsuka (grip) — wrapped handle */}
-      <rect x="4" y="14" width="66" height="14" rx="7" fill="#7a7a7a"/>
-      {/* Ito wrapping — cross-diamond pattern */}
-      {[11,18,25,32,39,46,53,60].map((x, i) => (
-        <line key={i} x1={x} y1="14" x2={x + 6} y2="28" stroke="#3a3a3a" strokeWidth="1.6" opacity="0.8"/>
-      ))}
+      {/* ── KATANA — tip LEFT, handle RIGHT ── */}
+      {/* Nagasa (blade) — curved steel, tip at left */}
+      <path d="M7 24 Q110 18 212 26 L212 30 Q110 24 9 26 Z" fill="#909090"/>
+      {/* Ha (cutting edge) — bright silver upper edge */}
+      <path d="M7 24 Q110 18 210 26 L7 25 Z" fill="#d8d8d8"/>
+      {/* Edge highlight shimmer */}
+      <path d="M12 24 Q110 18.5 208 26.5" stroke="rgba(255,255,255,0.5)" strokeWidth="0.7" fill="none"/>
       {/* Habaki (blade collar) */}
-      <rect x="70" y="16" width="6" height="10" rx="1" fill="#c0c0c0"/>
-      {/* Tsuba (guard) — round with detail */}
-      <ellipse cx="80" cy="21" rx="6" ry="16" fill="#b0b0b0"/>
-      <ellipse cx="80" cy="21" rx="4" ry="12" fill="#959595"/>
-      <ellipse cx="80" cy="21" rx="2" ry="7" fill="#808080"/>
-      {/* Nagasa (blade) — curved, characteristic katana sori */}
-      <path d="M86 17 Q160 12 292 21 L86 25 Z" fill="#d8d8d8"/>
-      {/* Ha (edge) highlight */}
-      <path d="M86 17.5 Q160 12.5 285 21 L86 19 Z" fill="rgba(255,255,255,0.55)"/>
-      {/* Mune (spine) dark line */}
-      <path d="M86 24.5 Q160 20 288 21.5" stroke="#aaa" strokeWidth="0.5" fill="none"/>
+      <rect x="210" y="21" width="7" height="13" rx="1.5" fill="#c8c8c8"/>
+      {/* Tsuba (guard) — layered oval */}
+      <ellipse cx="221" cy="27" rx="6" ry="17" fill="#b8b8b8"/>
+      <ellipse cx="221" cy="27" rx="4.5" ry="13" fill="#a0a0a0"/>
+      <ellipse cx="221" cy="27" rx="2.5" ry="8" fill="#888"/>
+      {/* Tsuka (grip) — handle on right */}
+      <rect x="227" y="20" width="68" height="14" rx="7" fill="#6e6e6e"/>
+      {/* Ito wrap — diagonal cross pattern */}
+      {[232,239,246,253,260,267,274,281,288].map((x, i) => (
+        <line key={i} x1={x} y1="20" x2={x + 5} y2="34" stroke="#333" strokeWidth="1.6" opacity="0.85"/>
+      ))}
+      {/* Kashira (pommel cap) */}
+      <ellipse cx="296" cy="27" rx="4" ry="8" fill="#888"/>
 
-      {/* ── SAYA (scabbard) ── */}
-      {/* Main body — slightly curved like the blade */}
-      <path d="M6 58 Q150 54 200 63 L200 69 Q150 60 6 64 Z" fill="#505050"/>
-      {/* Lacquer sheen */}
-      <path d="M12 59 Q150 55 198 64" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" fill="none"/>
-      {/* Kojiri (metal end cap — left) */}
-      <ellipse cx="7" cy="61" rx="7" ry="9" fill="#6e6e6e"/>
-      <ellipse cx="7" cy="61" rx="5" ry="7" fill="#7c7c7c"/>
+      {/* ── SAYA (scabbard) — same orientation ── */}
+      {/* Main body — curved like the blade */}
+      <path d="M14 60 Q110 55 213 64 L213 71 Q110 62 14 67 Z" fill="#4a4a4a"/>
+      {/* Lacquer highlight */}
+      <path d="M18 61 Q110 56 211 65" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none"/>
+      {/* Kojiri (end cap — left) */}
+      <ellipse cx="12" cy="63" rx="7" ry="9" fill="#6a6a6a"/>
+      <ellipse cx="12" cy="63" rx="5" ry="7" fill="#7a7a7a"/>
       {/* Kurikata (cord knob) */}
-      <rect x="55" y="55" width="11" height="18" rx="4" fill="#383838"/>
-      <rect x="57" y="57" width="7" height="14" rx="3" fill="#2e2e2e"/>
-      {/* Koiguchi (mouth — open right end) */}
-      <rect x="196" y="57" width="9" height="12" rx="2" fill="#686868"/>
-      <rect x="197" y="59" width="5" height="8" rx="1" fill="#747474"/>
+      <rect x="68" y="57" width="12" height="19" rx="4.5" fill="#333"/>
+      <rect x="70" y="59" width="8" height="15" rx="3" fill="#282828"/>
+      {/* Koiguchi (mouth — right end) */}
+      <rect x="210" y="58" width="9" height="14" rx="2" fill="#646464"/>
+      {/* Fuchi + handle section of koshirae */}
+      <rect x="220" y="57" width="8" height="15" rx="2" fill="#5a5a5a"/>
+      <rect x="228" y="56" width="65" height="17" rx="7" fill="#525252"/>
+      {[232,239,246,253,260,267,274,281,288].map((x, i) => (
+        <line key={i} x1={x} y1="56" x2={x + 5} y2="73" stroke="#282828" strokeWidth="1.5" opacity="0.8"/>
+      ))}
+      <ellipse cx="295" cy="64" rx="4" ry="9" fill="#5e5e5e"/>
     </svg>
   );
 }
@@ -724,14 +732,27 @@ export default function App() {
         for (const e of edits) {
           const lines = e.text.split(/\r?\n/);
           const lh = e.fontSize * 1.22;
+          const lineCount = Math.max(1, lines.length);
+          const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
           ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
+          let maxLineW = e.width;
+          for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
+          let whiteH;
+          if (useBaselines && lines.length > 1) {
+            const bs = e.lineBaselines;
+            whiteH = Math.max(e.height + 12, Math.max(...bs) - Math.min(...bs) + lh + 16);
+          } else {
+            whiteH = Math.max(e.height + 12, lineCount * lh + 14);
+          }
           ctx.fillStyle = "#fff";
-          let maxW = e.width;
-          for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
-          ctx.fillRect(e.x - 2, e.y - 2, maxW + 14, lines.length * lh + 16);
+          ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
           ctx.fillStyle = "#000";
           ctx.textBaseline = "alphabetic";
-          lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines?.[i] ?? e.baselineY + i * lh));
+          if (useBaselines) {
+            lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
+          } else {
+            lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
+          }
         }
 
         for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
