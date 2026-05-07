@@ -112,8 +112,8 @@
   margin: 32px 0 0;
 
   .logo {
-  height: 18px;
-  width: auto;
+  height: 140px;
+  width: 140px;
   display: block;
   flex-shrink: 0;
 }
