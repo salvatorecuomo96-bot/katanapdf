@@ -232,7 +232,7 @@ function redrawPage(canvas, dataUrl, edits) {
   img.src = dataUrl;
 }
 
-function EditPopup({ block, zoom, fontFamily, isBold, isItalic, offsetX, offsetY, onOffsetChange, onCommit, onCancel }) {
+function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offsetX, offsetY, onOffsetChange, onCommit, onCancel }) {
   const [text, setText] = useState(block.text);
   const [dragging, setDragging] = useState(false);
   const [measuredW, setMeasuredW] = useState(0);
@@ -282,7 +282,7 @@ function EditPopup({ block, zoom, fontFamily, isBold, isItalic, offsetX, offsetY
     setDragging(true);
   };
 
-  const cssFontSize = block.fontSize * zoom;
+  const cssFontSize = (fontSize != null ? fontSize * SCALE : block.fontSize) * zoom;
   const lineHeightPx = Math.max(cssFontSize * 1.22, 15);
   const nLines = Math.max(1, text.split(/\r?\n/).length);
   const origNLines = Math.max(1, block.text.split(/\r?\n/).length);
@@ -566,7 +566,7 @@ export default function App() {
       ...prev,
       [pageNum]: prev[pageNum].map(w => {
         if (w.id !== blockId) return w;
-        return { ...w, text: newText, edited: true, fontFamily, isBold, isItalic, lineBaselines: undefined };
+        return { ...w, text: newText, edited: true, fontFamily, fontSize: fontSize * SCALE, isBold, isItalic, lineBaselines: undefined };
       }),
     }));
     setActivePopup(null);
@@ -584,6 +584,7 @@ export default function App() {
     if (!tb.edited) saveHistory();
     setSelected(tb.id);
     setFontFamily(tb.fontFamily);
+    setFontSize(Math.round(tb.fontSize / SCALE));
     setIsBold(tb.isBold);
     setIsItalic(tb.isItalic);
     setActivePopup({ blockId: tb.id, pageNum: tb.page, offsetX: 0, offsetY: 0 });
@@ -817,7 +818,7 @@ export default function App() {
                           zIndex: isOpen ? 20 : 10, cursor: "text",
                         }} onClick={e => clickTextBlock(tb, e)}>
                           {isOpen && (
-                            <EditPopup block={tb} zoom={zoom} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
+                            <EditPopup block={tb} zoom={zoom} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
                               offsetX={activePopup.offsetX ?? 0} offsetY={activePopup.offsetY ?? 0}
                               onOffsetChange={(ox, oy) => setActivePopup(ap => (ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap))}
                               onCommit={newText => commitEdit(tb.id, tb.page, newText)}
