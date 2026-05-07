@@ -12,7 +12,9 @@ const SCALE = 2;
 function KatanaLogo({ size = 36 }) {
   const [err, setErr] = useState(false);
   if (err) return null;
-  return <img src="/logo.png" alt="katanapdf" onError={() => setErr(true)} style={{ height: size * 1.8, width: "auto", objectFit: "contain" }} />;
+  const h = size >= 40 ? size * 3.8 : size * 1.3;
+  return <img src="/logo.png" alt="katanapdf" onError={() => setErr(true)}
+    style={{ height: h, width: "auto", objectFit: "contain", mixBlendMode: "multiply" }} />;
 }
 function KatanaLogoSVG({ size = 36 }) {
   return (
