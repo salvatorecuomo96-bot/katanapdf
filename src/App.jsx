@@ -11,17 +11,33 @@ const SCALE = 2;
 
 function KatanaLogo({ size = 36 }) {
   return (
-    <svg width={size * 3} height={size} viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M50 16 L108 19 L110 20 L108 21 L50 24 Z" fill="#d0d0d0"/>
-      <path d="M108 19 L118 20 L108 21 Z" fill="#e8e8e8"/>
-      <line x1="52" y1="17.5" x2="107" y2="19.5" stroke="#fff" strokeWidth="0.8" opacity="0.5"/>
-      <rect x="44" y="13" width="7" height="14" rx="1" fill="#999"/>
-      <rect x="45" y="14" width="5" height="12" rx="0.5" fill="#777"/>
-      <rect x="6" y="16" width="39" height="8" rx="3" fill="#1a1a1a"/>
-      {[10,15,20,25,30,35,40].map((cx, i) => (
-        <path key={i} d={`M${cx} 16.5 L${cx+2} 20 L${cx} 23.5 L${cx-2} 20 Z`} fill="#888" opacity="0.9"/>
+    <svg width={size * 6} height={size * 1.6} viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* ── KATANA (top) centerline y=22 ── */}
+      {/* Tsuka (grip) */}
+      <rect x="4" y="16" width="64" height="12" rx="6" fill="#8a8a8a"/>
+      {/* Ito wrapping — diagonal lines */}
+      {[10,17,24,31,38,45,52,59].map((x, i) => (
+        <line key={i} x1={x} y1="16" x2={x + 5} y2="28" stroke="#444" strokeWidth="1.4" opacity="0.75"/>
       ))}
-      <ellipse cx="5" cy="20" rx="4" ry="5.5" fill="#999"/>
+      {/* Tsuba (guard) — oval */}
+      <ellipse cx="73" cy="22" rx="5" ry="15" fill="#b5b5b5"/>
+      <ellipse cx="73" cy="22" rx="3" ry="10" fill="#9a9a9a"/>
+      {/* Nagasa (blade) — long taper to kissaki */}
+      <path d="M78 19 L288 22 L78 25 Z" fill="#dcdcdc"/>
+      {/* Edge highlight */}
+      <path d="M78 19.5 L272 22 L78 21 Z" fill="rgba(255,255,255,0.5)"/>
+
+      {/* ── SAYA (scabbard) centerline y=58 ── */}
+      {/* Main body */}
+      <rect x="4" y="52" width="192" height="12" rx="6" fill="#5a5a5a"/>
+      {/* Kurikata (cord knob) */}
+      <rect x="52" y="50" width="10" height="16" rx="3.5" fill="#404040"/>
+      <rect x="54" y="52" width="6" height="12" rx="2" fill="#363636"/>
+      {/* Koiguchi (mouth — open right end) */}
+      <rect x="190" y="53" width="8" height="10" rx="2" fill="#6e6e6e"/>
+      {/* Kojiri (metal end cap — left) */}
+      <ellipse cx="6" cy="58" rx="6" ry="8" fill="#6e6e6e"/>
+      <ellipse cx="6" cy="58" rx="4" ry="6" fill="#7a7a7a"/>
     </svg>
   );
 }
