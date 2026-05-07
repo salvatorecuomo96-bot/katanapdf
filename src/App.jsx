@@ -382,7 +382,7 @@ function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, 
       position: "absolute", left: fi.x, top: fi.y,
       width: fi.w, height: fi.h,
       zIndex: isSel ? 100 : 50,
-      border: isSel ? "2px solid #e63946" : "none",
+      border: isSel ? "2px solid #8B1A1A" : "none",
       boxSizing: "border-box", overflow: "visible",
       boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.3)" : "none",
       cursor: isSel ? "default" : "pointer",
@@ -392,7 +392,7 @@ function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, 
       {isSel && <>
         <div onMouseDown={onStartDrag} style={{
           position: "absolute", top: -28, left: 0, right: 0,
-          background: "#e63946", padding: "4px 8px", fontSize: 10,
+          background: "#8B1A1A", padding: "4px 8px", fontSize: 10,
           color: "#fff", cursor: "grab", display: "flex", alignItems: "center", userSelect: "none",
           borderRadius: "4px 4px 0 0",
         }}>
@@ -402,7 +402,7 @@ function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, 
         </div>
         <div onMouseDown={onStartResize} style={{
           position: "absolute", bottom: -8, right: -8, width: 16, height: 16,
-          background: "#e63946", cursor: "nwse-resize", borderRadius: "50%",
+          background: "#8B1A1A", cursor: "nwse-resize", borderRadius: "50%",
           border: "2px solid #fff",
         }} />
       </>}
@@ -717,7 +717,7 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
     }}>
       <span ref={measureRef} aria-hidden style={{ position: "absolute", left: -9999, top: 0, visibility: "hidden", pointerEvents: "none" }} />
       <div style={{
-        background: "#e63946", height: 11, flexShrink: 0, userSelect: "none",
+        background: "#8B1A1A", height: 11, flexShrink: 0, userSelect: "none",
         borderRadius: "2px 2px 0 0", display: "flex", alignItems: "center",
         justifyContent: "space-between", padding: "0 4px 0 2px",
       }}>
@@ -810,14 +810,14 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onC
     <div onClick={e => { e.stopPropagation(); }} style={{
       position: "absolute", left: fb.x, top: fb.y, minWidth: 140,
       zIndex: 100,
-      border: "2px solid #e63946",
+      border: "2px solid #8B1A1A",
       borderRadius: 4, background: "rgba(255,255,255,0.97)",
       boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
       boxSizing: "border-box",
     }}>
       {/* Toolbar */}
       <div onMouseDown={onStartDrag} style={{
-        background: "#e63946", padding: "4px 6px", fontSize: 11, color: "#fff",
+        background: "#8B1A1A", padding: "4px 6px", fontSize: 11, color: "#fff",
         cursor: "grab", display: "flex", alignItems: "center", gap: 5,
         userSelect: "none", borderRadius: "2px 2px 0 0", flexWrap: "nowrap",
       }}>
@@ -826,7 +826,7 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onC
         <select value={FB_SIZES.includes(fb.fontSize) ? fb.fontSize : 14}
           onChange={e => onUpdate({ fontSize: +e.target.value })}
           onMouseDown={stopAll} onClick={e => e.stopPropagation()}
-          style={{ fontSize: 11, background: "#a02030", color: "#fff", border: "none", borderRadius: 2, cursor: "pointer", width: 46 }}>
+          style={{ fontSize: 11, background: "#5a0f0f", color: "#fff", border: "none", borderRadius: 2, cursor: "pointer", width: 46 }}>
           {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
 
@@ -843,7 +843,7 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onC
         <select value={fb.fontFamily}
           onChange={e => onUpdate({ fontFamily: e.target.value })}
           onMouseDown={stopAll} onClick={e => e.stopPropagation()}
-          style={{ fontSize: 11, background: "#a02030", color: "#fff", border: "none", borderRadius: 2, cursor: "pointer", padding: "0 2px" }}>
+          style={{ fontSize: 11, background: "#5a0f0f", color: "#fff", border: "none", borderRadius: 2, cursor: "pointer", padding: "0 2px" }}>
           <option value="Arial, sans-serif">Arial</option>
           <option value="Times New Roman, serif">Times</option>
           <option value="Courier New, monospace">Courier</option>
@@ -900,6 +900,12 @@ export default function App() {
   const [activePopup, setActivePopup] = useState(null);
   const [selected, setSelected] = useState(null);
   const [fileName, setFileName] = useState("");
+
+  // Multi-tab state — each loaded PDF is a "tab" with its own state snapshot
+  const [tabsList, setTabsList] = useState([]); // [{ id, fileName }]
+  const [activeTabId, setActiveTabId] = useState(null);
+  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom } }
+  const liveStateRef = useRef({});
   const [dragging, setDragging] = useState(null);
   const [draggingImg, setDraggingImg] = useState(null);
   const [resizingImg, setResizingImg] = useState(null);
@@ -921,7 +927,11 @@ export default function App() {
     input.value = "";
     if (!file) return;
     try {
+      snapshotCurrentTab();
       await loadPdfFromFile(file);
+      const id = makeTabId();
+      setTabsList(prev => [...prev, { id, fileName: file.name }]);
+      setActiveTabId(id);
     } catch (err) {
       console.error("Failed to load PDF:", err);
       alert("Couldn't open this PDF: " + (err.message || err) + "\n\nTry a different file or refresh the page.");
@@ -1017,17 +1027,90 @@ export default function App() {
     }
   }, [textBlocks, pages, activePopup]);
 
+  // Mirror live state into a ref so snapshotCurrent always reads fresh values
+  useEffect(() => {
+    liveStateRef.current = {
+      pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom,
+    };
+  });
+
+  function snapshotCurrentTab() {
+    if (!activeTabId) return;
+    tabSnapshots.current[activeTabId] = { ...liveStateRef.current };
+  }
+
+  function restoreSnapshot(snap) {
+    setPdfBytes(snap.pdfBytes);
+    setPages(snap.pages);
+    setTextBlocks(snap.textBlocks);
+    setFloatingBoxes(snap.floatingBoxes);
+    setFloatingImages(snap.floatingImages);
+    setHistory(snap.history);
+    setFileName(snap.fileName);
+    setZoom(snap.zoom);
+    setSelected(null);
+    setActivePopup(null);
+  }
+
+  function switchTab(id) {
+    if (id === activeTabId) return;
+    snapshotCurrentTab();
+    const snap = tabSnapshots.current[id];
+    if (!snap) return;
+    restoreSnapshot(snap);
+    setActiveTabId(id);
+  }
+
+  function closeTab(id) {
+    delete tabSnapshots.current[id];
+    setTabsList(prev => {
+      const next = prev.filter(t => t.id !== id);
+      if (id === activeTabId) {
+        if (next.length) {
+          // Activate the first remaining tab
+          const newActive = next[0].id;
+          const snap = tabSnapshots.current[newActive];
+          if (snap) restoreSnapshot(snap);
+          setActiveTabId(newActive);
+        } else {
+          // No tabs left — return to homepage
+          setPages([]);
+          setTextBlocks({});
+          setFloatingBoxes([]);
+          setFloatingImages([]);
+          setHistory([]);
+          setFileName("");
+          setPdfBytes(null);
+          setActiveTabId(null);
+        }
+      }
+      return next;
+    });
+  }
+
+  function makeTabId() {
+    return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
   async function createBlankPdf() {
+    snapshotCurrentTab();
     const doc = await PDFDocument.create();
     doc.addPage([612, 792]); // US Letter
     const bytes = await doc.save();
     setFileName("blank.pdf");
     await loadPdfFromBytes(bytes);
+    const id = makeTabId();
+    setTabsList(prev => [...prev, { id, fileName: "blank.pdf" }]);
+    setActiveTabId(id);
   }
 
   async function handleDroppedFile(file) {
     if (!file || file.type !== "application/pdf") return;
+    snapshotCurrentTab();
     await loadPdfFromFile(file);
+    const id = makeTabId();
+    setTabsList(prev => [...prev, { id, fileName: file.name }]);
+    setActiveTabId(id);
   }
 
   function saveHistory() {
@@ -1127,13 +1210,49 @@ export default function App() {
     reader.onload = ev => {
       saveHistory();
       floatingIdCounter++;
+      const id = `img-${floatingIdCounter}`;
       setFloatingImages(prev => [...prev, {
-        id: `img-${floatingIdCounter}`, page: pageNum,
+        id, page: pageNum,
         x: 60, y: 60, w: 200, h: 150,
         dataUrl: ev.target.result,
       }]);
+      setSelected(id);
     };
     reader.readAsDataURL(file);
+  }
+
+  // Insert another PDF as an image overlay — first page becomes a draggable/resizable image
+  async function handleAddPdfAsImage(e, pageNum) {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+      const page = await pdf.getPage(1);
+      const vp = page.getViewport({ scale: 2 });
+      const canvas = document.createElement("canvas");
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+      const dataUrl = canvas.toDataURL("image/png");
+
+      saveHistory();
+      floatingIdCounter++;
+      const id = `pdfimg-${floatingIdCounter}`;
+      const aspect = vp.width / vp.height;
+      const targetW = 320;
+      setFloatingImages(prev => [...prev, {
+        id, page: pageNum,
+        x: 60, y: 60, w: targetW, h: targetW / aspect,
+        dataUrl,
+      }]);
+      setSelected(id);
+    } catch (err) {
+      console.error("Add PDF error:", err);
+      alert("Couldn't insert this PDF: " + (err.message || err));
+    }
   }
 
   function deleteFloatingImage(id) {
@@ -1485,6 +1604,48 @@ export default function App() {
             <AdSlot slot="11223344async55" style={{ width: "100%", maxWidth: 728 }} />
           </div>
 
+          {/* TABS STRIP — one PDF per tab */}
+          {tabsList.length > 0 && (
+            <div onClick={e => e.stopPropagation()} style={{
+              background: PARCHMENT_2, borderBottom: `1px solid rgba(139,26,26,0.25)`,
+              padding: "8px 16px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
+              position: "sticky", top: 52, zIndex: 290,
+            }}>
+              {tabsList.map(t => {
+                const isActive = t.id === activeTabId;
+                return (
+                  <div key={t.id} onClick={() => switchTab(t.id)} style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "5px 10px 5px 14px",
+                    border: `1px solid ${isActive ? GOLD : "rgba(139,26,26,0.3)"}`,
+                    background: isActive ? INK : "transparent",
+                    color: isActive ? GOLD : INK,
+                    fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase",
+                    cursor: "pointer", maxWidth: 220,
+                  }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {t.fileName.replace(/\.pdf$/i, "")}
+                    </span>
+                    <span onClick={e => { e.stopPropagation(); closeTab(t.id); }}
+                      title="Close" style={{
+                        cursor: "pointer", padding: "0 4px", fontWeight: 700,
+                        opacity: 0.7,
+                      }}>✕</span>
+                  </div>
+                );
+              })}
+              <label style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: 30, height: 26,
+                border: `1px solid ${LACQUER}`, color: LACQUER,
+                fontFamily: CINZEL, fontSize: 16, fontWeight: 600, cursor: "pointer",
+              }} title="Open another PDF in a new tab">
+                +
+                <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} />
+              </label>
+            </div>
+          )}
+
           <div ref={containerRef} style={{ padding: "40px 0 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 48 }}>
             {pages.map((pg, pgIdx) => {
               const dispW = pg.width * zoom;
@@ -1498,6 +1659,10 @@ export default function App() {
                       <label style={pageBtn} onClick={e => e.stopPropagation()}>
                         + Add image
                         <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
+                      </label>
+                      <label style={pageBtn} onClick={e => e.stopPropagation()}>
+                        + Add PDF
+                        <input type="file" accept="application/pdf,.pdf" onChange={e => handleAddPdfAsImage(e, pg.num)} style={hiddenFileInput} />
                       </label>
                     </div>
                   </div>
