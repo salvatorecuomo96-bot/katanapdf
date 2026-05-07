@@ -254,7 +254,7 @@ function StaticPage({ route }) {
           <h2>Why free?</h2>
           <p>The site is supported by ads and reader donations. There is no paid tier and no plan to add one — the goal is to keep a useful tool genuinely free for everyone.</p>
           <h2>Contact</h2>
-          <p>For feedback, bug reports, or feature requests you can reach us at <a href="mailto:hello@katanapdf.com">hello@katanapdf.com</a>.</p>
+          <p>For feedback, bug reports, or feature requests you can reach us at <a href="mailto:katanapdf@gmail.com">katanapdf@gmail.com</a>.</p>
         </>
       ),
     },
