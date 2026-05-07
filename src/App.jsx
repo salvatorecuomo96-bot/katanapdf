@@ -986,6 +986,7 @@ export default function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
     } catch (err) {
       console.error("Download error:", err);
       alert("Download failed: " + err.message);
@@ -995,7 +996,7 @@ export default function App() {
   const isNoFile = pages.length === 0;
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#0f0f0f", userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
+    <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#ffe4ec", userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
       {isNoFile ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0a0a0a" }}>
           <div style={{ marginBottom: 16 }}>
