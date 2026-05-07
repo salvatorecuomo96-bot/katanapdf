@@ -76,6 +76,211 @@ function KatanaLogoSVG({ size = 36 }) {
   );
 }
 
+function Homepage({ onFile, onDropFile, onCreateBlank }) {
+  const [dragOver, setDragOver] = useState(false);
+
+  const onDragOver = (e) => { e.preventDefault(); if (!dragOver) setDragOver(true); };
+  const onDragLeave = (e) => {
+    if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget)) setDragOver(false);
+  };
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) onDropFile(f);
+  };
+
+  return (
+    <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+         style={{ minHeight: "100vh", background: "#ffe4ec", color: "#1a1a1a", position: "relative" }}>
+      {dragOver && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(230,57,70,0.18)",
+                      border: "4px dashed #e63946", display: "flex", alignItems: "center", justifyContent: "center",
+                      pointerEvents: "none" }}>
+          <div style={{ background: "#fff", padding: "20px 40px", borderRadius: 12, fontSize: 20, fontWeight: 800, color: "#e63946" }}>
+            Drop your PDF here
+          </div>
+        </div>
+      )}
+
+      {/* HERO */}
+      <section style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 20px 40px", textAlign: "center" }}>
+        <KatanaLogo size={44} />
+        <p style={{ marginTop: 14, marginBottom: 0, fontSize: 18, fontWeight: 600, color: "#3a1f24", maxWidth: 600 }}>
+          Free PDF editor in your browser. No uploads. No account. No limits.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14, marginTop: 18, color: "#5b2932", fontSize: 14, fontWeight: 600 }}>
+          <span>✓ 100% Free</span>
+          <span>✓ No Upload</span>
+          <span>✓ No Sign-up</span>
+          <span>✓ Unlimited Pages</span>
+        </div>
+        <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <label style={{ padding: "16px 56px", background: "#e63946", color: "#fff", borderRadius: 10, cursor: "pointer",
+                          fontSize: 16, fontWeight: 700, boxShadow: "0 8px 32px rgba(230,57,70,0.35)" }}>
+            Open PDF
+            <input type="file" accept=".pdf" onChange={onFile} style={{ display: "none" }} />
+          </label>
+          <button onClick={onCreateBlank}
+                  style={{ background: "transparent", border: "none", color: "#5b2932", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
+            or create a blank PDF
+          </button>
+          <span style={{ fontSize: 12, color: "#7a4855", marginTop: 4 }}>or drag a PDF anywhere on this page</span>
+        </div>
+      </section>
+
+      {/* PRIVACY CALLOUT */}
+      <section style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 32px" }}>
+        <div style={{ background: "#fff", border: "2px solid #e63946", borderRadius: 12, padding: "18px 22px",
+                      display: "flex", alignItems: "center", gap: 14, fontSize: 14, lineHeight: 1.5 }}>
+          <span style={{ fontSize: 28 }}>🔒</span>
+          <div>
+            <strong style={{ display: "block", marginBottom: 4 }}>Your PDF never leaves your computer.</strong>
+            Unlike most PDF editors, katanapdf runs entirely in your browser. Nothing is uploaded to any server.
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "32px 20px" }}>
+        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 18, color: "#3a1f24" }}>How to edit a PDF online</h2>
+        <ol style={{ paddingLeft: 22, lineHeight: 1.75, fontSize: 15, color: "#3a1f24" }}>
+          <li><strong>Open your PDF</strong> — click the “Open PDF” button or drag a file onto this page.</li>
+          <li><strong>Edit the text</strong> — click any text in the document to change it directly.</li>
+          <li><strong>Add new text or images</strong> — use the “+ Add text” and “+ Add image” buttons on each page.</li>
+          <li><strong>Download</strong> — click “Download PDF” to save the edited file. Your file stays on your computer the whole time.</li>
+        </ol>
+      </section>
+
+      {/* WHY KATANAPDF */}
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "8px 20px 32px" }}>
+        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 18, color: "#3a1f24" }}>Why katanapdf</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+          {[
+            { t: "100% Free", d: "Every feature, every file, every time. No paid tier hidden behind your edits." },
+            { t: "No Upload Required", d: "Your PDF is processed entirely inside your browser — it never touches our servers." },
+            { t: "No Account Needed", d: "No sign-up, no email, no tracking. Just open the file and edit it." },
+            { t: "No File Limits", d: "Edit PDFs of any size or page count. No daily quotas, no “3 tasks per hour.”" },
+            { t: "Edit Existing Text", d: "Click any text to change it. Most competitors lock this behind a paid plan." },
+            { t: "Add Text & Images", d: "Insert new text boxes, drop in images, drag, resize, and download." },
+          ].map((x, i) => (
+            <div key={i} style={{ background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #f1c2cd" }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#e63946" }}>{x.t}</h3>
+              <p style={{ margin: "6px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "#3a1f24" }}>{x.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "8px 20px 48px" }}>
+        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 18, color: "#3a1f24" }}>Frequently asked questions</h2>
+        {[
+          { q: "Is katanapdf really free?", a: "Yes. Every feature is free with no paid tier. The site is supported by ads and donations." },
+          { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
+          { q: "Do I need an account?", a: "No. There is no sign-up, no email required, no tracking of who edits what." },
+          { q: "What size of PDF can I edit?", a: "Any size your browser can handle — typically files up to a few hundred MB work fine on a modern computer." },
+          { q: "Can I edit existing text in a PDF?", a: "Yes. Click any text in the document and edit it directly. Most competitors only let you do this on a paid plan." },
+          { q: "Will the layout of my PDF break?", a: "katanapdf preserves the original page as a high-resolution image and overlays your edits on top, so the visual layout stays intact." },
+        ].map((f, i) => (
+          <details key={i} style={{ background: "#fff", borderRadius: 10, padding: "12px 18px", marginBottom: 10, border: "1px solid #f1c2cd" }}>
+            <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 15, color: "#3a1f24" }}>{f.q}</summary>
+            <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.55, color: "#3a1f24" }}>{f.a}</p>
+          </details>
+        ))}
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer style={{ borderTop: "1px solid #f1c2cd", background: "#ffd1dd", padding: "20px", textAlign: "center", fontSize: 13, color: "#5b2932" }}>
+      <div style={{ marginBottom: 8 }}>
+        <a href="#about" style={{ color: "#5b2932", margin: "0 10px", textDecoration: "underline" }}>About</a>
+        <a href="#privacy" style={{ color: "#5b2932", margin: "0 10px", textDecoration: "underline" }}>Privacy Policy</a>
+        <a href="#terms" style={{ color: "#5b2932", margin: "0 10px", textDecoration: "underline" }}>Terms</a>
+      </div>
+      <div>© {new Date().getFullYear()} katanapdf — Free PDF editor in your browser.</div>
+    </footer>
+  );
+}
+
+function StaticPage({ route }) {
+  const content = {
+    privacy: {
+      title: "Privacy Policy",
+      body: (
+        <>
+          <p><em>Last updated: {new Date().toLocaleDateString()}</em></p>
+          <h2>What we collect</h2>
+          <p>katanapdf does not collect, store, or transmit the contents of any PDF you open. Every editing operation runs locally in your browser using JavaScript. Your file never leaves your computer.</p>
+          <h2>Analytics and ads</h2>
+          <p>We may serve advertisements through third-party providers (such as Google AdSense). These providers may use cookies to serve ads based on prior visits to this and other websites. You can opt out of personalised advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.</p>
+          <h2>Cookies</h2>
+          <p>We do not set our own tracking cookies. Third-party cookies may be set by ad providers. You can disable cookies in your browser at any time without affecting the editor’s functionality.</p>
+          <h2>Children</h2>
+          <p>This site is not directed at children under 13. We do not knowingly collect personal information from children.</p>
+          <h2>Contact</h2>
+          <p>Questions about this policy can be sent to the contact email listed on the About page.</p>
+        </>
+      ),
+    },
+    terms: {
+      title: "Terms of Use",
+      body: (
+        <>
+          <p><em>Last updated: {new Date().toLocaleDateString()}</em></p>
+          <h2>Acceptable use</h2>
+          <p>You may use katanapdf to edit any PDF you have the legal right to modify. You agree not to use this service to violate copyright, infringe intellectual property, or perform unlawful acts.</p>
+          <h2>No warranty</h2>
+          <p>katanapdf is provided "as is", without warranty of any kind. We do not guarantee that every PDF will render or save perfectly. Always keep an original copy of your file.</p>
+          <h2>Limitation of liability</h2>
+          <p>To the maximum extent permitted by law, katanapdf and its operators are not liable for any data loss, damages, or losses resulting from use of this service.</p>
+          <h2>Changes</h2>
+          <p>These terms may be updated occasionally. Continued use of the site constitutes acceptance of the latest version.</p>
+        </>
+      ),
+    },
+    about: {
+      title: "About katanapdf",
+      body: (
+        <>
+          <p>katanapdf is a free, browser-based PDF editor. It was built on the simple idea that editing a PDF shouldn’t require uploading your file to a stranger’s server, signing up for an account, or paying a subscription.</p>
+          <h2>How it works</h2>
+          <p>Everything happens in your browser. We use modern web technologies (PDF.js for rendering, pdf-lib for saving) to open, edit, and download PDFs without ever sending the file anywhere.</p>
+          <h2>Why free?</h2>
+          <p>The site is supported by ads and reader donations. There is no paid tier and no plan to add one — the goal is to keep a useful tool genuinely free for everyone.</p>
+          <h2>Contact</h2>
+          <p>For feedback, bug reports, or feature requests you can reach us at <a href="mailto:hello@katanapdf.com">hello@katanapdf.com</a>.</p>
+        </>
+      ),
+    },
+  }[route];
+
+  if (!content) return null;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#ffe4ec", color: "#1a1a1a" }}>
+      <header style={{ padding: "20px", textAlign: "center", borderBottom: "1px solid #f1c2cd" }}>
+        <a href="#home" style={{ textDecoration: "none" }}>
+          <span style={{ fontWeight: 900, fontSize: 22, color: "#1a1a1a", fontFamily: "Georgia, serif", letterSpacing: -0.5 }}>
+            katana<span style={{ color: "#e63946" }}>pdf</span>
+          </span>
+        </a>
+      </header>
+      <article style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 64px", fontSize: 15, lineHeight: 1.7, color: "#3a1f24" }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, marginTop: 0, color: "#1a1a1a" }}>{content.title}</h1>
+        {content.body}
+        <p style={{ marginTop: 32 }}><a href="#home" style={{ color: "#e63946", fontWeight: 700, textDecoration: "underline" }}>← Back to editor</a></p>
+      </article>
+      <Footer />
+    </div>
+  );
+}
+
 function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, onDelete, onDeselect }) {
   useEffect(() => {
     if (!isSel) return;
@@ -549,6 +754,20 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
 
 export default function App() {
   const [pdfBytes, setPdfBytes] = useState(null);
+  const [route, setRoute] = useState(() => {
+    const h = (typeof window !== "undefined" && window.location.hash.slice(1)) || "home";
+    return ["privacy", "terms", "about"].includes(h) ? h : "home";
+  });
+  useEffect(() => {
+    const onHash = () => {
+      const h = window.location.hash.slice(1) || "home";
+      setRoute(["privacy", "terms", "about"].includes(h) ? h : "home");
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
   const [pages, setPages] = useState([]);
   const [textBlocks, setTextBlocks] = useState({});
   const [floatingBoxes, setFloatingBoxes] = useState([]);
@@ -574,9 +793,17 @@ export default function App() {
   async function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
+    await loadPdfFromFile(file);
+  }
+
+  async function loadPdfFromFile(file) {
     setFileName(file.name);
     const buf = await file.arrayBuffer();
     const bytes = new Uint8Array(buf);
+    await loadPdfFromBytes(bytes);
+  }
+
+  async function loadPdfFromBytes(bytes) {
     setPdfBytes(bytes);
 
     const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
@@ -657,6 +884,19 @@ export default function App() {
       redrawPage(canvas, pg.dataUrl, edits);
     }
   }, [textBlocks, pages, activePopup]);
+
+  async function createBlankPdf() {
+    const doc = await PDFDocument.create();
+    doc.addPage([612, 792]); // US Letter
+    const bytes = await doc.save();
+    setFileName("blank.pdf");
+    await loadPdfFromBytes(bytes);
+  }
+
+  async function handleDroppedFile(file) {
+    if (!file || file.type !== "application/pdf") return;
+    await loadPdfFromFile(file);
+  }
 
   function saveHistory() {
     setHistory(prev => [...prev.slice(-29), {
@@ -925,15 +1165,14 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#ffe4ec", userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
-      {isNoFile ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#ffe4ec" }}>
-          <div style={{ marginBottom: 16 }}>
-            <KatanaLogo size={44} />
-          </div>
-          <label style={{ padding: "14px 52px", background: "#e63946", color: "#fff", borderRadius: 10, cursor: "pointer", fontSize: 15, fontWeight: 700, boxShadow: "0 8px 32px rgba(230,57,70,0.4)" }}>
-            Open PDF <input type="file" accept=".pdf" onChange={handleFile} style={{ display: "none" }} />
-          </label>
-        </div>
+      {route !== "home" ? (
+        <StaticPage route={route} />
+      ) : isNoFile ? (
+        <Homepage
+          onFile={handleFile}
+          onDropFile={handleDroppedFile}
+          onCreateBlank={createBlankPdf}
+        />
       ) : (
         <>
           <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: "#111", borderBottom: "1px solid #222", position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
