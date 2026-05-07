@@ -85,7 +85,7 @@ const GOLD = "#C4963A";
 const INK = "#1a1208";
 
 const CINZEL = '"Cinzel", "Times New Roman", serif';
-const FELL = '"EB Garamond", "Times New Roman", Georgia, serif';
+const FELL = '"Lora", Georgia, "Times New Roman", serif';
 
 const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
 
@@ -149,12 +149,12 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
       )}
 
       {/* HEADER — parchment bg with logo + stamp tags (dark logo, light bg) */}
-      <header style={{ padding: "32px 20px 24px", textAlign: "center" }}>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 22px", opacity: 0.5 }} />
+      <header style={{ padding: "18px 20px 14px", textAlign: "center" }}>
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 6px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(380px, 65vw)", height: "auto", display: "block" }} />
+          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(440px, 72vw)", height: "auto", display: "block", marginTop: -8, marginBottom: -10 }} />
         </div>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "22px auto 20px", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "6px auto 14px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10 }}>
           <StampTag>100% Free</StampTag>
           <StampTag>No Upload</StampTag>
@@ -904,8 +904,10 @@ export default function App() {
   // Multi-tab state — each loaded PDF is a "tab" with its own state snapshot
   const [tabsList, setTabsList] = useState([]); // [{ id, fileName }]
   const [activeTabId, setActiveTabId] = useState(null);
-  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom } }
+  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer } }
   const liveStateRef = useRef({});
+  const [hasTextLayer, setHasTextLayer] = useState(true);
+  const [textLayerNoticeDismissed, setTextLayerNoticeDismissed] = useState(false);
   const [dragging, setDragging] = useState(null);
   const [draggingImg, setDraggingImg] = useState(null);
   const [resizingImg, setResizingImg] = useState(null);
@@ -974,13 +976,22 @@ export default function App() {
         const totalW = Math.max(item.width * SCALE, fs * 0.4);
         const h = fs * 1.4;
 
-        const fn = (item.fontName || "").toLowerCase();
-        let ff = "Arial, sans-serif";
-        if (fn.includes("times") || fn.includes("roman")) ff = "Times New Roman, serif";
+        const styleEntry = (content.styles && content.styles[item.fontName]) || {};
+        const styleFamily = (styleEntry.fontFamily || "").toString();
+        const fn = ((item.fontName || "") + " " + styleFamily).toLowerCase();
+        let ff;
+        if (styleFamily && /\w/.test(styleFamily)) {
+          ff = `"${styleFamily}", Arial, sans-serif`;
+          if (/serif/i.test(styleFamily)) ff = `"${styleFamily}", "Times New Roman", serif`;
+          else if (/mono|courier/i.test(styleFamily)) ff = `"${styleFamily}", "Courier New", monospace`;
+        } else if (fn.includes("times") || fn.includes("roman") || fn.includes("serif")) ff = "Times New Roman, serif";
         else if (fn.includes("courier") || fn.includes("mono")) ff = "Courier New, monospace";
         else if (fn.includes("georgia")) ff = "Georgia, serif";
-        const bold = fn.includes("bold");
-        const italic = fn.includes("italic") || fn.includes("oblique");
+        else if (fn.includes("verdana")) ff = "Verdana, sans-serif";
+        else if (fn.includes("calibri") || fn.includes("segoe")) ff = "Calibri, 'Segoe UI', Arial, sans-serif";
+        else ff = "Arial, sans-serif";
+        const bold = /bold|black|heavy|semibold|medium/.test(fn);
+        const italic = /italic|oblique/.test(fn);
 
         const parts = item.str.split(/(\s+)/);
         const charW = totalW / Math.max(item.str.length, 1);
@@ -1014,6 +1025,10 @@ export default function App() {
     setActivePopup(null);
     setSelected(null);
     setZoom(1);
+    // Detect no-text-layer PDFs (browser-printed, scanned, image-only)
+    const totalWords = Object.values(words).reduce((acc, blocks) => acc + (blocks ? blocks.length : 0), 0);
+    setHasTextLayer(totalWords > 0);
+    setTextLayerNoticeDismissed(false);
   }
 
   useEffect(() => {
@@ -1030,7 +1045,7 @@ export default function App() {
   // Mirror live state into a ref so snapshotCurrent always reads fresh values
   useEffect(() => {
     liveStateRef.current = {
-      pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom,
+      pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer,
     };
   });
 
@@ -1048,6 +1063,7 @@ export default function App() {
     setHistory(snap.history);
     setFileName(snap.fileName);
     setZoom(snap.zoom);
+    setHasTextLayer(snap.hasTextLayer !== undefined ? snap.hasTextLayer : true);
     setSelected(null);
     setActivePopup(null);
   }
@@ -1681,6 +1697,26 @@ export default function App() {
                 +
                 <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} />
               </label>
+            </div>
+          )}
+
+          {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
+            <div onClick={e => e.stopPropagation()} style={{
+              maxWidth: 880, margin: "20px auto 0", padding: "14px 20px",
+              background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
+              fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
+              display: "flex", alignItems: "flex-start", gap: 12,
+            }}>
+              <div style={{ flex: 1 }}>
+                <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                  No editable text in this PDF
+                </strong>
+                This PDF doesn't have a selectable text layer — it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
+              </div>
+              <button onClick={() => setTextLayerNoticeDismissed(true)} style={{
+                background: "transparent", border: "none", color: LACQUER,
+                fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
+              }}>✕</button>
             </div>
           )}
 
