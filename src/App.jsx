@@ -393,59 +393,74 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
   );
 }
 
+const FB_SIZES = [6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120];
+
 function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
-  const [localText, setLocalText] = useState(fb.text);
-  useEffect(() => { setLocalText(fb.text); }, [fb.text]);
+  const stopAll = e => { e.stopPropagation(); e.preventDefault && e.preventDefault(); };
   return (
     <div onClick={e => { e.stopPropagation(); onSelect(); }} style={{
-      position: "absolute", left: fb.x, top: fb.y, minWidth: 80,
+      position: "absolute", left: fb.x, top: fb.y, minWidth: 140,
       zIndex: isSel ? 100 : 50,
       border: isSel ? "2px solid #e63946" : "1.5px dashed rgba(230,57,70,0.4)",
       borderRadius: 4, background: "rgba(255,255,255,0.97)",
       boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.25)" : "0 2px 8px rgba(0,0,0,0.1)",
       boxSizing: "border-box",
     }}>
+      {/* Toolbar */}
       <div onMouseDown={onStartDrag} style={{
-        background: "#e63946", padding: "3px 8px", fontSize: 10, color: "#fff",
+        background: "#e63946", padding: "4px 6px", fontSize: 11, color: "#fff",
         cursor: "grab", display: "flex", alignItems: "center", gap: 5,
-        userSelect: "none", borderRadius: "2px 2px 0 0",
+        userSelect: "none", borderRadius: "2px 2px 0 0", flexWrap: "nowrap",
       }}>
-        <span style={{ letterSpacing: 1, fontWeight: 700 }}>✥ DRAG</span>
-        <span onMouseDown={e => e.stopPropagation()} onClick={e => {
-          e.stopPropagation();
-          const s = prompt("Size:", fb.fontSize);
-          if (s && !isNaN(s)) onUpdate({ fontSize: +s });
-        }} style={{ cursor: "pointer", fontWeight: 700 }}>Aa</span>
-        <span onMouseDown={e => e.stopPropagation()} onClick={e => {
-          e.stopPropagation();
-          onUpdate({ isBold: !fb.isBold });
-        }} style={{ cursor: "pointer", fontWeight: 900, opacity: fb.isBold ? 1 : 0.4 }}>B</span>
-        <span onMouseDown={e => e.stopPropagation()} onClick={e => {
-          e.stopPropagation();
-          onUpdate({ isItalic: !fb.isItalic });
-        }} style={{ cursor: "pointer", fontStyle: "italic", opacity: fb.isItalic ? 1 : 0.4 }}>I</span>
-        <input type="color" value={fb.color || "#000"} onChange={e => onUpdate({ color: e.target.value })}
-          onMouseDown={e => e.stopPropagation()}
-          style={{ width: 14, height: 14, border: "none", padding: 0, background: "none", cursor: "pointer" }} />
-        <select value={fb.fontFamily} onChange={e => onUpdate({ fontFamily: e.target.value })}
-          onMouseDown={e => e.stopPropagation()}
-          style={{ fontSize: 9, background: "#a02030", color: "#fff", border: "none", cursor: "pointer", borderRadius: 2, padding: "0 2px" }}>
+        <span style={{ fontWeight: 700, marginRight: 2, cursor: "grab" }}>✥</span>
+
+        {/* Font size */}
+        <select value={FB_SIZES.includes(fb.fontSize) ? fb.fontSize : 14}
+          onChange={e => onUpdate({ fontSize: +e.target.value })}
+          onMouseDown={stopAll} onClick={e => e.stopPropagation()}
+          style={{ fontSize: 11, background: "#a02030", color: "#fff", border: "none", borderRadius: 2, cursor: "pointer", width: 46 }}>
+          {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+
+        {/* Bold */}
+        <span onMouseDown={stopAll} onClick={e => { e.stopPropagation(); onUpdate({ isBold: !fb.isBold }); }}
+          style={{ cursor: "pointer", fontWeight: 900, opacity: fb.isBold ? 1 : 0.4 }}>B</span>
+
+        {/* Italic */}
+        <span onMouseDown={stopAll} onClick={e => { e.stopPropagation(); onUpdate({ isItalic: !fb.isItalic }); }}
+          style={{ cursor: "pointer", fontStyle: "italic", opacity: fb.isItalic ? 1 : 0.4 }}>I</span>
+
+        {/* Color */}
+        <input type="color" value={fb.color || "#000000"} onChange={e => onUpdate({ color: e.target.value })}
+          onMouseDown={stopAll}
+          style={{ width: 16, height: 16, border: "none", padding: 0, background: "none", cursor: "pointer", flexShrink: 0 }} />
+
+        {/* Font family */}
+        <select value={fb.fontFamily}
+          onChange={e => onUpdate({ fontFamily: e.target.value })}
+          onMouseDown={stopAll} onClick={e => e.stopPropagation()}
+          style={{ fontSize: 11, background: "#a02030", color: "#fff", border: "none", borderRadius: 2, cursor: "pointer", padding: "0 2px" }}>
           <option value="Arial, sans-serif">Arial</option>
           <option value="Times New Roman, serif">Times</option>
           <option value="Courier New, monospace">Courier</option>
           <option value="Georgia, serif">Georgia</option>
         </select>
-        <span onMouseDown={e => e.stopPropagation()} onClick={e => {
-          e.stopPropagation();
-          onDelete();
-        }} style={{ marginLeft: "auto", cursor: "pointer" }}>✕</span>
+
+        {/* Delete */}
+        <span onMouseDown={stopAll} onClick={e => { e.stopPropagation(); onDelete(); }}
+          style={{ marginLeft: "auto", cursor: "pointer", fontWeight: 700 }}>✕</span>
       </div>
-      <textarea value={localText} onChange={e => { setLocalText(e.target.value); onUpdate({ text: e.target.value }); }}
-        onMouseDown={e => e.stopPropagation()} rows={2}
+
+      {/* Textarea — fully controlled by parent state */}
+      <textarea value={fb.text}
+        onChange={e => onUpdate({ text: e.target.value })}
+        onMouseDown={e => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
+        rows={2}
         style={{
           display: "block", width: "100%", minWidth: 120, border: "none",
           outline: "none", resize: "both", background: "transparent",
-          padding: "4px 8px", fontSize: fb.fontSize, fontFamily: fb.fontFamily,
+          padding: "5px 8px", fontSize: fb.fontSize, fontFamily: fb.fontFamily,
           fontWeight: fb.isBold ? "bold" : "normal",
           fontStyle: fb.isItalic ? "italic" : "normal",
           color: fb.color || "#000", lineHeight: 1.5, cursor: "text",
@@ -873,4 +888,4 @@ export default function App() {
 const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 12, background: "#1a1a1a", color: "#666", cursor: "pointer", userSelect: "none", fontFamily: "inherit" };
 const tbIconBtn = { width: 28, height: 28, border: "1px solid #2a2a2a", borderRadius: 5, fontSize: 13, background: "#1a1a1a", color: "#888", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", padding: 0 };
 const tbSelect = { padding: "4px 6px", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 12, background: "#1a1a1a", color: "#888", cursor: "pointer", fontFamily: "inherit" };
-const pageBtn = { padding: "5px 10px", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 11, background: "#1a1a1a", color: "#c9a84c", cursor: "pointer", userSelect: "none" };
+const pageBtn = { padding: "7px 16px", border: "1px solid #444", borderRadius: 8, fontSize: 13, fontWeight: 700, background: "#1a1a1a", color: "#c9a84c", cursor: "pointer", userSelect: "none" };
