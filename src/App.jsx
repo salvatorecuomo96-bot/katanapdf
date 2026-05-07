@@ -85,7 +85,7 @@ const GOLD = "#C4963A";
 const INK = "#1a1208";
 
 const CINZEL = '"Cinzel", "Times New Roman", serif';
-const FELL = '"IM Fell English", "Times New Roman", serif';
+const FELL = '"EB Garamond", "Times New Roman", Georgia, serif';
 
 const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
 
@@ -104,7 +104,7 @@ function StampTag({ children }) {
     <span style={{
       border: `1px solid ${LACQUER}`,
       padding: "5px 14px",
-      color: GOLD,
+      color: LACQUER,
       fontFamily: CINZEL,
       fontSize: 11,
       letterSpacing: 3,
@@ -148,13 +148,13 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
         </div>
       )}
 
-      {/* HEADER — dark ink bar with logo + stamp tags */}
-      <header style={{ background: INK, padding: "28px 20px 22px", textAlign: "center" }}>
-        <div style={{ height: 1, background: GOLD, maxWidth: 920, margin: "0 auto 18px" }} />
+      {/* HEADER — parchment bg with logo + stamp tags (dark logo, light bg) */}
+      <header style={{ padding: "32px 20px 24px", textAlign: "center" }}>
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 22px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(420px, 70vw)", height: "auto", display: "block" }} />
+          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(380px, 65vw)", height: "auto", display: "block" }} />
         </div>
-        <div style={{ height: 1, background: GOLD, maxWidth: 920, margin: "18px auto 18px" }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "22px auto 20px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10 }}>
           <StampTag>100% Free</StampTag>
           <StampTag>No Upload</StampTag>
@@ -337,14 +337,14 @@ function StaticPage({ route }) {
 
   return (
     <div style={{ minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, color: INK, fontFamily: FELL }}>
-      <header style={{ background: INK, padding: "22px 20px", textAlign: "center" }}>
-        <div style={{ height: 0.5, background: GOLD, maxWidth: 920, margin: "0 auto 14px" }} />
+      <header style={{ padding: "20px", textAlign: "center" }}>
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 14px", opacity: 0.5 }} />
         <a href="#home" style={{ textDecoration: "none" }}>
-          <span style={{ fontFamily: CINZEL, fontSize: 18, color: PARCHMENT, letterSpacing: 5, textTransform: "uppercase", fontWeight: 600 }}>
+          <span style={{ fontFamily: CINZEL, fontSize: 18, color: INK, letterSpacing: 5, textTransform: "uppercase", fontWeight: 600 }}>
             katanapdf
           </span>
         </a>
-        <div style={{ height: 0.5, background: GOLD, maxWidth: 920, margin: "14px auto 0" }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "14px auto 0", opacity: 0.5 }} />
       </header>
       <article style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 64px", fontSize: 16, lineHeight: 1.75, fontFamily: FELL, color: INK }}>
         <h1 style={{ fontFamily: CINZEL, fontSize: 30, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase", marginTop: 0, marginBottom: 8, color: INK }}>{content.title}</h1>
@@ -1221,37 +1221,75 @@ export default function App() {
     reader.readAsDataURL(file);
   }
 
-  // Insert another PDF as an image overlay — first page becomes a draggable/resizable image
-  async function handleAddPdfAsImage(e, pageNum) {
+  // Append another PDF's pages to the current document — fully editable like original pages
+  async function handleAddPdfAsImage(e, _pageNum) {
     const file = e.target.files[0];
     if (!file) return;
     e.target.value = "";
     try {
+      saveHistory();
       const buf = await file.arrayBuffer();
       const bytes = new Uint8Array(buf);
       const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-      const page = await pdf.getPage(1);
-      const vp = page.getViewport({ scale: 2 });
-      const canvas = document.createElement("canvas");
-      canvas.width = vp.width;
-      canvas.height = vp.height;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
-      const dataUrl = canvas.toDataURL("image/png");
 
-      saveHistory();
-      floatingIdCounter++;
-      const id = `pdfimg-${floatingIdCounter}`;
-      const aspect = vp.width / vp.height;
-      const targetW = 320;
-      setFloatingImages(prev => [...prev, {
-        id, page: pageNum,
-        x: 60, y: 60, w: targetW, h: targetW / aspect,
-        dataUrl,
-      }]);
-      setSelected(id);
+      // Pick up where current pages end
+      const startNum = pages.length + 1;
+      const newPages = [];
+      const newWords = { ...textBlocks };
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const pgNum = startNum + i - 1;
+        const page = await pdf.getPage(i);
+        const vp = page.getViewport({ scale: SCALE });
+        const c = document.createElement("canvas");
+        c.width = vp.width;
+        c.height = vp.height;
+        await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+
+        const content = await page.getTextContent();
+        const pageWords = [];
+        for (let idx = 0; idx < content.items.length; idx++) {
+          const item = content.items[idx];
+          if (!item.str.trim()) continue;
+          const [, , , d, tx, ty] = item.transform;
+          const fs = Math.abs(d) * SCALE;
+          const baselineY = vp.height - ty * SCALE;
+          const top = baselineY - fs;
+          const left = tx * SCALE;
+          const totalW = Math.max(item.width * SCALE, fs * 0.4);
+          const h = fs * 1.4;
+          const fn = (item.fontName || "").toLowerCase();
+          let ff = "Arial, sans-serif";
+          if (fn.includes("times") || fn.includes("roman")) ff = "Times New Roman, serif";
+          else if (fn.includes("courier") || fn.includes("mono")) ff = "Courier New, monospace";
+          else if (fn.includes("georgia")) ff = "Georgia, serif";
+          const bold = fn.includes("bold");
+          const italic = fn.includes("italic") || fn.includes("oblique");
+          const parts = item.str.split(/(\s+)/);
+          const charW = totalW / Math.max(item.str.length, 1);
+          let ox = 0;
+          for (let wi = 0; wi < parts.length; wi++) {
+            const word = parts[wi];
+            const ww = word.length * charW;
+            if (word.trim()) {
+              pageWords.push({
+                id: `${pgNum}-${idx}-${wi}`, text: word, page: pgNum,
+                x: left + ox, y: top, baselineY, width: ww, height: h,
+                fontSize: fs, fontFamily: ff, isBold: bold, isItalic: italic, edited: false,
+              });
+            }
+            ox += ww;
+          }
+        }
+        newWords[pgNum] = pageWordsToTextBlocks(pageWords);
+        newPages.push({ num: pgNum, dataUrl: c.toDataURL("image/png"), width: vp.width, height: vp.height });
+      }
+
+      setPages(prev => [...prev, ...newPages]);
+      setTextBlocks(newWords);
     } catch (err) {
       console.error("Add PDF error:", err);
-      alert("Couldn't insert this PDF: " + (err.message || err));
+      alert("Couldn't append this PDF: " + (err.message || err));
     }
   }
 
