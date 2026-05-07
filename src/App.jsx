@@ -998,7 +998,7 @@ export default function App() {
   return (
     <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#ffe4ec", userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
       {isNoFile ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0a0a0a" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#ffe4ec" }}>
           <div style={{ marginBottom: 16 }}>
             <KatanaLogo size={44} />
           </div>
