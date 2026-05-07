@@ -10,11 +10,38 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 const SCALE = 2;
 
 function KatanaLogo({ size = 36 }) {
-  const [err, setErr] = useState(false);
-  if (err) return null;
-  const h = size >= 40 ? size * 3.8 : size * 1.3;
-  return <img src="/logo.png" alt="katanapdf" onError={() => setErr(true)}
-    style={{ height: h, width: "auto", objectFit: "contain", mixBlendMode: "multiply" }} />;
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = imageData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          if (r > 230 && g > 230 && b > 230) {
+            d[i + 3] = 0;
+          } else if (r > 200 && g > 200 && b > 200) {
+            d[i + 3] = Math.round((255 - Math.min(r, g, b)) * 4);
+          }
+        }
+        ctx.putImageData(imageData, 0, 0);
+        setUrl(canvas.toDataURL("image/png"));
+      } catch { setUrl("/logo.png"); }
+    };
+    img.onerror = () => setUrl(null);
+    img.src = "/logo.png";
+  }, []);
+
+  if (!url) return null;
+  const h = size >= 40 ? size * 7.5 : size * 1.5;
+  return <img src={url} alt="katanapdf" style={{ height: h, width: "auto", objectFit: "contain" }} />;
 }
 function KatanaLogoSVG({ size = 36 }) {
   return (
