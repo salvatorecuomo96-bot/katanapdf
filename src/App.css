@@ -112,8 +112,11 @@
   margin: 32px 0 0;
 
   .logo {
-    height: 18px;
-  }
+  height: 18px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
 
   a {
     color: var(--text-h);
