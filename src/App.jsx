@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -1163,87 +1163,231 @@ export default function App() {
     };
   }, [onMouseMove, onMouseUp]);
 
+  function pickPdfLibFont(fonts, family, bold, italic) {
+    const f = (family || "").toLowerCase();
+    let key;
+    if (f.includes("times") || f.includes("georgia") || f.includes("serif")) {
+      key = bold && italic ? "timesBI" : bold ? "timesB" : italic ? "timesI" : "times";
+    } else if (f.includes("courier") || f.includes("mono")) {
+      key = bold && italic ? "courierBI" : bold ? "courierB" : italic ? "courierI" : "courier";
+    } else {
+      key = bold && italic ? "helvBI" : bold ? "helvB" : italic ? "helvI" : "helv";
+    }
+    return fonts[key];
+  }
+
+  function hexToRgb(hex) {
+    const m = (hex || "").match(/^#?([0-9a-f]{6})$/i);
+    if (!m) return rgb(0, 0, 0);
+    const n = parseInt(m[1], 16);
+    return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+  }
+
+  // Replace any character pdf-lib's WinAnsi standard font can't encode
+  function sanitiseForStdFont(s) {
+    // pdf-lib's standard fonts only cover WinAnsi (latin-1ish). Replace others with "?".
+    // Common smart-quote / em-dash substitutions to keep text legible:
+    return s
+      .replace(/[‘’]/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/—/g, "--")
+      .replace(/–/g, "-")
+      .replace(/…/g, "...")
+      .replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, "?");
+  }
+
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
     try {
-      const doc = await PDFDocument.create();
-      for (const pg of pages) {
-        const canvas = canvasRefs.current[pg.num];
-        if (!canvas) continue;
-        canvas.width = pg.width;
-        canvas.height = pg.height;
-        const ctx = canvas.getContext("2d");
+      // Try real-text path first: load the original PDF and overlay edits as actual text.
+      let doc;
+      try {
+        doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      } catch (loadErr) {
+        console.warn("pdf-lib couldn't parse this PDF, falling back to canvas:", loadErr.message);
+        return await handleDownloadCanvasFallback();
+      }
 
-        await new Promise(resolve => {
-          const img = new Image();
-          img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
-          img.src = pg.dataUrl;
-        });
+      const docPages = doc.getPages();
+      const fonts = {
+        helv: await doc.embedFont(StandardFonts.Helvetica),
+        helvB: await doc.embedFont(StandardFonts.HelveticaBold),
+        helvI: await doc.embedFont(StandardFonts.HelveticaOblique),
+        helvBI: await doc.embedFont(StandardFonts.HelveticaBoldOblique),
+        times: await doc.embedFont(StandardFonts.TimesRoman),
+        timesB: await doc.embedFont(StandardFonts.TimesRomanBold),
+        timesI: await doc.embedFont(StandardFonts.TimesRomanItalic),
+        timesBI: await doc.embedFont(StandardFonts.TimesRomanBoldItalic),
+        courier: await doc.embedFont(StandardFonts.Courier),
+        courierB: await doc.embedFont(StandardFonts.CourierBold),
+        courierI: await doc.embedFont(StandardFonts.CourierOblique),
+        courierBI: await doc.embedFont(StandardFonts.CourierBoldOblique),
+      };
 
+      for (let pgIdx = 0; pgIdx < pages.length; pgIdx++) {
+        const pg = pages[pgIdx];
+        const pdfPage = docPages[pgIdx];
+        if (!pdfPage) continue;
+        const { width: pdfW, height: pdfH } = pdfPage.getSize();
+        const sx = pdfW / pg.width;
+        const sy = pdfH / pg.height;
+
+        // 1. Edited original text → white rectangle over the original area + new text on top
         const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
         for (const e of edits) {
-          const lines = e.text.split(/\r?\n/);
-          const lh = e.fontSize * 1.22;
-          const lineCount = Math.max(1, lines.length);
+          const text = sanitiseForStdFont(e.text || "");
+          const lines = text.split(/\r?\n/);
+          const numLines = Math.max(1, lines.length);
+          const lhCanvas = e.fontSize * 1.22;
           const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
-          ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
-          let maxLineW = e.width;
-          for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
-          let whiteH;
+          let whiteHCanvas;
           if (useBaselines && lines.length > 1) {
             const bs = e.lineBaselines;
-            whiteH = Math.max(e.height + 12, Math.max(...bs) - Math.min(...bs) + lh + 16);
+            whiteHCanvas = Math.max(e.height + 12, Math.max(...bs) - Math.min(...bs) + lhCanvas + 16);
           } else {
-            whiteH = Math.max(e.height + 12, lineCount * lh + 14);
+            whiteHCanvas = Math.max(e.height + 12, numLines * lhCanvas + 14);
           }
-          ctx.fillStyle = "#fff";
-          ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
-          ctx.fillStyle = "#000";
-          ctx.textBaseline = "alphabetic";
-          if (useBaselines) {
-            lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
-          } else {
-            lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
+          const padX = 4;
+          const whiteW = (e.width + padX * 2) * sx;
+          const whiteH = whiteHCanvas * sy;
+          const whiteX = (e.x - padX) * sx;
+          const yTopCanvas = e.y - 4;
+          const yBottomPdf = pdfH - (yTopCanvas + whiteHCanvas) * sy;
+          pdfPage.drawRectangle({ x: whiteX, y: yBottomPdf, width: whiteW, height: whiteH, color: rgb(1, 1, 1) });
+
+          if (lines.some(l => l.length > 0)) {
+            const font = pickPdfLibFont(fonts, e.fontFamily, e.isBold, e.isItalic);
+            const fs = e.fontSize * sy;
+            lines.forEach((ln, i) => {
+              if (!ln) return;
+              const baselineCanvas = (useBaselines && e.lineBaselines[i] != null)
+                ? e.lineBaselines[i]
+                : (e.baselineY + i * lhCanvas);
+              const yPdf = pdfH - baselineCanvas * sy;
+              try {
+                pdfPage.drawText(ln, { x: e.x * sx, y: yPdf, size: fs, font, color: rgb(0, 0, 0) });
+              } catch {}
+            });
           }
         }
 
+        // 2. New floating text boxes
         for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-          const lines = fb.text.split(/\r?\n/);
-          ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
-          ctx.fillStyle = fb.color || "#000";
-          ctx.textBaseline = "top";
-          lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
-        }
-
-        for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-          await new Promise(resolve => {
-            const img = new Image();
-            img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); };
-            img.src = fi.dataUrl;
+          const text = sanitiseForStdFont(fb.text || "");
+          if (!text) continue;
+          const font = pickPdfLibFont(fonts, fb.fontFamily, fb.isBold, fb.isItalic);
+          const fs = fb.fontSize * sy;
+          const lhCanvas = fb.fontSize * 1.5;
+          const lines = text.split(/\r?\n/);
+          const color = hexToRgb(fb.color || "#000000");
+          lines.forEach((ln, i) => {
+            if (!ln) return;
+            // baseline ~ y_top + fontSize (alphabetic)
+            const baselineCanvas = fb.y + i * lhCanvas + fb.fontSize * 0.85;
+            const yPdf = pdfH - baselineCanvas * sy;
+            try {
+              pdfPage.drawText(ln, { x: fb.x * sx, y: yPdf, size: fs, font, color });
+            } catch {}
           });
         }
 
-        const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
-        const pngImg = await doc.embedPng(pngBytes);
-        const pdfPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
-        pdfPage.drawImage(pngImg, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+        // 3. Floating images
+        for (const fi of floatingImages.filter(f => f.page === pg.num)) {
+          const isJpg = /^data:image\/jpe?g/i.test(fi.dataUrl);
+          const data = await (await fetch(fi.dataUrl)).arrayBuffer();
+          let img;
+          try {
+            img = isJpg ? await doc.embedJpg(data) : await doc.embedPng(data);
+          } catch {
+            try { img = await doc.embedPng(data); } catch { continue; }
+          }
+          const x = fi.x * sx;
+          const w = fi.w * sx;
+          const h = fi.h * sy;
+          const yPdf = pdfH - (fi.y + fi.h) * sy;
+          pdfPage.drawImage(img, { x, y: yPdf, width: w, height: h });
+        }
       }
 
       const bytes = await doc.save();
-      const blob = new Blob([bytes], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = (fileName || "document").replace(/\.pdf$/i, "") + "_edited.pdf";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
+      triggerPdfDownload(bytes);
+
     } catch (err) {
       console.error("Download error:", err);
       alert("Download failed: " + err.message);
     }
+  }
+
+  function triggerPdfDownload(bytes) {
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (fileName || "document").replace(/\.pdf$/i, "") + "_edited.pdf";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Fallback used when pdf-lib can't parse the original PDF (rare): rasterise via canvas.
+  async function handleDownloadCanvasFallback() {
+    const doc = await PDFDocument.create();
+    for (const pg of pages) {
+      const canvas = canvasRefs.current[pg.num];
+      if (!canvas) continue;
+      canvas.width = pg.width;
+      canvas.height = pg.height;
+      const ctx = canvas.getContext("2d");
+      await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
+        img.src = pg.dataUrl;
+      });
+      const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
+      for (const e of edits) {
+        const lines = e.text.split(/\r?\n/);
+        const lh = e.fontSize * 1.22;
+        const lineCount = Math.max(1, lines.length);
+        const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
+        ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
+        let maxLineW = e.width;
+        for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
+        let whiteH;
+        if (useBaselines && lines.length > 1) {
+          const bs = e.lineBaselines;
+          whiteH = Math.max(e.height + 12, Math.max(...bs) - Math.min(...bs) + lh + 16);
+        } else {
+          whiteH = Math.max(e.height + 12, lineCount * lh + 14);
+        }
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
+        ctx.fillStyle = "#000";
+        ctx.textBaseline = "alphabetic";
+        if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
+        else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
+      }
+      for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
+        const lines = fb.text.split(/\r?\n/);
+        ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
+        ctx.fillStyle = fb.color || "#000";
+        ctx.textBaseline = "top";
+        lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
+      }
+      for (const fi of floatingImages.filter(f => f.page === pg.num)) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); };
+          img.src = fi.dataUrl;
+        });
+      }
+      const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
+      const pngImg = await doc.embedPng(pngBytes);
+      const pdfPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
+      pdfPage.drawImage(pngImg, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+    }
+    const bytes = await doc.save();
+    triggerPdfDownload(bytes);
   }
 
   const isNoFile = pages.length === 0;
