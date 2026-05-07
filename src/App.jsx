@@ -23,11 +23,38 @@ function KatanaLogo({ size = 36 }) {
         ctx.drawImage(img, 0, 0);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const d = imageData.data;
-        for (let i = 0; i < d.length; i += 4) {
-          const r = d[i], g = d[i + 1], b = d[i + 2];
-          if (r > 230 && g > 230 && b > 230) { d[i + 3] = 0; }
-          else if (r > 200 && g > 200 && b > 200) { d[i + 3] = Math.round((255 - Math.min(r, g, b)) * 4); }
+        const w = canvas.width, h = canvas.height;
+
+        // Flood-fill from all edges — removes only connected background white
+        const visited = new Uint8Array(w * h);
+        const stack = [];
+        for (let x = 0; x < w; x++) { stack.push(x + 0 * w); stack.push(x + (h - 1) * w); }
+        for (let y = 1; y < h - 1; y++) { stack.push(0 + y * w); stack.push((w - 1) + y * w); }
+
+        while (stack.length > 0) {
+          const pi = stack.pop();
+          if (visited[pi]) continue;
+          visited[pi] = 1;
+          const i = pi * 4;
+          if (d[i] < 190 || d[i+1] < 190 || d[i+2] < 190 || d[i+3] === 0) continue;
+          d[i+3] = 0; // erase background pixel
+          const x = pi % w, y = (pi / w) | 0;
+          if (x > 0)     stack.push(pi - 1);
+          if (x < w - 1) stack.push(pi + 1);
+          if (y > 0)     stack.push(pi - w);
+          if (y < h - 1) stack.push(pi + w);
         }
+
+        // Second pass: soften any remaining near-white fringe pixels
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i+3] === 0) continue;
+          const r = d[i], g = d[i+1], b = d[i+2];
+          if (r > 220 && g > 220 && b > 220) d[i+3] = 0;
+          else if (r > 190 && g > 190 && b > 190) {
+            d[i+3] = Math.round(d[i+3] * (1 - (Math.min(r,g,b) - 190) / 80));
+          }
+        }
+
         ctx.putImageData(imageData, 0, 0);
         setUrl(canvas.toDataURL("image/png"));
       } catch { setUrl("/logo.png"); }
@@ -967,7 +994,7 @@ export default function App() {
     <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#0f0f0f", userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
       {isNoFile ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0a0a0a" }}>
-          <div style={{ marginBottom: 40 }}>
+          <div style={{ marginBottom: 16 }}>
             <KatanaLogo size={44} />
           </div>
           <label style={{ padding: "14px 52px", background: "#e63946", color: "#fff", borderRadius: 10, cursor: "pointer", fontSize: 15, fontWeight: 700, boxShadow: "0 8px 32px rgba(230,57,70,0.4)" }}>
