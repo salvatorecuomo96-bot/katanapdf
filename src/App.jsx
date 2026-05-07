@@ -76,6 +76,50 @@ function KatanaLogoSVG({ size = 36 }) {
   );
 }
 
+// === Ancient Japan design tokens ===
+const PARCHMENT = "#F5EDD6";
+const PARCHMENT_2 = "#EDE0BC";
+const LACQUER = "#8B1A1A";
+const GOLD = "#C4963A";
+const INK = "#1a1208";
+
+const CINZEL = '"Cinzel", "Times New Roman", serif';
+const FELL = '"IM Fell English", "Times New Roman", serif';
+
+const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
+
+function SectionDivider({ label }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "48px 0 24px", maxWidth: 880, marginLeft: "auto", marginRight: "auto", padding: "0 20px" }}>
+      <div style={{ flex: 1, height: 1, background: GOLD }} />
+      <span style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 5, textTransform: "uppercase", color: LACQUER, fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>
+      <div style={{ flex: 1, height: 1, background: GOLD }} />
+    </div>
+  );
+}
+
+function StampTag({ children }) {
+  return (
+    <span style={{
+      border: `1px solid ${LACQUER}`,
+      padding: "5px 14px",
+      color: GOLD,
+      fontFamily: CINZEL,
+      fontSize: 11,
+      letterSpacing: 3,
+      textTransform: "uppercase",
+      fontWeight: 500,
+      background: "transparent",
+    }}>{children}</span>
+  );
+}
+
+function CornerBracket() {
+  return (
+    <div style={{ position: "absolute", top: 8, right: 8, width: 14, height: 14, borderTop: `1px solid ${GOLD}`, borderRight: `1px solid ${GOLD}`, pointerEvents: "none" }} />
+  );
+}
+
 function Homepage({ onFile, onDropFile, onCreateBlank }) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -92,70 +136,93 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
   return (
     <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
-         style={{ minHeight: "100vh", background: "#ffe4ec", color: "#1a1a1a", position: "relative" }}>
+         style={{ minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, color: INK, position: "relative", fontFamily: FELL }}>
       {dragOver && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(230,57,70,0.18)",
-                      border: "4px dashed #e63946", display: "flex", alignItems: "center", justifyContent: "center",
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(139,26,26,0.18)",
+                      border: `4px dashed ${LACQUER}`, display: "flex", alignItems: "center", justifyContent: "center",
                       pointerEvents: "none" }}>
-          <div style={{ background: "#fff", padding: "20px 40px", borderRadius: 12, fontSize: 20, fontWeight: 800, color: "#e63946" }}>
+          <div style={{ background: PARCHMENT, padding: "20px 40px", color: LACQUER, fontFamily: CINZEL, fontSize: 18, letterSpacing: 4, textTransform: "uppercase", border: `1px solid ${GOLD}`, outline: `1px solid ${LACQUER}`, outlineOffset: 4 }}>
             Drop your PDF here
           </div>
         </div>
       )}
 
-      {/* HERO */}
-      <section style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 20px 40px", textAlign: "center" }}>
-        <KatanaLogo size={44} />
-        <p style={{ marginTop: 14, marginBottom: 0, fontSize: 18, fontWeight: 600, color: "#3a1f24", maxWidth: 600 }}>
+      {/* HEADER — dark ink bar with logo + stamp tags */}
+      <header style={{ background: INK, padding: "28px 20px 22px", textAlign: "center" }}>
+        <div style={{ height: 1, background: GOLD, maxWidth: 920, margin: "0 auto 18px" }} />
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(420px, 70vw)", height: "auto", display: "block" }} />
+        </div>
+        <div style={{ height: 1, background: GOLD, maxWidth: 920, margin: "18px auto 18px" }} />
+        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10 }}>
+          <StampTag>100% Free</StampTag>
+          <StampTag>No Upload</StampTag>
+          <StampTag>No Sign-up</StampTag>
+          <StampTag>Unlimited Pages</StampTag>
+        </div>
+      </header>
+
+      {/* HERO — tagline + CTA */}
+      <section style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "56px 20px 40px", textAlign: "center" }}>
+        <p style={{ marginTop: 0, marginBottom: 36, fontSize: 20, fontFamily: FELL, color: INK, maxWidth: 640, lineHeight: 1.5, fontStyle: "italic" }}>
           Free PDF editor in your browser. No uploads. No account. No limits.
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14, marginTop: 18, color: "#5b2932", fontSize: 14, fontWeight: 600 }}>
-          <span>✓ 100% Free</span>
-          <span>✓ No Upload</span>
-          <span>✓ No Sign-up</span>
-          <span>✓ Unlimited Pages</span>
-        </div>
-        <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          <label style={{ padding: "16px 56px", background: "#e63946", color: "#fff", borderRadius: 10, cursor: "pointer",
-                          fontSize: 16, fontWeight: 700, boxShadow: "0 8px 32px rgba(230,57,70,0.35)" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+          <label style={{
+            display: "inline-block", padding: "14px 52px", background: LACQUER, color: PARCHMENT, cursor: "pointer",
+            fontFamily: CINZEL, fontSize: 14, letterSpacing: 5, textTransform: "uppercase", fontWeight: 600,
+            border: `1px solid ${GOLD}`, outline: `1px solid ${LACQUER}`, outlineOffset: 4,
+          }}>
             Open PDF
             <input type="file" accept=".pdf" onChange={onFile} style={{ display: "none" }} />
           </label>
-          <button onClick={onCreateBlank}
-                  style={{ background: "transparent", border: "none", color: "#5b2932", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
+          <button onClick={onCreateBlank} style={{
+            background: "transparent", border: "none", color: LACQUER, fontFamily: CINZEL, fontSize: 11,
+            letterSpacing: 3, textTransform: "uppercase", cursor: "pointer", padding: "4px 0", textDecoration: "underline",
+          }}>
             or create a blank PDF
           </button>
-          <span style={{ fontSize: 12, color: "#7a4855", marginTop: 4 }}>or drag a PDF anywhere on this page</span>
+          <span style={{ fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.6)", fontStyle: "italic" }}>
+            or drag a PDF anywhere on this page
+          </span>
         </div>
       </section>
 
-      {/* PRIVACY CALLOUT */}
-      <section style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 32px" }}>
-        <div style={{ background: "#fff", border: "2px solid #e63946", borderRadius: 12, padding: "18px 22px",
-                      display: "flex", alignItems: "center", gap: 14, fontSize: 14, lineHeight: 1.5 }}>
-          <span style={{ fontSize: 28 }}>🔒</span>
-          <div>
-            <strong style={{ display: "block", marginBottom: 4 }}>Your PDF never leaves your computer.</strong>
-            Unlike most PDF editors, katanapdf runs entirely in your browser. Nothing is uploaded to any server.
-          </div>
+      {/* PRIVACY NOTICE — parchment, left red border */}
+      <section style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 16px" }}>
+        <div style={{ background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`, padding: "20px 24px", fontFamily: FELL, fontSize: 15, lineHeight: 1.55, color: INK }}>
+          <strong style={{ display: "block", marginBottom: 6, fontFamily: CINZEL, fontSize: 13, letterSpacing: 3, textTransform: "uppercase", color: INK, fontWeight: 600 }}>
+            Your PDF never leaves your computer.
+          </strong>
+          Unlike most PDF editors, katanapdf runs entirely in your browser. Nothing is uploaded to any server.
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "32px 20px" }}>
-        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 18, color: "#3a1f24" }}>How to edit a PDF online</h2>
-        <ol style={{ paddingLeft: 22, lineHeight: 1.75, fontSize: 15, color: "#3a1f24" }}>
-          <li><strong>Open your PDF</strong> — click the “Open PDF” button or drag a file onto this page.</li>
-          <li><strong>Edit the text</strong> — click any text in the document to change it directly.</li>
-          <li><strong>Add new text or images</strong> — use the “+ Add text” and “+ Add image” buttons on each page.</li>
-          <li><strong>Download</strong> — click “Download PDF” to save the edited file. Your file stays on your computer the whole time.</li>
-        </ol>
+      {/* HOW TO EDIT */}
+      <SectionDivider label="How to edit a PDF online" />
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {[
+            { t: "Open your PDF", b: "click the “Open PDF” button or drag a file onto this page." },
+            { t: "Edit the text", b: "click any text in the document to change it directly." },
+            { t: "Add new text or images", b: "use the “+ Add text” and “+ Add image” buttons on each page." },
+            { t: "Download", b: "click “Download PDF” to save the edited file. Your file stays on your computer the whole time." },
+          ].map((s, i) => (
+            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.25)`, padding: "16px 22px", display: "flex", alignItems: "flex-start", gap: 22 }}>
+              <span style={{ fontFamily: CINZEL, fontSize: 52, color: "rgba(139,26,26,0.28)", lineHeight: 1, fontWeight: 700, flexShrink: 0, minWidth: 44, textAlign: "center" }}>{i + 1}</span>
+              <div style={{ paddingTop: 8, fontFamily: FELL, fontSize: 16, lineHeight: 1.55, color: INK }}>
+                <strong style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>{s.t}</strong>
+                <span style={{ display: "block", marginTop: 4 }}>{s.b}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
-      {/* WHY KATANAPDF */}
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "8px 20px 32px" }}>
-        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 18, color: "#3a1f24" }}>Why katanapdf</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+      {/* WHY KATANAPDF — dark ink feature cards */}
+      <SectionDivider label="Why katanapdf" />
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
           {[
             { t: "100% Free", d: "Every feature, every file, every time. No paid tier hidden behind your edits." },
             { t: "No Upload Required", d: "Your PDF is processed entirely inside your browser — it never touches our servers." },
@@ -164,17 +231,18 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             { t: "Edit Existing Text", d: "Click any text to change it. Most competitors lock this behind a paid plan." },
             { t: "Add Text & Images", d: "Insert new text boxes, drop in images, drag, resize, and download." },
           ].map((x, i) => (
-            <div key={i} style={{ background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #f1c2cd" }}>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#e63946" }}>{x.t}</h3>
-              <p style={{ margin: "6px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "#3a1f24" }}>{x.d}</p>
+            <div key={i} style={{ background: INK, padding: "20px 22px", position: "relative", border: `1px solid rgba(196,150,58,0.3)` }}>
+              <CornerBracket />
+              <h3 style={{ fontFamily: CINZEL, fontSize: 13, color: GOLD, letterSpacing: 3, textTransform: "uppercase", margin: 0, fontWeight: 600 }}>{x.t}</h3>
+              <p style={{ fontFamily: FELL, fontSize: 14, color: "rgba(245,237,214,0.72)", margin: "10px 0 0", lineHeight: 1.6 }}>{x.d}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* FAQ */}
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "8px 20px 48px" }}>
-        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 18, color: "#3a1f24" }}>Frequently asked questions</h2>
+      <SectionDivider label="Frequently asked questions" />
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px 56px" }}>
         {[
           { q: "Is katanapdf really free?", a: "Yes. Every feature is free with no paid tier. The site is supported by ads and donations." },
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
@@ -183,9 +251,9 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           { q: "Can I edit existing text in a PDF?", a: "Yes. Click any text in the document and edit it directly. Most competitors only let you do this on a paid plan." },
           { q: "Will the layout of my PDF break?", a: "katanapdf preserves the original page as a high-resolution image and overlays your edits on top, so the visual layout stays intact." },
         ].map((f, i) => (
-          <details key={i} style={{ background: "#fff", borderRadius: 10, padding: "12px 18px", marginBottom: 10, border: "1px solid #f1c2cd" }}>
-            <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 15, color: "#3a1f24" }}>{f.q}</summary>
-            <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.55, color: "#3a1f24" }}>{f.a}</p>
+          <details key={i} style={{ background: PARCHMENT_2, padding: "14px 22px", marginBottom: 10, border: `1px solid rgba(139,26,26,0.25)` }}>
+            <summary style={{ cursor: "pointer", fontFamily: CINZEL, fontWeight: 600, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", color: INK }}>{f.q}</summary>
+            <p style={{ margin: "10px 0 0", fontFamily: FELL, fontSize: 15, lineHeight: 1.55, color: INK }}>{f.a}</p>
           </details>
         ))}
       </section>
@@ -196,14 +264,18 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 }
 
 function Footer() {
+  const linkStyle = { color: GOLD, fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", margin: "0 14px", textDecoration: "none", fontWeight: 500 };
   return (
-    <footer style={{ borderTop: "1px solid #f1c2cd", background: "#ffd1dd", padding: "20px", textAlign: "center", fontSize: 13, color: "#5b2932" }}>
-      <div style={{ marginBottom: 8 }}>
-        <a href="#about" style={{ color: "#5b2932", margin: "0 10px", textDecoration: "underline" }}>About</a>
-        <a href="#privacy" style={{ color: "#5b2932", margin: "0 10px", textDecoration: "underline" }}>Privacy Policy</a>
-        <a href="#terms" style={{ color: "#5b2932", margin: "0 10px", textDecoration: "underline" }}>Terms</a>
+    <footer style={{ background: INK, padding: "26px 20px", textAlign: "center", borderTop: `1px solid rgba(196,150,58,0.3)` }}>
+      <div style={{ height: 0.5, background: "rgba(196,150,58,0.5)", maxWidth: 600, margin: "0 auto 16px" }} />
+      <div style={{ marginBottom: 14 }}>
+        <a href="#about" style={linkStyle}>About</a>
+        <a href="#privacy" style={linkStyle}>Privacy Policy</a>
+        <a href="#terms" style={linkStyle}>Terms</a>
       </div>
-      <div>© {new Date().getFullYear()} katanapdf — Free PDF editor in your browser.</div>
+      <div style={{ color: GOLD, fontFamily: CINZEL, fontSize: 10, letterSpacing: 2, opacity: 0.7 }}>
+        © {new Date().getFullYear()} katanapdf — Free PDF editor in your browser.
+      </div>
     </footer>
   );
 }
@@ -263,20 +335,33 @@ function StaticPage({ route }) {
   if (!content) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#ffe4ec", color: "#1a1a1a" }}>
-      <header style={{ padding: "20px", textAlign: "center", borderBottom: "1px solid #f1c2cd" }}>
+    <div style={{ minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, color: INK, fontFamily: FELL }}>
+      <header style={{ background: INK, padding: "22px 20px", textAlign: "center" }}>
+        <div style={{ height: 0.5, background: GOLD, maxWidth: 920, margin: "0 auto 14px" }} />
         <a href="#home" style={{ textDecoration: "none" }}>
-          <span style={{ fontWeight: 900, fontSize: 22, color: "#1a1a1a", fontFamily: "Georgia, serif", letterSpacing: -0.5 }}>
-            katana<span style={{ color: "#e63946" }}>pdf</span>
+          <span style={{ fontFamily: CINZEL, fontSize: 18, color: PARCHMENT, letterSpacing: 5, textTransform: "uppercase", fontWeight: 600 }}>
+            katanapdf
           </span>
         </a>
+        <div style={{ height: 0.5, background: GOLD, maxWidth: 920, margin: "14px auto 0" }} />
       </header>
-      <article style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 64px", fontSize: 15, lineHeight: 1.7, color: "#3a1f24" }}>
-        <h1 style={{ fontSize: 32, fontWeight: 800, marginTop: 0, color: "#1a1a1a" }}>{content.title}</h1>
-        {content.body}
-        <p style={{ marginTop: 32 }}><a href="#home" style={{ color: "#e63946", fontWeight: 700, textDecoration: "underline" }}>← Back to editor</a></p>
+      <article style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 64px", fontSize: 16, lineHeight: 1.75, fontFamily: FELL, color: INK }}>
+        <h1 style={{ fontFamily: CINZEL, fontSize: 30, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase", marginTop: 0, marginBottom: 8, color: INK }}>{content.title}</h1>
+        <div style={{ height: 1, background: GOLD, width: 80, marginBottom: 28 }} />
+        <div className="static-body">{content.body}</div>
+        <p style={{ marginTop: 40 }}>
+          <a href="#home" style={{ color: LACQUER, fontFamily: CINZEL, fontSize: 12, letterSpacing: 3, textTransform: "uppercase", textDecoration: "underline", fontWeight: 600 }}>
+            ← Back to editor
+          </a>
+        </p>
       </article>
       <Footer />
+      <style>{`
+        .static-body h2 { font-family: ${CINZEL}; font-size: 16px; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; color: ${LACQUER}; margin: 28px 0 10px; }
+        .static-body p { margin: 0 0 14px; }
+        .static-body a { color: ${LACQUER}; text-decoration: underline; }
+        .static-body em { color: rgba(26,18,8,0.6); }
+      `}</style>
     </div>
   );
 }
@@ -1164,7 +1249,7 @@ export default function App() {
   const isNoFile = pages.length === 0;
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#ffe4ec", userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
+    <div style={{ fontFamily: FELL, minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
       {route !== "home" ? (
         <StaticPage route={route} />
       ) : isNoFile ? (
@@ -1175,11 +1260,11 @@ export default function App() {
         />
       ) : (
         <>
-          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: "#ffd1dd", borderBottom: "1px solid #f1c2cd", position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
+          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
             <a href="#home" style={{ textDecoration: "none" }}>
-              <span style={{ fontWeight: 900, fontSize: 18, color: "#1a1a1a", fontFamily: "Georgia, serif", letterSpacing: -0.5 }}>katana<span style={{ color: "#e63946" }}>pdf</span></span>
+              <span style={{ fontFamily: CINZEL, fontSize: 14, color: PARCHMENT, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>katanapdf</span>
             </a>
-            <div style={{ width: 1, height: 24, background: "#f1c2cd", margin: "0 4px" }} />
+            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
             <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={tbSelect}>
               <option value="Arial, sans-serif">Arial</option>
               <option value="Times New Roman, serif">Times New Roman</option>
@@ -1191,8 +1276,8 @@ export default function App() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? "#e63946" : "#fff", color: isBold ? "#fff" : "#5b2932" }}>B</button>
-            <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? "#e63946" : "#fff", color: isItalic ? "#fff" : "#5b2932" }}>I</button>
+            <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
+            <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
             <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
             <label style={tbBtn}>Open <input type="file" accept=".pdf" onChange={handleFile} style={{ display: "none" }} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
@@ -1200,10 +1285,10 @@ export default function App() {
             <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={tbIconBtn}>−</button>
             <div style={{ flex: 1 }} />
-            <button onClick={handleDownload} style={{ padding: "8px 20px", background: "#e63946", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>⬇ Download PDF</button>
+            <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
           </div>
 
-          <div onClick={e => e.stopPropagation()} style={{ background: "#ffe4ec", padding: "6px 0", display: "flex", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: PARCHMENT, padding: "6px 0", display: "flex", justifyContent: "center" }}>
             <AdSlot slot="11223344async55" style={{ width: "100%", maxWidth: 728 }} />
           </div>
 
@@ -1214,7 +1299,7 @@ export default function App() {
               return (
                 <div key={pg.num}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
-                    <span style={{ fontSize: 11, color: "#5b2932", letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 }}>Page {pg.num}</span>
+                    <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {pg.num}</span>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }} style={pageBtn}>+ Add text</button>
                       <label style={pageBtn} onClick={e => e.stopPropagation()}>
@@ -1275,7 +1360,7 @@ export default function App() {
   );
 }
 
-const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid #f1c2cd", borderRadius: 6, fontSize: 12, background: "#fff", color: "#5b2932", cursor: "pointer", userSelect: "none", fontFamily: "inherit" };
-const tbIconBtn = { width: 28, height: 28, border: "1px solid #f1c2cd", borderRadius: 5, fontSize: 13, background: "#fff", color: "#5b2932", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", padding: 0 };
-const tbSelect = { padding: "4px 6px", border: "1px solid #f1c2cd", borderRadius: 6, fontSize: 12, background: "#fff", color: "#3a1f24", cursor: "pointer", fontFamily: "inherit" };
-const pageBtn = { padding: "7px 16px", border: "1px solid #f1c2cd", borderRadius: 8, fontSize: 13, fontWeight: 700, background: "#fff", color: "#e63946", cursor: "pointer", userSelect: "none" };
+const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 11, background: "transparent", color: GOLD, cursor: "pointer", userSelect: "none", fontFamily: CINZEL, letterSpacing: 2, textTransform: "uppercase" };
+const tbIconBtn = { width: 28, height: 28, border: "1px solid rgba(196,150,58,0.4)", fontSize: 13, background: "transparent", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: CINZEL, padding: 0 };
+const tbSelect = { padding: "4px 8px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 12, background: INK, color: PARCHMENT, cursor: "pointer", fontFamily: CINZEL, letterSpacing: 1 };
+const pageBtn = { padding: "7px 16px", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, background: "transparent", color: LACQUER, cursor: "pointer", userSelect: "none" };
