@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -11,33 +11,41 @@ const SCALE = 2;
 
 function KatanaLogo({ size = 36 }) {
   return (
-    <svg width={size * 6} height={size * 1.6} viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* ── KATANA (top) centerline y=22 ── */}
-      {/* Tsuka (grip) */}
-      <rect x="4" y="16" width="64" height="12" rx="6" fill="#8a8a8a"/>
-      {/* Ito wrapping — diagonal lines */}
-      {[10,17,24,31,38,45,52,59].map((x, i) => (
-        <line key={i} x1={x} y1="16" x2={x + 5} y2="28" stroke="#444" strokeWidth="1.4" opacity="0.75"/>
+    <svg width={size * 6} height={size * 1.8} viewBox="0 0 300 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* ── KATANA (top) ── */}
+      {/* Tsuka (grip) — wrapped handle */}
+      <rect x="4" y="14" width="66" height="14" rx="7" fill="#7a7a7a"/>
+      {/* Ito wrapping — cross-diamond pattern */}
+      {[11,18,25,32,39,46,53,60].map((x, i) => (
+        <line key={i} x1={x} y1="14" x2={x + 6} y2="28" stroke="#3a3a3a" strokeWidth="1.6" opacity="0.8"/>
       ))}
-      {/* Tsuba (guard) — oval */}
-      <ellipse cx="73" cy="22" rx="5" ry="15" fill="#b5b5b5"/>
-      <ellipse cx="73" cy="22" rx="3" ry="10" fill="#9a9a9a"/>
-      {/* Nagasa (blade) — long taper to kissaki */}
-      <path d="M78 19 L288 22 L78 25 Z" fill="#dcdcdc"/>
-      {/* Edge highlight */}
-      <path d="M78 19.5 L272 22 L78 21 Z" fill="rgba(255,255,255,0.5)"/>
+      {/* Habaki (blade collar) */}
+      <rect x="70" y="16" width="6" height="10" rx="1" fill="#c0c0c0"/>
+      {/* Tsuba (guard) — round with detail */}
+      <ellipse cx="80" cy="21" rx="6" ry="16" fill="#b0b0b0"/>
+      <ellipse cx="80" cy="21" rx="4" ry="12" fill="#959595"/>
+      <ellipse cx="80" cy="21" rx="2" ry="7" fill="#808080"/>
+      {/* Nagasa (blade) — curved, characteristic katana sori */}
+      <path d="M86 17 Q160 12 292 21 L86 25 Z" fill="#d8d8d8"/>
+      {/* Ha (edge) highlight */}
+      <path d="M86 17.5 Q160 12.5 285 21 L86 19 Z" fill="rgba(255,255,255,0.55)"/>
+      {/* Mune (spine) dark line */}
+      <path d="M86 24.5 Q160 20 288 21.5" stroke="#aaa" strokeWidth="0.5" fill="none"/>
 
-      {/* ── SAYA (scabbard) centerline y=58 ── */}
-      {/* Main body */}
-      <rect x="4" y="52" width="192" height="12" rx="6" fill="#5a5a5a"/>
-      {/* Kurikata (cord knob) */}
-      <rect x="52" y="50" width="10" height="16" rx="3.5" fill="#404040"/>
-      <rect x="54" y="52" width="6" height="12" rx="2" fill="#363636"/>
-      {/* Koiguchi (mouth — open right end) */}
-      <rect x="190" y="53" width="8" height="10" rx="2" fill="#6e6e6e"/>
+      {/* ── SAYA (scabbard) ── */}
+      {/* Main body — slightly curved like the blade */}
+      <path d="M6 58 Q150 54 200 63 L200 69 Q150 60 6 64 Z" fill="#505050"/>
+      {/* Lacquer sheen */}
+      <path d="M12 59 Q150 55 198 64" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" fill="none"/>
       {/* Kojiri (metal end cap — left) */}
-      <ellipse cx="6" cy="58" rx="6" ry="8" fill="#6e6e6e"/>
-      <ellipse cx="6" cy="58" rx="4" ry="6" fill="#7a7a7a"/>
+      <ellipse cx="7" cy="61" rx="7" ry="9" fill="#6e6e6e"/>
+      <ellipse cx="7" cy="61" rx="5" ry="7" fill="#7c7c7c"/>
+      {/* Kurikata (cord knob) */}
+      <rect x="55" y="55" width="11" height="18" rx="4" fill="#383838"/>
+      <rect x="57" y="57" width="7" height="14" rx="3" fill="#2e2e2e"/>
+      {/* Koiguchi (mouth — open right end) */}
+      <rect x="196" y="57" width="9" height="12" rx="2" fill="#686868"/>
+      <rect x="197" y="59" width="5" height="8" rx="1" fill="#747474"/>
     </svg>
   );
 }
@@ -396,7 +404,7 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
 const FB_SIZES = [6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120];
 
 function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
-  const stopAll = e => { e.stopPropagation(); e.preventDefault && e.preventDefault(); };
+  const stopAll = e => e.stopPropagation();
   return (
     <div onClick={e => { e.stopPropagation(); onSelect(); }} style={{
       position: "absolute", left: fb.x, top: fb.y, minWidth: 140,
@@ -695,89 +703,65 @@ export default function App() {
     };
   }, [onMouseMove, onMouseUp]);
 
-  function handleDownload() {
-    if (!pages.length) {
-      alert("No PDF loaded.");
-      return;
+  async function handleDownload() {
+    if (!pages.length) { alert("No PDF loaded."); return; }
+    try {
+      const doc = await PDFDocument.create();
+      for (const pg of pages) {
+        const canvas = canvasRefs.current[pg.num];
+        if (!canvas) continue;
+        canvas.width = pg.width;
+        canvas.height = pg.height;
+        const ctx = canvas.getContext("2d");
+
+        await new Promise(resolve => {
+          const img = new Image();
+          img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
+          img.src = pg.dataUrl;
+        });
+
+        const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
+        for (const e of edits) {
+          const lines = e.text.split(/\r?\n/);
+          const lh = e.fontSize * 1.22;
+          ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
+          ctx.fillStyle = "#fff";
+          let maxW = e.width;
+          for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
+          ctx.fillRect(e.x - 2, e.y - 2, maxW + 14, lines.length * lh + 16);
+          ctx.fillStyle = "#000";
+          ctx.textBaseline = "alphabetic";
+          lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines?.[i] ?? e.baselineY + i * lh));
+        }
+
+        for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
+          const lines = fb.text.split(/\r?\n/);
+          ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
+          ctx.fillStyle = fb.color || "#000";
+          ctx.textBaseline = "top";
+          lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
+        }
+
+        const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
+        const pngImg = await doc.embedPng(pngBytes);
+        const pdfPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
+        pdfPage.drawImage(pngImg, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+      }
+
+      const bytes = await doc.save();
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = (fileName || "document").replace(/\.pdf$/i, "") + "_edited.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download error:", err);
+      alert("Download failed: " + err.message);
     }
-
-    for (const pg of pages) {
-      const canvas = canvasRefs.current[pg.num];
-      if (!canvas) continue;
-      canvas.width = pg.width;
-      canvas.height = pg.height;
-      const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
-      redrawPage(canvas, pg.dataUrl, edits);
-    }
-
-    setTimeout(() => {
-      PDFDocument.load(pdfBytes).then(doc => {
-        const processPages = (pageIndex) => {
-          if (pageIndex >= pages.length) {
-            doc.save().then(pdfBytesData => {
-              const blob = new Blob([pdfBytesData], { type: "application/pdf" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = (fileName || "document").replace(/\.pdf$/i, "") + "_edited.pdf";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-            });
-            return;
-          }
-
-          const pageData = pages[pageIndex];
-          const pageNum = pageIndex + 1;
-          const pdfPage = doc.getPage(pageIndex);
-          const pageHeight = pdfPage.getHeight();
-
-          StandardFonts.Helvetica;
-          doc.embedFont(StandardFonts.Helvetica).then(helvetica => {
-            const edits = (textBlocks[pageNum] || []).filter(w => w.edited);
-            for (const edit of edits) {
-              const lines = edit.text.split(/\r?\n/);
-              lines.forEach((line, lineIdx) => {
-                pdfPage.drawText(line, {
-                  x: edit.x / SCALE,
-                  y: pageHeight - ((edit.baselineY + lineIdx * edit.fontSize * 1.22) / SCALE),
-                  size: edit.fontSize / SCALE,
-                  font: helvetica,
-                  color: rgb(0, 0, 0),
-                });
-              });
-            }
-
-            const floats = floatingBoxes.filter(fb => fb.page === pageNum);
-            for (const fb of floats) {
-              const lines = fb.text.split(/\r?\n/);
-              lines.forEach((line, lineIdx) => {
-                const colorVal = fb.color || "#000000";
-                const r = parseInt(colorVal.slice(1, 3), 16) / 255;
-                const g = parseInt(colorVal.slice(3, 5), 16) / 255;
-                const b = parseInt(colorVal.slice(5, 7), 16) / 255;
-
-                pdfPage.drawText(line, {
-                  x: fb.x / SCALE,
-                  y: pageHeight - ((fb.y + lineIdx * fb.fontSize * 1.22) / SCALE),
-                  size: fb.fontSize / SCALE,
-                  font: helvetica,
-                  color: rgb(r, g, b),
-                });
-              });
-            }
-
-            processPages(pageIndex + 1);
-          });
-        };
-
-        processPages(0);
-      }).catch(err => {
-        console.error("PDF load error:", err);
-        alert("Download failed: " + err.message);
-      });
-    }, 500);
   }
 
   const isNoFile = pages.length === 0;
