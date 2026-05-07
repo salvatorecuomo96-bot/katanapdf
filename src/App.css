@@ -111,9 +111,9 @@
   gap: 8px;
   margin: 32px 0 0;
 
-  .logo {
-  height: 140px;
+.logo {
   width: 140px;
+  height: auto;
   display: block;
   flex-shrink: 0;
 }
