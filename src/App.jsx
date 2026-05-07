@@ -1175,9 +1175,11 @@ export default function App() {
         />
       ) : (
         <>
-          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: "#111", borderBottom: "1px solid #222", position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
-            <span style={{ fontWeight: 900, fontSize: 18, color: "#fff", fontFamily: "Georgia, serif", letterSpacing: -0.5 }}>katana<span style={{ color: "#e63946" }}>pdf</span></span>
-            <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
+          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: "#ffd1dd", borderBottom: "1px solid #f1c2cd", position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
+            <a href="#home" style={{ textDecoration: "none" }}>
+              <span style={{ fontWeight: 900, fontSize: 18, color: "#1a1a1a", fontFamily: "Georgia, serif", letterSpacing: -0.5 }}>katana<span style={{ color: "#e63946" }}>pdf</span></span>
+            </a>
+            <div style={{ width: 1, height: 24, background: "#f1c2cd", margin: "0 4px" }} />
             <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={tbSelect}>
               <option value="Arial, sans-serif">Arial</option>
               <option value="Times New Roman, serif">Times New Roman</option>
@@ -1189,8 +1191,8 @@ export default function App() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? "#e63946" : "#1a1a1a", color: isBold ? "#fff" : "#888" }}>B</button>
-            <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? "#e63946" : "#1a1a1a", color: isItalic ? "#fff" : "#888" }}>I</button>
+            <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? "#e63946" : "#fff", color: isBold ? "#fff" : "#5b2932" }}>B</button>
+            <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? "#e63946" : "#fff", color: isItalic ? "#fff" : "#5b2932" }}>I</button>
             <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
             <label style={tbBtn}>Open <input type="file" accept=".pdf" onChange={handleFile} style={{ display: "none" }} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
@@ -1201,7 +1203,7 @@ export default function App() {
             <button onClick={handleDownload} style={{ padding: "8px 20px", background: "#e63946", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>⬇ Download PDF</button>
           </div>
 
-          <div onClick={e => e.stopPropagation()} style={{ background: "#0f0f0f", padding: "6px 0", display: "flex", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#ffe4ec", padding: "6px 0", display: "flex", justifyContent: "center" }}>
             <AdSlot slot="11223344async55" style={{ width: "100%", maxWidth: 728 }} />
           </div>
 
@@ -1212,7 +1214,7 @@ export default function App() {
               return (
                 <div key={pg.num}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
-                    <span style={{ fontSize: 11, color: "#444", letterSpacing: 2, textTransform: "uppercase" }}>Page {pg.num}</span>
+                    <span style={{ fontSize: 11, color: "#5b2932", letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 }}>Page {pg.num}</span>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }} style={pageBtn}>+ Add text</button>
                       <label style={pageBtn} onClick={e => e.stopPropagation()}>
@@ -1273,7 +1275,7 @@ export default function App() {
   );
 }
 
-const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 12, background: "#1a1a1a", color: "#666", cursor: "pointer", userSelect: "none", fontFamily: "inherit" };
-const tbIconBtn = { width: 28, height: 28, border: "1px solid #2a2a2a", borderRadius: 5, fontSize: 13, background: "#1a1a1a", color: "#888", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", padding: 0 };
-const tbSelect = { padding: "4px 6px", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 12, background: "#1a1a1a", color: "#888", cursor: "pointer", fontFamily: "inherit" };
-const pageBtn = { padding: "7px 16px", border: "1px solid #444", borderRadius: 8, fontSize: 13, fontWeight: 700, background: "#1a1a1a", color: "#c9a84c", cursor: "pointer", userSelect: "none" };
+const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid #f1c2cd", borderRadius: 6, fontSize: 12, background: "#fff", color: "#5b2932", cursor: "pointer", userSelect: "none", fontFamily: "inherit" };
+const tbIconBtn = { width: 28, height: 28, border: "1px solid #f1c2cd", borderRadius: 5, fontSize: 13, background: "#fff", color: "#5b2932", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", padding: 0 };
+const tbSelect = { padding: "4px 6px", border: "1px solid #f1c2cd", borderRadius: 6, fontSize: 12, background: "#fff", color: "#3a1f24", cursor: "pointer", fontFamily: "inherit" };
+const pageBtn = { padding: "7px 16px", border: "1px solid #f1c2cd", borderRadius: 8, fontSize: 13, fontWeight: 700, background: "#fff", color: "#e63946", cursor: "pointer", userSelect: "none" };
