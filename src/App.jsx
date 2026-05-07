@@ -10,7 +10,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 const SCALE = 2;
 
 function KatanaLogo({ size = 36 }) {
-  return <img src="/logo.png" alt="katanapdf" style={{ height: size * 1.8, width: "auto", objectFit: "contain" }} />;
+  const [err, setErr] = useState(false);
+  if (err) return <KatanaLogoSVG size={size} />;
+  return <img src="/logo.png" alt="katanapdf" onError={() => setErr(true)} style={{ height: size * 1.8, width: "auto", objectFit: "contain" }} />;
 }
 function KatanaLogoSVG({ size = 36 }) {
   return (
@@ -61,31 +63,43 @@ function KatanaLogoSVG({ size = 36 }) {
   );
 }
 
-function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, onDelete }) {
+function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, onDelete, onDeselect }) {
+  useEffect(() => {
+    if (!isSel) return;
+    const handler = (e) => {
+      if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); onDeselect(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isSel, onDeselect]);
+
   return (
     <div onClick={e => { e.stopPropagation(); onSelect(); }} style={{
       position: "absolute", left: fi.x, top: fi.y,
       width: fi.w, height: fi.h,
       zIndex: isSel ? 100 : 50,
-      border: isSel ? "2px solid #e63946" : "1.5px dashed rgba(230,57,70,0.35)",
-      boxSizing: "border-box", overflow: "hidden",
+      border: isSel ? "2px solid #e63946" : "none",
+      boxSizing: "border-box", overflow: "visible",
       boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.3)" : "none",
+      cursor: isSel ? "default" : "pointer",
     }}>
       <img src={fi.dataUrl} alt="" draggable={false}
         style={{ width: "100%", height: "100%", display: "block", objectFit: "fill", pointerEvents: "none", userSelect: "none" }} />
       {isSel && <>
         <div onMouseDown={onStartDrag} style={{
-          position: "absolute", top: 0, left: 0, right: 0,
-          background: "rgba(230,57,70,0.85)", padding: "3px 8px", fontSize: 10,
+          position: "absolute", top: -28, left: 0, right: 0,
+          background: "#e63946", padding: "4px 8px", fontSize: 10,
           color: "#fff", cursor: "grab", display: "flex", alignItems: "center", userSelect: "none",
+          borderRadius: "4px 4px 0 0",
         }}>
           <span style={{ fontWeight: 700 }}>✥ DRAG</span>
           <span onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); onDelete(); }}
             style={{ marginLeft: "auto", cursor: "pointer", fontWeight: 700 }}>✕</span>
         </div>
         <div onMouseDown={onStartResize} style={{
-          position: "absolute", bottom: 0, right: 0, width: 14, height: 14,
-          background: "#e63946", cursor: "nwse-resize", borderRadius: "4px 0 0 0",
+          position: "absolute", bottom: -8, right: -8, width: 16, height: 16,
+          background: "#e63946", cursor: "nwse-resize", borderRadius: "50%",
+          border: "2px solid #fff",
         }} />
       </>}
     </div>
@@ -960,7 +974,7 @@ export default function App() {
                       </label>
                     </div>
                   </div>
-                  <div data-pgwrap={pg.num} onClick={e => e.stopPropagation()} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden" }}>
+                  <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden" }}>
                     <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: dispW, height: dispH }} />
                     {(textBlocks[pg.num] || []).map(tb => {
                       const isOpen = activePopup?.blockId === tb.id;
@@ -991,6 +1005,7 @@ export default function App() {
                     {floatingImages.filter(fi => fi.page === pg.num).map(fi => (
                       <FloatingImage key={fi.id} fi={fi} isSel={selected === fi.id} zoom={zoom}
                         onSelect={() => setSelected(fi.id)}
+                        onDeselect={() => setSelected(null)}
                         onStartDrag={e => startDragImg(e, fi)}
                         onStartResize={e => startResizeImg(e, fi)}
                         onDelete={() => deleteFloatingImage(fi.id)} />
