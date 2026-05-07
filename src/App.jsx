@@ -1527,6 +1527,7 @@ export default function App() {
                         onSelect={() => setSelected(fb.id)}
                         onStartDrag={e => startDragFloat(e, fb)}
                         onUpdate={u => updateFloatingBox(fb.id, u)}
+                        onCommit={() => setSelected(null)}
                         onDelete={() => deleteFloatingBox(fb.id)} />
                     ))}
                     {floatingImages.filter(fi => fi.page === pg.num).map(fi => (
