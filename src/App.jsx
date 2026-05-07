@@ -10,11 +10,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 const SCALE = 2;
 
 function KatanaLogo({ size = 36 }) {
-  // Homepage (size=44): show logo big. Toolbar (size=26): show small with white removed.
-  const [processedUrl, setProcessedUrl] = useState(null);
+  const [url, setUrl] = useState(null);
 
   useEffect(() => {
-    if (size >= 40) return; // homepage: use raw image, no processing needed on dark bg
     const img = new Image();
     img.onload = () => {
       try {
@@ -31,26 +29,44 @@ function KatanaLogo({ size = 36 }) {
           else if (r > 200 && g > 200 && b > 200) { d[i + 3] = Math.round((255 - Math.min(r, g, b)) * 4); }
         }
         ctx.putImageData(imageData, 0, 0);
-        setProcessedUrl(canvas.toDataURL("image/png"));
-      } catch { setProcessedUrl("/logo.png"); }
+        setUrl(canvas.toDataURL("image/png"));
+      } catch { setUrl("/logo.png"); }
     };
-    img.onerror = () => setProcessedUrl(null);
+    img.onerror = () => setUrl(null);
     img.src = "/logo.png";
-  }, [size]);
+  }, []);
+
+  if (!url) return null;
 
   if (size >= 40) {
-    // Homepage: large logo, raw image on dark background (no white removal needed)
+    // Homepage: big, white removed, golden glow so it reads well on black
     return (
       <img
-        src="/logo.png"
+        src={url}
         alt="katanapdf"
-        style={{ width: "min(480px, 80vw)", height: "auto", objectFit: "contain", display: "block" }}
+        style={{
+          width: "min(520px, 85vw)",
+          height: "auto",
+          objectFit: "contain",
+          display: "block",
+          filter: "drop-shadow(0 0 6px #FFD700) drop-shadow(0 0 14px rgba(255,215,0,0.35))",
+        }}
       />
     );
   }
-  // Toolbar: small, white-removed
-  if (!processedUrl) return null;
-  return <img src={processedUrl} alt="katanapdf" style={{ height: size * 1.5, width: "auto", objectFit: "contain" }} />;
+  // Toolbar: small, white removed, subtle glow
+  return (
+    <img
+      src={url}
+      alt="katanapdf"
+      style={{
+        height: size * 1.5,
+        width: "auto",
+        objectFit: "contain",
+        filter: "drop-shadow(0 0 2px #FFD700)",
+      }}
+    />
+  );
 }
 function KatanaLogoSVG({ size = 36 }) {
   return (
