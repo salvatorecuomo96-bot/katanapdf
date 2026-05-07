@@ -937,8 +937,7 @@ export default function App() {
       ) : (
         <>
           <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: "#111", borderBottom: "1px solid #222", position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
-            <KatanaLogo size={26} />
-            <span style={{ fontWeight: 900, fontSize: 15, color: "#fff", fontFamily: "Georgia, serif" }}>katana<span style={{ color: "#e63946" }}>pdf</span></span>
+            <span style={{ fontWeight: 900, fontSize: 18, color: "#fff", fontFamily: "Georgia, serif", letterSpacing: -0.5 }}>katana<span style={{ color: "#e63946" }}>pdf</span></span>
             <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
             <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={tbSelect}>
               <option value="Arial, sans-serif">Arial</option>
