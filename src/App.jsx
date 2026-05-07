@@ -10,6 +10,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 const SCALE = 2;
 
 function KatanaLogo({ size = 36 }) {
+  return <img src="/logo.png" alt="katanapdf" style={{ height: size * 1.8, width: "auto", objectFit: "contain" }} />;
+}
+function KatanaLogoSVG({ size = 36 }) {
   return (
     <svg width={size * 6} height={size * 1.8} viewBox="0 0 300 90" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* ── KATANA — tip LEFT, handle RIGHT ── */}
@@ -55,6 +58,37 @@ function KatanaLogo({ size = 36 }) {
       ))}
       <ellipse cx="295" cy="64" rx="4" ry="9" fill="#5e5e5e"/>
     </svg>
+  );
+}
+
+function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, onDelete }) {
+  return (
+    <div onClick={e => { e.stopPropagation(); onSelect(); }} style={{
+      position: "absolute", left: fi.x, top: fi.y,
+      width: fi.w, height: fi.h,
+      zIndex: isSel ? 100 : 50,
+      border: isSel ? "2px solid #e63946" : "1.5px dashed rgba(230,57,70,0.35)",
+      boxSizing: "border-box", overflow: "hidden",
+      boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.3)" : "none",
+    }}>
+      <img src={fi.dataUrl} alt="" draggable={false}
+        style={{ width: "100%", height: "100%", display: "block", objectFit: "fill", pointerEvents: "none", userSelect: "none" }} />
+      {isSel && <>
+        <div onMouseDown={onStartDrag} style={{
+          position: "absolute", top: 0, left: 0, right: 0,
+          background: "rgba(230,57,70,0.85)", padding: "3px 8px", fontSize: 10,
+          color: "#fff", cursor: "grab", display: "flex", alignItems: "center", userSelect: "none",
+        }}>
+          <span style={{ fontWeight: 700 }}>✥ DRAG</span>
+          <span onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); onDelete(); }}
+            style={{ marginLeft: "auto", cursor: "pointer", fontWeight: 700 }}>✕</span>
+        </div>
+        <div onMouseDown={onStartResize} style={{
+          position: "absolute", bottom: 0, right: 0, width: 14, height: 14,
+          background: "#e63946", cursor: "nwse-resize", borderRadius: "4px 0 0 0",
+        }} />
+      </>}
+    </div>
   );
 }
 
@@ -491,17 +525,22 @@ export default function App() {
   const [pages, setPages] = useState([]);
   const [textBlocks, setTextBlocks] = useState({});
   const [floatingBoxes, setFloatingBoxes] = useState([]);
+  const [floatingImages, setFloatingImages] = useState([]);
   const [history, setHistory] = useState([]);
   const [activePopup, setActivePopup] = useState(null);
   const [selected, setSelected] = useState(null);
   const [fileName, setFileName] = useState("");
   const [dragging, setDragging] = useState(null);
+  const [draggingImg, setDraggingImg] = useState(null);
+  const [resizingImg, setResizingImg] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
   const [fontSize, setFontSize] = useState(14);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
+  const imgDragOrigin = useRef(null);
+  const imgResizeOrigin = useRef(null);
   const containerRef = useRef(null);
   const canvasRefs = useRef({});
 
@@ -574,6 +613,7 @@ export default function App() {
     setPages(pageData);
     setTextBlocks(words);
     setFloatingBoxes([]);
+    setFloatingImages([]);
     setHistory([]);
     setActivePopup(null);
     setSelected(null);
@@ -595,6 +635,7 @@ export default function App() {
     setHistory(prev => [...prev.slice(-29), {
       textBlocks: JSON.parse(JSON.stringify(textBlocks)),
       floatingBoxes: JSON.parse(JSON.stringify(floatingBoxes)),
+      floatingImages: JSON.parse(JSON.stringify(floatingImages)),
     }]);
   }
 
@@ -603,6 +644,7 @@ export default function App() {
     const snap = history[history.length - 1];
     setTextBlocks(snap.textBlocks);
     setFloatingBoxes(snap.floatingBoxes);
+    setFloatingImages(snap.floatingImages || []);
     setHistory(h => h.slice(0, -1));
     setActivePopup(null);
     setSelected(null);
@@ -676,6 +718,43 @@ export default function App() {
     setFloatingBoxes(prev => prev.filter(fb => fb.id !== id));
   }
 
+  function handleAddImage(e, pageNum) {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = ev => {
+      saveHistory();
+      floatingIdCounter++;
+      setFloatingImages(prev => [...prev, {
+        id: `img-${floatingIdCounter}`, page: pageNum,
+        x: 60, y: 60, w: 200, h: 150,
+        dataUrl: ev.target.result,
+      }]);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function deleteFloatingImage(id) {
+    saveHistory();
+    setFloatingImages(prev => prev.filter(fi => fi.id !== id));
+  }
+
+  function startDragImg(e, fi) {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelected(fi.id);
+    imgDragOrigin.current = { mx: e.clientX, my: e.clientY, x: fi.x, y: fi.y };
+    setDraggingImg({ id: fi.id });
+  }
+
+  function startResizeImg(e, fi) {
+    e.preventDefault();
+    e.stopPropagation();
+    imgResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: fi.w, h: fi.h };
+    setResizingImg({ id: fi.id });
+  }
+
   function startDragFloat(e, fb) {
     e.preventDefault();
     e.stopPropagation();
@@ -686,21 +765,42 @@ export default function App() {
   }
 
   const onMouseMove = useCallback((e) => {
-    if (!dragging) return;
-    let pageEl = null;
-    containerRef.current?.querySelectorAll("[data-pgwrap]").forEach(el => {
-      const r = el.getBoundingClientRect();
-      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) pageEl = el;
-    });
-    if (!pageEl) return;
-    const r = pageEl.getBoundingClientRect();
-    setFloatingBoxes(prev => prev.map(fb => fb.id === dragging.id
-      ? { ...fb, x: Math.max(0, e.clientX - r.left - dragOffset.current.x), y: Math.max(0, e.clientY - r.top - dragOffset.current.y) }
-      : fb
-    ));
-  }, [dragging]);
+    if (dragging) {
+      let pageEl = null;
+      containerRef.current?.querySelectorAll("[data-pgwrap]").forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) pageEl = el;
+      });
+      if (!pageEl) return;
+      const r = pageEl.getBoundingClientRect();
+      setFloatingBoxes(prev => prev.map(fb => fb.id === dragging.id
+        ? { ...fb, x: Math.max(0, e.clientX - r.left - dragOffset.current.x), y: Math.max(0, e.clientY - r.top - dragOffset.current.y) }
+        : fb
+      ));
+    }
+    if (draggingImg) {
+      const o = imgDragOrigin.current;
+      if (!o) return;
+      setFloatingImages(prev => prev.map(fi => fi.id === draggingImg.id
+        ? { ...fi, x: Math.max(0, o.x + e.clientX - o.mx), y: Math.max(0, o.y + e.clientY - o.my) }
+        : fi
+      ));
+    }
+    if (resizingImg) {
+      const o = imgResizeOrigin.current;
+      if (!o) return;
+      setFloatingImages(prev => prev.map(fi => fi.id === resizingImg.id
+        ? { ...fi, w: Math.max(40, o.w + e.clientX - o.mx), h: Math.max(40, o.h + e.clientY - o.my) }
+        : fi
+      ));
+    }
+  }, [dragging, draggingImg, resizingImg]);
 
-  const onMouseUp = useCallback(() => setDragging(null), []);
+  const onMouseUp = useCallback(() => {
+    setDragging(null);
+    setDraggingImg(null);
+    setResizingImg(null);
+  }, []);
 
   useEffect(() => {
     window.addEventListener("mousemove", onMouseMove);
@@ -761,6 +861,14 @@ export default function App() {
           ctx.fillStyle = fb.color || "#000";
           ctx.textBaseline = "top";
           lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
+        }
+
+        for (const fi of floatingImages.filter(f => f.page === pg.num)) {
+          await new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); };
+            img.src = fi.dataUrl;
+          });
         }
 
         const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
@@ -844,7 +952,13 @@ export default function App() {
                 <div key={pg.num}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
                     <span style={{ fontSize: 11, color: "#444", letterSpacing: 2, textTransform: "uppercase" }}>Page {pg.num}</span>
-                    <button onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }} style={pageBtn}>+ Add text</button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }} style={pageBtn}>+ Add text</button>
+                      <label style={pageBtn} onClick={e => e.stopPropagation()}>
+                        + Add image
+                        <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={{ display: "none" }} />
+                      </label>
+                    </div>
                   </div>
                   <div data-pgwrap={pg.num} onClick={e => e.stopPropagation()} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden" }}>
                     <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: dispW, height: dispH }} />
@@ -873,6 +987,13 @@ export default function App() {
                         onStartDrag={e => startDragFloat(e, fb)}
                         onUpdate={u => updateFloatingBox(fb.id, u)}
                         onDelete={() => deleteFloatingBox(fb.id)} />
+                    ))}
+                    {floatingImages.filter(fi => fi.page === pg.num).map(fi => (
+                      <FloatingImage key={fi.id} fi={fi} isSel={selected === fi.id} zoom={zoom}
+                        onSelect={() => setSelected(fi.id)}
+                        onStartDrag={e => startDragImg(e, fi)}
+                        onStartResize={e => startResizeImg(e, fi)}
+                        onDelete={() => deleteFloatingImage(fi.id)} />
                     ))}
                   </div>
                   {pgIdx % 2 === 1 && (
