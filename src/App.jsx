@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import * as pdfjsLib from "pdfjs-dist";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
+// Legacy build is transpiled for older Safari / iOS — improves cross-device compatibility
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
+  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
   import.meta.url
 ).href;
 
@@ -174,7 +175,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             border: `1px solid ${GOLD}`, outline: `1px solid ${LACQUER}`, outlineOffset: 4,
           }}>
             Open PDF
-            <input type="file" accept=".pdf" onChange={onFile} style={{ display: "none" }} />
+            <input type="file" accept="application/pdf,.pdf" onChange={onFile} style={hiddenFileInput} />
           </label>
           <button onClick={onCreateBlank} style={{
             background: "transparent", border: "none", color: LACQUER, fontFamily: CINZEL, fontSize: 11,
@@ -762,15 +763,56 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
 
 const FB_SIZES = [6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120];
 
-function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
+function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onCommit }) {
   const stopAll = e => e.stopPropagation();
+  const taRef = useRef(null);
+
+  // When this box becomes selected, focus the textarea
+  useEffect(() => {
+    if (isSel && taRef.current) {
+      taRef.current.focus();
+      // If the text is the placeholder, select all so the user can type to replace
+      if (fb.text === "New text") taRef.current.select();
+    }
+  }, [isSel]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tab / Esc to commit (deselect)
+  const handleKeyDown = (e) => {
+    if (e.key === "Tab" || e.key === "Escape") {
+      e.preventDefault();
+      onCommit();
+    }
+  };
+
+  // Not selected — render text as a clean overlay (no toolbar, no border, no background)
+  if (!isSel) {
+    return (
+      <div onClick={e => { e.stopPropagation(); onSelect(); }}
+        style={{
+          position: "absolute", left: fb.x, top: fb.y,
+          minWidth: 20, zIndex: 50, cursor: "pointer",
+          padding: "2px 4px",
+          fontSize: fb.fontSize, fontFamily: fb.fontFamily,
+          fontWeight: fb.isBold ? "bold" : "normal",
+          fontStyle: fb.isItalic ? "italic" : "normal",
+          color: fb.color || "#000",
+          lineHeight: 1.5,
+          whiteSpace: "pre-wrap",
+          background: "transparent",
+        }}>
+        {fb.text || " "}
+      </div>
+    );
+  }
+
+  // Selected — full editor UI
   return (
-    <div onClick={e => { e.stopPropagation(); onSelect(); }} style={{
+    <div onClick={e => { e.stopPropagation(); }} style={{
       position: "absolute", left: fb.x, top: fb.y, minWidth: 140,
-      zIndex: isSel ? 100 : 50,
-      border: isSel ? "2px solid #e63946" : "1.5px dashed rgba(230,57,70,0.4)",
+      zIndex: 100,
+      border: "2px solid #e63946",
       borderRadius: 4, background: "rgba(255,255,255,0.97)",
-      boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.25)" : "0 2px 8px rgba(0,0,0,0.1)",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
       boxSizing: "border-box",
     }}>
       {/* Toolbar */}
@@ -781,7 +823,6 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
       }}>
         <span style={{ fontWeight: 700, marginRight: 2, cursor: "grab" }}>✥</span>
 
-        {/* Font size */}
         <select value={FB_SIZES.includes(fb.fontSize) ? fb.fontSize : 14}
           onChange={e => onUpdate({ fontSize: +e.target.value })}
           onMouseDown={stopAll} onClick={e => e.stopPropagation()}
@@ -789,20 +830,16 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
           {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
 
-        {/* Bold */}
         <span onMouseDown={stopAll} onClick={e => { e.stopPropagation(); onUpdate({ isBold: !fb.isBold }); }}
           style={{ cursor: "pointer", fontWeight: 900, opacity: fb.isBold ? 1 : 0.4 }}>B</span>
 
-        {/* Italic */}
         <span onMouseDown={stopAll} onClick={e => { e.stopPropagation(); onUpdate({ isItalic: !fb.isItalic }); }}
           style={{ cursor: "pointer", fontStyle: "italic", opacity: fb.isItalic ? 1 : 0.4 }}>I</span>
 
-        {/* Color */}
         <input type="color" value={fb.color || "#000000"} onChange={e => onUpdate({ color: e.target.value })}
           onMouseDown={stopAll}
           style={{ width: 16, height: 16, border: "none", padding: 0, background: "none", cursor: "pointer", flexShrink: 0 }} />
 
-        {/* Font family */}
         <select value={fb.fontFamily}
           onChange={e => onUpdate({ fontFamily: e.target.value })}
           onMouseDown={stopAll} onClick={e => e.stopPropagation()}
@@ -813,16 +850,15 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
           <option value="Georgia, serif">Georgia</option>
         </select>
 
-        {/* Delete */}
         <span onMouseDown={stopAll} onClick={e => { e.stopPropagation(); onDelete(); }}
           style={{ marginLeft: "auto", cursor: "pointer", fontWeight: 700 }}>✕</span>
       </div>
 
-      {/* Textarea — fully controlled by parent state */}
-      <textarea value={fb.text}
+      <textarea ref={taRef} value={fb.text}
         onChange={e => onUpdate({ text: e.target.value })}
         onMouseDown={e => e.stopPropagation()}
         onClick={e => e.stopPropagation()}
+        onKeyDown={handleKeyDown}
         rows={2}
         style={{
           display: "block", width: "100%", minWidth: 120, border: "none",
@@ -833,6 +869,9 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete }) {
           color: fb.color || "#000", lineHeight: 1.5, cursor: "text",
           boxSizing: "border-box",
         }} />
+      <div style={{ fontSize: 10, color: "#999", padding: "2px 8px 4px", fontFamily: "sans-serif", borderTop: "1px solid #eee" }}>
+        Tab to save · Esc to cancel
+      </div>
     </div>
   );
 }
@@ -876,9 +915,17 @@ export default function App() {
   const canvasRefs = useRef({});
 
   async function handleFile(e) {
-    const file = e.target.files[0];
+    const input = e.target;
+    const file = input.files && input.files[0];
+    // Reset value so the same file can be picked again later
+    input.value = "";
     if (!file) return;
-    await loadPdfFromFile(file);
+    try {
+      await loadPdfFromFile(file);
+    } catch (err) {
+      console.error("Failed to load PDF:", err);
+      alert("Couldn't open this PDF: " + (err.message || err) + "\n\nTry a different file or refresh the page.");
+    }
   }
 
   async function loadPdfFromFile(file) {
@@ -1053,12 +1100,14 @@ export default function App() {
   function addFloatingBox(pageNum) {
     saveHistory();
     floatingIdCounter++;
+    const id = `float-${floatingIdCounter}`;
     setFloatingBoxes(prev => [...prev, {
-      id: `float-${floatingIdCounter}`, page: pageNum,
+      id, page: pageNum,
       x: 80, y: 80, text: "New text",
       fontSize: 14, fontFamily: "Arial, sans-serif",
       isBold: false, isItalic: false, color: "#000000",
     }]);
+    setSelected(id); // auto-select so the textarea focuses immediately
   }
 
   function updateFloatingBox(id, updates) {
@@ -1423,7 +1472,7 @@ export default function App() {
             <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
             <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
-            <label style={tbBtn}>Open <input type="file" accept=".pdf" onChange={handleFile} style={{ display: "none" }} /></label>
+            <label style={tbBtn}>Open <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
             <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
             <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
@@ -1448,7 +1497,7 @@ export default function App() {
                       <button onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }} style={pageBtn}>+ Add text</button>
                       <label style={pageBtn} onClick={e => e.stopPropagation()}>
                         + Add image
-                        <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={{ display: "none" }} />
+                        <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
                       </label>
                     </div>
                   </div>
@@ -1504,6 +1553,8 @@ export default function App() {
   );
 }
 
+// iOS-friendly hidden file input — display:none breaks file picker on some iOS Safari versions
+const hiddenFileInput = { position: "absolute", width: 0.1, height: 0.1, opacity: 0, overflow: "hidden", pointerEvents: "none" };
 const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 11, background: "transparent", color: GOLD, cursor: "pointer", userSelect: "none", fontFamily: CINZEL, letterSpacing: 2, textTransform: "uppercase" };
 const tbIconBtn = { width: 28, height: 28, border: "1px solid rgba(196,150,58,0.4)", fontSize: 13, background: "transparent", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: CINZEL, padding: 0 };
 const tbSelect = { padding: "4px 8px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 12, background: INK, color: PARCHMENT, cursor: "pointer", fontFamily: CINZEL, letterSpacing: 1 };
