@@ -36,7 +36,7 @@ function KatanaLogo({ size = 36 }) {
           if (visited[pi]) continue;
           visited[pi] = 1;
           const i = pi * 4;
-          if (d[i] < 190 || d[i+1] < 190 || d[i+2] < 190 || d[i+3] === 0) continue;
+          if (d[i] < 200 || d[i+1] < 200 || d[i+2] < 200 || d[i+3] === 0) continue;
           d[i+3] = 0; // erase background pixel
           const x = pi % w, y = (pi / w) | 0;
           if (x > 0)     stack.push(pi - 1);
@@ -45,18 +45,35 @@ function KatanaLogo({ size = 36 }) {
           if (y < h - 1) stack.push(pi + w);
         }
 
-        // Second pass: soften any remaining near-white fringe pixels
+        // Second pass: nuke any remaining near-white fringe pixels
         for (let i = 0; i < d.length; i += 4) {
           if (d[i+3] === 0) continue;
           const r = d[i], g = d[i+1], b = d[i+2];
-          if (r > 220 && g > 220 && b > 220) d[i+3] = 0;
-          else if (r > 190 && g > 190 && b > 190) {
-            d[i+3] = Math.round(d[i+3] * (1 - (Math.min(r,g,b) - 190) / 80));
+          if (r > 210 && g > 210 && b > 210) d[i+3] = 0;
+          else if (r > 170 && g > 170 && b > 170) {
+            d[i+3] = Math.round(d[i+3] * (1 - (Math.min(r,g,b) - 170) / 80));
           }
         }
 
         ctx.putImageData(imageData, 0, 0);
-        setUrl(canvas.toDataURL("image/png"));
+
+        // Crop canvas to bounding box of non-transparent pixels (removes dead space)
+        let minX = w, maxX = 0, minY = h, maxY = 0;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (d[(y * w + x) * 4 + 3] > 10) {
+              if (x < minX) minX = x; if (x > maxX) maxX = x;
+              if (y < minY) minY = y; if (y > maxY) maxY = y;
+            }
+          }
+        }
+        const pad = 6;
+        const cropW = Math.min(maxX - minX + pad * 2, w);
+        const cropH = Math.min(maxY - minY + pad * 2, h);
+        const cropped = document.createElement("canvas");
+        cropped.width = cropW; cropped.height = cropH;
+        cropped.getContext("2d").drawImage(canvas, minX - pad, minY - pad, cropW, cropH, 0, 0, cropW, cropH);
+        setUrl(cropped.toDataURL("image/png"));
       } catch { setUrl("/logo.png"); }
     };
     img.onerror = () => setUrl(null);
