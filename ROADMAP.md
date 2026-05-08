@@ -24,10 +24,6 @@ Update this table at the end of every session so any device can see where we are
 | 14 | Mobile-friendly pass (whole site) | Pending | — | [14](phases/14-mobile-friendly.md) |
 | 15 | Pre-launch QA + ship | Pending | — | [15](phases/15-prelaunch-qa.md) |
 
-## Pinned bugs (fix before next phase)
-
-- **EditPopup transparent bg shows the original text underneath.** Introduced in `f2c8554` while making the popup transparent. The popup textarea sits over the same text block on the canvas; with no opaque body the original canvas text bleeds through, looks like a duplicate. Tab still saves, but the on-canvas redraw doesn't happen until commit, so during the edit the user sees double text. **Fix:** in the canvas-redraw `useEffect` (search `redrawPage` callsite that filters `activePopup?.blockId !== w.id`), also push a synthetic white-out edit for the active block (same coords, `text: ""`, `edited: true`) so its area on the canvas is blanked while the popup is open. Verify Tab-to-save still produces the right edited text and clicking outside still commits. Do this **before** starting Phase 5.
-
 Pre-roadmap groundwork (already shipped):
 - Stage 0 — `tests/export-smoke.mjs` + `npm run test:export` ✅
 - Stage 1 — `+ Add PDF` silent merge bug fix ✅
