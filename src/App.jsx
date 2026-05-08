@@ -685,8 +685,11 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
 
   return (
     <div ref={popupRef} onClick={e => e.stopPropagation()} style={{
-      position: "absolute", left: offsetX, top: offsetY, zIndex: 999,
-      border: "1px solid #c42f3c", borderRadius: 3, background: "#fff",
+      // zIndex 2000 keeps the popup above floating images (which use z = 50 + counter,
+      // typically <300). background transparent so the user previews their edit against
+      // the actual page (or any image overlapping the text block).
+      position: "absolute", left: offsetX, top: offsetY, zIndex: 2000,
+      border: "1px solid #c42f3c", borderRadius: 3, background: "transparent",
       boxSizing: "border-box", display: "flex", flexDirection: "column",
       width: Math.min(boxW, vw), minWidth: Math.min(boxW, vw), maxWidth: vw,
       boxShadow: "0 4px 18px rgba(0,0,0,0.28)",
@@ -723,7 +726,7 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
         }}
         style={{
           ...sharedFont, display: "block", border: "none", outline: "none",
-          resize: "vertical", background: "#fff", padding: "5px 6px 6px",
+          resize: "vertical", background: "transparent", padding: "5px 6px 6px",
           margin: 0, cursor: "text", width: "100%", minHeight: boxHBody,
           maxHeight: Math.max(boxHBody * 2.2, 360), boxSizing: "border-box",
           color: "#000", overflowX: singleVisualLine ? "auto" : "hidden",
@@ -1874,7 +1877,9 @@ export default function App() {
                           position: "absolute", left: tb.x * zoom, top: tb.y * zoom,
                           width: Math.max(tb.width * zoom, 8),
                           height: Math.max(tb.height * zoom, tb.fontSize * zoom * 0.9),
-                          zIndex: isOpen ? 20 : 10, cursor: "text",
+                          // When the popup is open, lift the whole wrapper above floating images
+                          // (which use z = 50 + counter, ~1000 when selected) so the popup renders on top.
+                          zIndex: isOpen ? 3000 : 10, cursor: "text",
                         }} onClick={e => clickTextBlock(tb, e)}>
                           {isOpen && (
                             <EditPopup block={tb} zoom={zoom} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
