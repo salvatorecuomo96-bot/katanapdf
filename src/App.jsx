@@ -157,8 +157,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           parchment around it. */}
       <header style={{ padding: "6px 20px 0", textAlign: "center" }}>
         <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto", opacity: 0.5 }} />
-        <div style={{ height: 76, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          <img src="/logo.png" alt="katanapdf" style={{ width: "min(320px, 64vw)", height: "auto", display: "block" }} />
+        <div style={{ height: 130, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <img src="/logo.png" alt="katanapdf" style={{ width: "min(540px, 90vw)", height: "auto", display: "block" }} />
         </div>
         <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 8px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
