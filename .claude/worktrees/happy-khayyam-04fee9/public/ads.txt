@@ -1,3 +1,0 @@
-# Replace this line with your real AdSense publisher entry once approved.
-# Format: google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
-# Until approved, AdSense will not require this file. Empty placeholder for now.
