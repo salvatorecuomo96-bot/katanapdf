@@ -11,10 +11,33 @@ Tick boxes in a copy of this file per run; do not commit the ticked copy.
 npm install            # only the first time, or after package.json changes
 npm run lint           # static checks
 npm run build          # production build (must succeed)
+npm run test:export    # export-pipeline smoke test (Stage 0; see below)
 npm run dev            # local server, usually http://localhost:5173
 ```
 
 Open the URL printed by `npm run dev`.
+
+### Automated export smoke test
+
+`npm run test:export` runs `tests/export-smoke.mjs`, a small Node script that
+exercises the same `pdf-lib` primitives `handleDownload` uses (load,
+drawRectangle, drawText, save) and asserts the output is a valid PDF with the
+expected page count.
+
+It also roundtrips every file in `local-test-pdfs/` through the same
+overlay pipeline and confirms the page count doesn't drift. Drop more
+fixtures into that folder to widen coverage; the folder is `.gitignore`d so
+your private PDFs never ship.
+
+Exit code 0 = all pass, 1 = at least one failure. Run it before manual QA
+to catch obvious regressions in seconds.
+
+Things this script intentionally does **not** cover yet (those land in later
+stages):
+
+- Text-content assertions on the exported PDF
+- The React state -> export glue inside `App.jsx`
+- Page rotation, encryption, and the `+ Add PDF` merge bug
 
 ### Sample PDFs
 
