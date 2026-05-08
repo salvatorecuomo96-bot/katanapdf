@@ -10,8 +10,8 @@ Update this block at the end of every session so any device can see where we are
 |---|---|---|---|
 | 1 | Production cleanup leftovers | ✅ Done | 2026-05-08 |
 | 2 | Add "Merge PDF" to top toolbar | ✅ Done | 2026-05-08 |
-| 3 | Encrypted PDF policy | ⏳ Next | — |
-| 4 | Unicode fonts | Pending | — |
+| 3 | Encrypted PDF policy | ✅ Done | 2026-05-08 |
+| 4 | Unicode fonts | ⏳ Next | — |
 | 5 | Reorder pages | Pending | — |
 | 6 | Delete + rotate pages | Pending | — |
 | 7 | Image to PDF | Pending | — |
@@ -19,7 +19,7 @@ Update this block at the end of every session so any device can see where we are
 | 9 | Per-page fallback + IndexedDB recovery | Pending | — |
 | 10 | Original text color | Pending | — |
 | 11 | SEO basics + per-tool routes | Pending | — |
-| 12 | Mobile editor toolbar fix | Pending | — |
+| 12 | Mobile-friendly pass (whole site) | Pending | — |
 | 13 | Pre-launch QA + ship | Pending | — |
 
 Pre-roadmap groundwork (already shipped):
@@ -64,12 +64,14 @@ Pre-roadmap groundwork (already shipped):
 
 ---
 
-## Phase 3 — Encrypted PDF policy (audit Stage 6)
+## Phase 3 — Encrypted PDF policy (audit Stage 6) ✅ Done 2026-05-08
 **Goal:** stop silently re-saving encrypted PDFs as unencrypted.
 **Effort:** ~15 min
 **Done when:** opening an encrypted PDF either decrypts (empty password) or shows a clear "this PDF is password-protected" message instead of half-broken output.
 
 > In `loadPdfFromBytes`, detect encryption via pdf-lib's `PDFDocument.load(bytes, { ignoreEncryption: false })` first. If it throws an encryption error, retry with `ignoreEncryption: true` AND show a banner: "This PDF is password-protected. Decrypted contents may not save correctly. Decrypt it first, then re-open." In `handleDownload`, also remove the silent `ignoreEncryption: true` — replace it with the same upfront check. Add a smoke test: an encrypted synthetic PDF triggers the banner path.
+
+**Outcome:** Added `isEncrypted` + `encryptionNoticeDismissed` state, plumbed through tab snapshots. `loadPdfFromBytes` now does an upfront strict pdf-lib probe — pdfjs renders the document either way, but the strict probe sets `isEncrypted` so a parchment banner ("Password-protected PDF — decrypted contents may not save correctly") appears with a dismissible ✕. `handleDownload` no longer silently strips encryption: it tries strict load first, only falls back to `ignoreEncryption: true` on actual encryption errors (with the user already warned), and routes other parse errors to the canvas fallback as before. New smoke test verifies pdf-lib's strict load throws on `/Encrypt`-trailer PDFs and that `ignoreEncryption: true` still loads them. Tests now 8/8.
 
 ---
 
@@ -155,17 +157,22 @@ Pre-roadmap groundwork (already shipped):
 
 ---
 
-## Phase 12 — Mobile editor toolbar fix
-**Goal:** the editor toolbar is unusable on phones — buttons wrap to 3 rows and the tab strip overlaps the wrapped buttons because `top: 52px` is hardcoded for a single-row toolbar. Confirmed at ~390 px width on Android Brave.
-**Effort:** ~30 min
-**Done when:** at 375 px and 414 px viewports, no toolbar / tab-strip overlap; all primary actions (Open, Merge, Undo, Zoom, Download) reachable in one tap; font controls accessible (a "Format" dropdown is fine).
+## Phase 12 — Mobile-friendly pass (whole site)
+**Goal:** the site is unusable on phones today. Editor toolbar wraps to 3 rows and the tab strip's hardcoded `top: 52` overlaps the wrapped buttons; plus the rest of the site (per-page controls, in-place text editor, FloatingBox toolbar, modal popups, page width) hasn't been audited at 375–414 px. Fix everything that breaks.
+**Effort:** ~45 min — bigger than a typical phase, plan the day around it.
+**Done when:** at 375 px and 414 px viewports the homepage and the editor are both usable: no element overlap, no horizontal scroll on the homepage, all primary actions (Open, Merge, Undo, Zoom, Download, + Add text/image/PDF, edit existing text, drag floating boxes) reachable in one tap, font controls accessible (a "Format" dropdown is fine), and the `EditPopup` / `FloatingBox` toolbars don't run off the side of the page.
 
-> Fix the editor toolbar on narrow viewports. The current toolbar (search for `data-edit-toolbar` in App.jsx) uses `flex-wrap: wrap` with hardcoded `height: 52`; the tab strip below uses `position: sticky; top: 52`. When buttons wrap, the tab strip lands on top of them.
-> Pick the smallest fix that covers it:
-> 1. Replace hardcoded `height: 52` and `top: 52` with `minHeight: 52` on the toolbar and a ref-measured offset on the tab strip (read `toolbarRef.current.getBoundingClientRect().height` after layout, store in state, use as `top`).
-> 2. Below 720 px viewport, collapse the toolbar: hide font-family + font-size selectors behind a single "Format" `<details>` dropdown; keep Open / Merge / Undo / +/- zoom / Download as the inline row. Bold/Italic move into Format too. Download becomes an icon button if needed to fit.
-> 3. Add a smoke check (manual at QA): take a screenshot at 375 × 700 in Chrome devtools — there should be no element overlap, and Download should be visible without scrolling horizontally.
-> Don't ship a different mobile/desktop component tree — same component, responsive styles only.
+> Make the site mobile-friendly across the board. Don't ship a separate mobile/desktop component tree — same components, responsive styles only.
+>
+> 1. **Editor toolbar** (search `data-edit-toolbar` in App.jsx). Currently `flex-wrap: wrap` with hardcoded `height: 52`; tab strip uses `position: sticky; top: 52`. When buttons wrap, tab strip overlaps them.
+>    - Replace hardcoded `height: 52` with `minHeight: 52`. Replace tab strip's `top: 52` with a ref-measured offset (read `toolbarRef.current.getBoundingClientRect().height` post-mount + on resize, stash in state, use as `top`).
+>    - Below 720 px viewport, collapse: hide font-family + font-size selectors and Bold/Italic behind a single "Format" `<details>` dropdown; keep Open / Merge / Undo / +/- zoom / Download inline. Download can be an icon if needed to fit.
+> 2. **Per-page controls** ("+ Add text", "+ Add image", "+ Add PDF" above each page). These overflow on narrow viewports — wrap them or collapse into a single "+ Add" menu.
+> 3. **In-place text editor** (`EditPopup`) and **FloatingBox** toolbar. Both are absolutely positioned at the click point and can render off-screen on phones. Clamp `left`/`top` so the editor stays within the viewport, and shrink the FloatingBox top toolbar (size selector, B, I, color, font-family, ✕) so all its controls fit on a 375 px row — currently the family `<select>` overflows.
+> 4. **Homepage**. Drop the heavy-padding hero (`padding: "24px 20px 28px"`) on narrow viewports; ensure the OPEN PDF button doesn't get cut off; verify card grids fall to one column gracefully (they should, but spot-check the new minmax 260/280 values from Phase 1's widening).
+> 5. **Static pages** (privacy / terms / about). They're already narrow (`maxWidth: 720`), should be fine — confirm.
+> 6. Add a `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` to `index.html` if not already there. (Spot check: it is, but verify scale handling.)
+> 7. Manual QA: screenshot homepage + editor (with a 3-page PDF open, one floating box selected) at 375 × 812 and 414 × 896 in Chrome devtools. No overlap, no horizontal scroll, all actions tappable. Capture before/after.
 
 ---
 

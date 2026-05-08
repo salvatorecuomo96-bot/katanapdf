@@ -11,7 +11,6 @@
 // What it does NOT yet cover (for later stages):
 //   - Text-content assertions via pdfjs (Stage 1+).
 //   - The React state -> export glue inside App.jsx (needs an extraction).
-//   - Page rotation, encryption, merge-of-appended-pages bug.
 //
 // Run: npm run test:export
 // Exit code: 0 = all pass, 1 = at least one failure.
@@ -121,6 +120,59 @@ await check("rotation survives save/load and is detectable", async () => {
   const reload = await PDFDocument.load(out);
   const r = reload.getPages()[0].getRotation();
   assert.equal(r.angle, 90, `expected 90, got ${r.angle}`);
+});
+
+// Phase 3: encryption detection. The App.jsx encryption probe relies on
+// pdf-lib's strict load throwing when the trailer has /Encrypt, and on the
+// same load with `ignoreEncryption: true` succeeding. Verify both.
+async function buildEncryptedFixture() {
+  const doc = await PDFDocument.create();
+  doc.addPage([612, 792]);
+
+  // Fake but well-formed Standard /Encrypt dict. The values don't decrypt
+  // anything (there's no encrypted content), but pdf-lib's parser only
+  // checks the trailer for an Encrypt entry — that's enough to trigger
+  // EncryptedPDFError when ignoreEncryption is false.
+  const encryptDict = doc.context.obj({
+    Filter: "Standard",
+    V: 1,
+    R: 2,
+    Length: 40,
+    O: "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+    U: "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU",
+    P: -4,
+  });
+  const encryptRef = doc.context.register(encryptDict);
+  doc.context.trailerInfo.Encrypt = encryptRef;
+  // ID is required alongside Encrypt in the trailer per the PDF spec.
+  doc.context.trailerInfo.ID = doc.context.obj([
+    "1234567890abcdef1234567890abcdef",
+    "1234567890abcdef1234567890abcdef",
+  ]);
+  return await doc.save({ useObjectStreams: false });
+}
+
+await check("encryption detected: strict load throws, ignoreEncryption:true succeeds", async () => {
+  const enc = await buildEncryptedFixture();
+
+  let strictErr = null;
+  try {
+    await PDFDocument.load(enc, { ignoreEncryption: false });
+  } catch (e) {
+    strictErr = e;
+  }
+  assert.ok(strictErr, "expected strict load to throw on /Encrypt PDF");
+  assert.match(
+    strictErr.message,
+    /encrypt/i,
+    `expected encryption-flavoured error, got: ${strictErr.message}`
+  );
+
+  // Sanity: the same bytes should still be loadable when we explicitly
+  // ignore encryption — that's the path handleDownload falls back to once
+  // the user has been warned via the banner.
+  const lenient = await PDFDocument.load(enc, { ignoreEncryption: true });
+  assert.equal(lenient.getPageCount(), 1, "ignoreEncryption load should expose the 1 page");
 });
 
 await check("merge then overlay edits keeps merged page count", async () => {

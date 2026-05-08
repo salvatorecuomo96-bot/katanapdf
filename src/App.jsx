@@ -870,10 +870,12 @@ export default function App() {
   // Multi-tab state — each loaded PDF is a "tab" with its own state snapshot
   const [tabsList, setTabsList] = useState([]); // [{ id, fileName }]
   const [activeTabId, setActiveTabId] = useState(null);
-  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer } }
+  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted } }
   const liveStateRef = useRef({});
   const [hasTextLayer, setHasTextLayer] = useState(true);
   const [textLayerNoticeDismissed, setTextLayerNoticeDismissed] = useState(false);
+  const [isEncrypted, setIsEncrypted] = useState(false);
+  const [encryptionNoticeDismissed, setEncryptionNoticeDismissed] = useState(false);
   const [dragging, setDragging] = useState(null);
   const [draggingImg, setDraggingImg] = useState(null);
   const [resizingImg, setResizingImg] = useState(null);
@@ -915,6 +917,22 @@ export default function App() {
 
   async function loadPdfFromBytes(bytes) {
     setPdfBytes(bytes);
+
+    // Phase 3 — encryption probe. pdfjs renders encrypted PDFs fine (it has
+    // its own decryption), but pdf-lib's strict load throws EncryptedPDFError
+    // when the trailer has /Encrypt. We use the strict load purely as a flag:
+    // if it's encrypted, we surface a banner so the user knows their saved
+    // copy may differ from the original (any password protection / signature
+    // metadata is lost on save).
+    let encrypted = false;
+    try {
+      await PDFDocument.load(bytes, { ignoreEncryption: false });
+    } catch (probeErr) {
+      if (/encrypt/i.test(probeErr?.message || "")) encrypted = true;
+      // Other parse errors aren't our concern here — pdfjs may still render.
+    }
+    setIsEncrypted(encrypted);
+    setEncryptionNoticeDismissed(false);
 
     const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
     const pageData = [];
@@ -1011,7 +1029,7 @@ export default function App() {
   // Mirror live state into a ref so snapshotCurrent always reads fresh values
   useEffect(() => {
     liveStateRef.current = {
-      pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer,
+      pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted,
     };
   });
 
@@ -1030,6 +1048,8 @@ export default function App() {
     setFileName(snap.fileName);
     setZoom(snap.zoom);
     setHasTextLayer(snap.hasTextLayer !== undefined ? snap.hasTextLayer : true);
+    setIsEncrypted(snap.isEncrypted ?? false);
+    setEncryptionNoticeDismissed(false);
     setSelected(null);
     setActivePopup(null);
   }
@@ -1406,12 +1426,26 @@ export default function App() {
     if (!pages.length) { alert("No PDF loaded."); return; }
     try {
       // Try real-text path first: load the original PDF and overlay edits as actual text.
+      // Phase 3: don't silently strip encryption. Try strict first; only
+      // fall back to ignoreEncryption: true if we hit an actual encryption
+      // error — and the user has already been warned via the banner that
+      // loadPdfFromBytes set up. Other parse failures still go to the
+      // canvas fallback as before.
       let doc;
       try {
-        doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
       } catch (loadErr) {
-        console.warn("pdf-lib couldn't parse this PDF, falling back to canvas:", loadErr.message);
-        return await handleDownloadCanvasFallback();
+        if (/encrypt/i.test(loadErr?.message || "")) {
+          try {
+            doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+          } catch (innerErr) {
+            console.warn("pdf-lib couldn't parse this encrypted PDF, falling back to canvas:", innerErr.message);
+            return await handleDownloadCanvasFallback();
+          }
+        } else {
+          console.warn("pdf-lib couldn't parse this PDF, falling back to canvas:", loadErr.message);
+          return await handleDownloadCanvasFallback();
+        }
       }
 
       const docPages = doc.getPages();
@@ -1700,6 +1734,26 @@ export default function App() {
                 +
                 <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} />
               </label>
+            </div>
+          )}
+
+          {pages.length > 0 && isEncrypted && !encryptionNoticeDismissed && (
+            <div onClick={e => e.stopPropagation()} style={{
+              maxWidth: 1280, margin: "20px auto 0", padding: "14px 20px",
+              background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
+              fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
+              display: "flex", alignItems: "flex-start", gap: 12,
+            }}>
+              <div style={{ flex: 1 }}>
+                <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                  Password-protected PDF
+                </strong>
+                This PDF is password-protected. Decrypted contents may not save correctly. Decrypt it first, then re-open.
+              </div>
+              <button onClick={() => setEncryptionNoticeDismissed(true)} aria-label="Dismiss password-protected notice" style={{
+                background: "transparent", border: "none", color: LACQUER,
+                fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
+              }}>✕</button>
             </div>
           )}
 
