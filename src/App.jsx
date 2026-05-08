@@ -1686,7 +1686,7 @@ export default function App() {
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
             <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
             <label style={tbBtn}>Open <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} /></label>
-            <label style={tbBtn} title="Appends pages into the current document">Merge PDF <input type="file" accept="application/pdf,.pdf" onChange={handleAddPdfAsImage} style={hiddenFileInput} /></label>
+            <label style={tbBtn} title="">Merge PDF <input type="file" accept="application/pdf,.pdf" onChange={handleAddPdfAsImage} style={hiddenFileInput} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
             <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
             <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
