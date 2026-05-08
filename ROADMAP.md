@@ -1,16 +1,43 @@
 # katanapdf roadmap (Salvatore-edition)
 
-12 phases. Each is one Claude session.
+13 phases. Each is one Claude session.
+
+## Status
+
+Update this block at the end of every session so any device can see where we are.
+
+| Phase | Title | Status | Date |
+|---|---|---|---|
+| 1 | Production cleanup leftovers | ✅ Done | 2026-05-08 |
+| 2 | Add "Merge PDF" to top toolbar | ⏳ Next | — |
+| 3 | Encrypted PDF policy | Pending | — |
+| 4 | Unicode fonts | Pending | — |
+| 5 | Reorder pages | Pending | — |
+| 6 | Delete + rotate pages | Pending | — |
+| 7 | Image to PDF | Pending | — |
+| 8 | Signature pad | Pending | — |
+| 9 | Per-page fallback + IndexedDB recovery | Pending | — |
+| 10 | Original text color | Pending | — |
+| 11 | SEO basics + per-tool routes | Pending | — |
+| 12 | Mobile editor toolbar fix | Pending | — |
+| 13 | Pre-launch QA + ship | Pending | — |
+
+Pre-roadmap groundwork (already shipped):
+- Stage 0 — `tests/export-smoke.mjs` + `npm run test:export` ✅
+- Stage 1 — `+ Add PDF` silent merge bug fix ✅
+- Stage 2 — rotated pages → canvas fallback (rotation guard) ✅
+- Homepage redesign + logo iterations ✅
 
 ## Rules
 - One phase per Claude session. Don't bundle.
 - After each phase: `npm run lint && npm run build && npm run test:export`. If green, commit + push.
+- After each phase: also update the **Status** table above so progress is visible from any device.
 - If a phase blocks (limit hit, weird behaviour), stop and resume next day. Don't fight it.
 - Don't run more than one phase per day on Pro until you have real users.
 
 ---
 
-## Phase 1 — Production cleanup leftovers
+## Phase 1 — Production cleanup leftovers ✅ Done 2026-05-08
 **Goal:** finish the cleanup ChatGPT's Prompt 1 didn't.
 **Effort:** ~15 min
 **Done when:** build clean, no `AdSlot` in code, real README, no Vite template files, lint count down.
@@ -21,6 +48,8 @@
 > 3. Delete `src/assets/react.svg` and `public/vite.svg` if they exist and aren't referenced.
 > 4. Reduce lint baseline: remove unused `KatanaLogo` and `KatanaLogoSVG` helpers, the unused `_pageNum` arg, and unused `zoom` prop — only the ones safe to delete. Don't touch the `Date.now`/`Math.random` ones (those are fine in non-render context).
 > Build, lint, commit, push.
+
+**Outcome:** AdSlot + AdSense markers + Logo helpers + unused args removed; real README written; template assets deleted; lint 21 → 16 (the 5 ROADMAP-targeted errors gone, the rest deferred to later phases).
 
 ---
 
@@ -124,18 +153,32 @@
 
 ---
 
-## Phase 12 — Pre-launch QA + ship
+## Phase 12 — Mobile editor toolbar fix
+**Goal:** the editor toolbar is unusable on phones — buttons wrap to 3 rows and the tab strip overlaps the wrapped buttons because `top: 52px` is hardcoded for a single-row toolbar. Confirmed at ~390 px width on Android Brave.
+**Effort:** ~30 min
+**Done when:** at 375 px and 414 px viewports, no toolbar / tab-strip overlap; all primary actions (Open, Merge, Undo, Zoom, Download) reachable in one tap; font controls accessible (a "Format" dropdown is fine).
+
+> Fix the editor toolbar on narrow viewports. The current toolbar (search for `data-edit-toolbar` in App.jsx) uses `flex-wrap: wrap` with hardcoded `height: 52`; the tab strip below uses `position: sticky; top: 52`. When buttons wrap, the tab strip lands on top of them.
+> Pick the smallest fix that covers it:
+> 1. Replace hardcoded `height: 52` and `top: 52` with `minHeight: 52` on the toolbar and a ref-measured offset on the tab strip (read `toolbarRef.current.getBoundingClientRect().height` after layout, store in state, use as `top`).
+> 2. Below 720 px viewport, collapse the toolbar: hide font-family + font-size selectors behind a single "Format" `<details>` dropdown; keep Open / Merge / Undo / +/- zoom / Download as the inline row. Bold/Italic move into Format too. Download becomes an icon button if needed to fit.
+> 3. Add a smoke check (manual at QA): take a screenshot at 375 × 700 in Chrome devtools — there should be no element overlap, and Download should be visible without scrolling horizontally.
+> Don't ship a different mobile/desktop component tree — same component, responsive styles only.
+
+---
+
+## Phase 13 — Pre-launch QA + ship
 **Goal:** ship.
 **Effort:** ~30 min Claude work + ~1 hour your manual testing
 **Done when:** QA_CHECKLIST passes on a real device.
 
-> Final pre-launch pass. Run `npm run lint && npm run build && npm run test:export` and report. Walk through QA_CHECKLIST.md and tell me which items I should manually test on Chrome desktop, iOS Safari, and Android Chrome. Fix obvious bugs only — no new features. Verify: no AdSlot left, no Vite template README, homepage works on a 375px viewport, downloaded PDFs open in another viewer.
+> Final pre-launch pass. Run `npm run lint && npm run build && npm run test:export` and report. Walk through QA_CHECKLIST.md and tell me which items I should manually test on Chrome desktop, iOS Safari, and Android Chrome. Fix obvious bugs only — no new features. Verify: no AdSlot left, no Vite template README, homepage works on a 375px viewport, downloaded PDFs open in another viewer, mobile toolbar (Phase 12) has no overlap.
 
 ---
 
 ## Optional / post-launch
-- **Phase 13 — Real text replacement (audit Stage 7)**, behind `?redact=real` flag. Hard, risky, save for after you have feedback.
-- **Phase 14 — Split PDF** (extract page range as new PDF). Easy, but page-tools cover most of the same need.
+- **Phase 14 — Real text replacement (audit Stage 7)**, behind `?redact=real` flag. Hard, risky, save for after you have feedback.
+- **Phase 15 — Split PDF** (extract page range as new PDF). Easy, but page-tools cover most of the same need.
 
 ## Things explicitly skipped
 - **Compress PDF.** No clean browser-only path that actually compresses. Promising it would lie.
@@ -147,7 +190,7 @@
 
 ## How to use this on Pro
 
-- Start of session: paste **only the prompt block** of one phase.
-- Claude does build/lint/test and commit + push.
-- If a session hits the limit mid-phase: stop, commit what's done, resume next day from the same phase.
+- Start of session: just say "continue" or "next phase". Claude reads ROADMAP.md, picks the first phase whose status is not `✅ Done`, and uses its prompt block.
+- Claude does build/lint/test, commits + pushes, and updates the **Status** table above.
+- If a session hits the limit mid-phase: stop, commit what's done, mark the phase as `🟡 In progress` in the table, resume next day from the same phase.
 - Don't ask Claude to "do phases 5 through 8" in one go. That's a Max-plan request.

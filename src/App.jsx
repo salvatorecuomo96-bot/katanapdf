@@ -27,7 +27,7 @@ function SectionDivider({ label }) {
   // shifts the visible text left of the geometric centre. Match it with paddingLeft
   // so the label looks visually centred between the gold rules.
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "36px auto 18px", maxWidth: 1080, padding: "0 20px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "36px auto 18px", maxWidth: 1280, padding: "0 20px" }}>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
       <span style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 4, paddingLeft: 4, textTransform: "uppercase", color: LACQUER, fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
@@ -89,11 +89,11 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           the visible content fills the strip instead of leaving empty
           parchment around it. */}
       <header style={{ padding: "6px 20px 0", textAlign: "center" }}>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 1080, margin: "0 auto", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 1280, margin: "0 auto", opacity: 0.5 }} />
         <div style={{ height: 130, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
           <img src="/logo.png" alt="katanapdf" style={{ width: "min(540px, 90vw)", height: "auto", display: "block" }} />
         </div>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 1080, margin: "0 auto 8px", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 1280, margin: "0 auto 8px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
           <StampTag>100% Free</StampTag>
           <StampTag>No Upload</StampTag>
@@ -147,8 +147,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* WHAT YOU CAN DO */}
       <SectionDivider label="What you can do" />
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px 8px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px 8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
           {[
             { label: "Edit supported text", detail: "Click any text block to edit it in place." },
             { label: "Add text", detail: "Place new text boxes anywhere on the page." },
@@ -169,7 +169,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* PRIVACY / TRUST */}
       <SectionDivider label="Your files stay private" />
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`, padding: "20px 24px", fontFamily: FELL, fontSize: 15, lineHeight: 1.6, color: INK }}>
           <p style={{ margin: "0 0 14px" }}>
             katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
@@ -184,7 +184,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* HOW TO EDIT */}
       <SectionDivider label="How to edit a PDF online" />
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
+      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
             "Open your PDF — click the button or drag a file onto this page.",
@@ -202,8 +202,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* WHY KATANAPDF */}
       <SectionDivider label="Why katanapdf" />
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
           {[
             { t: "100% Free", d: "No paid tier hiding the basic tools." },
             { t: "No Upload Required", d: "Your PDF is processed locally in your browser." },
@@ -223,7 +223,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* FAQ */}
       <SectionDivider label="Frequently asked questions" />
-      <section style={{ maxWidth: 980, margin: "0 auto", padding: "0 20px 56px" }}>
+      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px 56px" }}>
         {[
           { q: "Is katanapdf really free?", a: "Yes. Every feature is free with no paid tier. The site is supported by ads and donations." },
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
@@ -1704,7 +1704,7 @@ export default function App() {
 
           {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
             <div onClick={e => e.stopPropagation()} style={{
-              maxWidth: 1080, margin: "20px auto 0", padding: "14px 20px",
+              maxWidth: 1280, margin: "20px auto 0", padding: "14px 20px",
               background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
               fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
               display: "flex", alignItems: "flex-start", gap: 12,
