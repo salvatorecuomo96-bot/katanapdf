@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local QA sample PDFs — never commit private files
+local-test-pdfs/

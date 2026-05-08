@@ -90,10 +90,13 @@ const FELL = '"Lora", Georgia, "Times New Roman", serif';
 const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
 
 function SectionDivider({ label }) {
+  // letter-spacing leaves a trailing gap to the right of the last character, which
+  // shifts the visible text left of the geometric centre. Match it with paddingLeft
+  // so the label looks visually centred between the gold rules.
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "48px 0 24px", maxWidth: 880, marginLeft: "auto", marginRight: "auto", padding: "0 20px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "36px auto 18px", maxWidth: 880, padding: "0 20px" }}>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
-      <span style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 5, textTransform: "uppercase", color: LACQUER, fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>
+      <span style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 4, paddingLeft: 4, textTransform: "uppercase", color: LACQUER, fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
     </div>
   );
@@ -149,12 +152,12 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
       )}
 
       {/* HEADER — compact logo + trust badges */}
-      <header style={{ padding: "10px 20px 0", textAlign: "center" }}>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 4px", opacity: 0.5 }} />
+      <header style={{ padding: "6px 20px 0", textAlign: "center" }}>
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(300px, 56vw)", height: "auto", display: "block" }} />
+          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(220px, 48vw)", height: "auto", display: "block", marginTop: -10, marginBottom: -14 }} />
         </div>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "4px auto 10px", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 8px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
           <StampTag>100% Free</StampTag>
           <StampTag>No Upload</StampTag>
