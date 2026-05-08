@@ -1345,8 +1345,26 @@ export default function App() {
         newPages.push({ num: pgNum, dataUrl: c.toDataURL("image/png"), width: vp.width, height: vp.height });
       }
 
+      // Stage 1: keep pdfBytes in sync with the visible page list so the
+      // default export path includes appended pages with their original
+      // vector content. Without this, handleDownload silently drops them
+      // (the docPages[pgIdx] lookup returns undefined past the original
+      // page count). On merge failure the canvas fallback in handleDownload
+      // catches the mismatch and rasterises instead.
+      let mergedBytes = pdfBytes;
+      try {
+        const baseDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        const addedDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+        const copied = await baseDoc.copyPages(addedDoc, addedDoc.getPageIndices());
+        for (const p of copied) baseDoc.addPage(p);
+        mergedBytes = await baseDoc.save();
+      } catch (mergeErr) {
+        console.warn("Append-PDF merge failed; download will use canvas fallback for the appended pages:", mergeErr);
+      }
+
       setPages(prev => [...prev, ...newPages]);
       setTextBlocks(newWords);
+      setPdfBytes(mergedBytes);
     } catch (err) {
       console.error("Add PDF error:", err);
       alert("Couldn't append this PDF: " + (err.message || err));
@@ -1475,6 +1493,14 @@ export default function App() {
       }
 
       const docPages = doc.getPages();
+      // Stage 1 guard: if pdfBytes has fewer pages than the editor state
+      // (e.g. an Add-PDF merge failed earlier), the loop below would silently
+      // skip the missing pages. Fall through to the canvas fallback so every
+      // visible page lands in the export — even if at raster quality.
+      if (docPages.length < pages.length) {
+        console.warn(`pdfBytes has ${docPages.length} pages but state has ${pages.length}; using canvas fallback to preserve every page.`);
+        return await handleDownloadCanvasFallback();
+      }
       const fonts = {
         helv: await doc.embedFont(StandardFonts.Helvetica),
         helvB: await doc.embedFont(StandardFonts.HelveticaBold),

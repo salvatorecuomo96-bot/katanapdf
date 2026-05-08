@@ -96,6 +96,33 @@ await check("overlayEdits is idempotent on repeated runs (no growth blowup)", as
     `size blew up on second pass: ${once.byteLength} -> ${twice.byteLength}`);
 });
 
+// Stage 1: appended PDFs survive the merge primitive used by handleAddPdfAsImage.
+// Regression guard against the "+ Add PDF silently drops pages on download" bug.
+await check("merge two synthetic PDFs preserves all pages (3 + 2 = 5)", async () => {
+  const a = await buildSynth(3);
+  const b = await buildSynth(2);
+  const docA = await PDFDocument.load(a);
+  const docB = await PDFDocument.load(b);
+  const copied = await docA.copyPages(docB, docB.getPageIndices());
+  for (const p of copied) docA.addPage(p);
+  const out = await docA.save();
+  const reload = await PDFDocument.load(out);
+  assert.equal(reload.getPageCount(), 5, `expected 5 pages, got ${reload.getPageCount()}`);
+});
+
+await check("merge then overlay edits keeps merged page count", async () => {
+  const a = await buildSynth(2);
+  const b = await buildSynth(2);
+  const docA = await PDFDocument.load(a);
+  const docB = await PDFDocument.load(b);
+  const copied = await docA.copyPages(docB, docB.getPageIndices());
+  for (const p of copied) docA.addPage(p);
+  const merged = await docA.save();
+  const edited = await overlayEdits(merged);
+  const reload = await PDFDocument.load(edited);
+  assert.equal(reload.getPageCount(), 4, `expected 4 pages, got ${reload.getPageCount()}`);
+});
+
 // --- Optional fixture roundtrip ---
 
 let fixtures = [];
