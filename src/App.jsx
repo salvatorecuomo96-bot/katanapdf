@@ -151,11 +151,14 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
         </div>
       )}
 
-      {/* HEADER — compact logo + trust badges */}
+      {/* HEADER — compact logo + trust badges. Logo PNG has lots of internal
+          transparent padding; wrap in a fixed-height overflow:hidden box so
+          the visible content fills the strip instead of leaving empty
+          parchment around it. */}
       <header style={{ padding: "6px 20px 0", textAlign: "center" }}>
         <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto", opacity: 0.5 }} />
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(220px, 48vw)", height: "auto", display: "block", marginTop: -10, marginBottom: -14 }} />
+        <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <img src="/logo.png" alt="katanapdf" style={{ width: "min(220px, 48vw)", height: "auto", display: "block" }} />
         </div>
         <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 8px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
@@ -169,8 +172,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
       {/* HERO — H1 headline + CTA */}
       <section style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 20px 28px", textAlign: "center" }}>
         <h1 style={{
-          fontFamily: CINZEL, fontSize: "clamp(20px, 4vw, 30px)", fontWeight: 700,
-          letterSpacing: 1, color: INK, margin: "0 0 10px", lineHeight: 1.25, maxWidth: 620,
+          fontFamily: FELL, fontSize: "clamp(24px, 4vw, 34px)", fontWeight: 500,
+          letterSpacing: 0, color: INK, margin: "0 0 12px", lineHeight: 1.3, maxWidth: 620,
         }}>
           Free PDF editor that runs in your browser
         </h1>
