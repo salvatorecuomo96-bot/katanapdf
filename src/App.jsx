@@ -1065,6 +1065,28 @@ export default function App() {
     setActiveTabId(id);
   }
 
+  // Close the editor entirely and return to the homepage. Wired to the
+  // 'katanapdf' wordmark in the editor toolbar — without this the link only
+  // updates the URL hash and the editor still renders because pages.length > 0.
+  function goHome() {
+    tabSnapshots.current = {};
+    setTabsList([]);
+    setActiveTabId(null);
+    setPages([]);
+    setTextBlocks({});
+    setFloatingBoxes([]);
+    setFloatingImages([]);
+    setHistory([]);
+    setFileName("");
+    setPdfBytes(null);
+    setIsEncrypted(false);
+    setEncryptionNoticeDismissed(false);
+    setHasTextLayer(true);
+    setTextLayerNoticeDismissed(false);
+    setSelected(null);
+    setActivePopup(null);
+  }
+
   function closeTab(id) {
     delete tabSnapshots.current[id];
     setTabsList(prev => {
@@ -1669,7 +1691,7 @@ export default function App() {
       ) : (
         <>
           <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
-            <a href="#home" style={{ textDecoration: "none" }}>
+            <a href="#home" onClick={(e) => { e.preventDefault(); goHome(); window.location.hash = "#home"; }} style={{ textDecoration: "none" }}>
               <span style={{ fontFamily: CINZEL, fontSize: 14, color: PARCHMENT, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>katanapdf</span>
             </a>
             <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
