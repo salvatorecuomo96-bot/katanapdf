@@ -27,7 +27,7 @@ function SectionDivider({ label }) {
   // shifts the visible text left of the geometric centre. Match it with paddingLeft
   // so the label looks visually centred between the gold rules.
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "36px auto 18px", maxWidth: 1280, padding: "0 20px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "36px auto 18px", maxWidth: 1600, padding: "0 20px" }}>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
       <span style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 4, paddingLeft: 4, textTransform: "uppercase", color: LACQUER, fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
@@ -89,11 +89,11 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           the visible content fills the strip instead of leaving empty
           parchment around it. */}
       <header style={{ padding: "6px 20px 0", textAlign: "center" }}>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 1280, margin: "0 auto", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 1600, margin: "0 auto", opacity: 0.5 }} />
         <div style={{ height: 130, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
           <img src="/logo.png" alt="katanapdf" style={{ width: "min(540px, 90vw)", height: "auto", display: "block" }} />
         </div>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 1280, margin: "0 auto 8px", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 1600, margin: "0 auto 8px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
           <StampTag>100% Free</StampTag>
           <StampTag>No Upload</StampTag>
@@ -147,8 +147,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* WHAT YOU CAN DO */}
       <SectionDivider label="What you can do" />
-      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px 8px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+      <section style={{ maxWidth: 1600, margin: "0 auto", padding: "0 20px 8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: 14 }}>
           {[
             { label: "Edit supported text", detail: "Click any text block to edit it in place." },
             { label: "Add text", detail: "Place new text boxes anywhere on the page." },
@@ -169,7 +169,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* PRIVACY / TRUST */}
       <SectionDivider label="Your files stay private" />
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
+      <section style={{ maxWidth: 1300, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`, padding: "20px 24px", fontFamily: FELL, fontSize: 15, lineHeight: 1.6, color: INK }}>
           <p style={{ margin: "0 0 14px" }}>
             katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
@@ -184,7 +184,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* HOW TO EDIT */}
       <SectionDivider label="How to edit a PDF online" />
-      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px" }}>
+      <section style={{ maxWidth: 1600, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
             "Open your PDF — click the button or drag a file onto this page.",
@@ -204,8 +204,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           container so the layout is a clean 3+3 instead of an asymmetric 4+2.
           Below ~1116 px it falls to 2 cols (2+2+2), then 1 col on phones. */}
       <SectionDivider label="Why katanapdf" />
-      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 18 }}>
+      <section style={{ maxWidth: 1600, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(400px, 100%), 1fr))", gap: 18 }}>
           {[
             { t: "100% Free", d: "No paid tier hiding the basic tools." },
             { t: "No Upload Required", d: "Your PDF is processed locally in your browser." },
@@ -225,7 +225,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* FAQ */}
       <SectionDivider label="Frequently asked questions" />
-      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px 56px" }}>
+      <section style={{ maxWidth: 1300, margin: "0 auto", padding: "0 20px 56px" }}>
         {[
           { q: "Is katanapdf really free?", a: "Yes. Every feature is free with no paid tier. The site is supported by ads and donations." },
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
@@ -363,7 +363,7 @@ function FloatingImage({ fi, isSel, onSelect, onStartDrag, onStartResize, onDele
     <div onClick={e => { e.stopPropagation(); onSelect(); }} style={{
       position: "absolute", left: fi.x, top: fi.y,
       width: fi.w, height: fi.h,
-      zIndex: isSel ? 100 : 50,
+      zIndex: isSel ? 1000 : (fi.z || 50),
       border: isSel ? "2px solid #8B1A1A" : "none",
       boxSizing: "border-box", overflow: "visible",
       boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.3)" : "none",
@@ -387,6 +387,14 @@ function FloatingImage({ fi, isSel, onSelect, onStartDrag, onStartResize, onDele
           background: "#8B1A1A", cursor: "nwse-resize", borderRadius: "50%",
           border: "2px solid #fff",
         }} />
+        <div style={{
+          position: "absolute", left: 0, right: 0, top: "100%", marginTop: 4,
+          fontSize: 10, color: "#666", padding: "2px 8px 4px", fontFamily: "sans-serif",
+          background: "rgba(255,255,255,0.85)", borderRadius: 2, textAlign: "center",
+          pointerEvents: "none", whiteSpace: "nowrap",
+        }}>
+          Tab to save · Esc to cancel
+        </div>
       </>}
     </div>
   );
@@ -731,7 +739,7 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
 
 const FB_SIZES = [6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120];
 
-function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onCommit }) {
+function FloatingBox({ fb, isSel, onSelect, onStartDrag, onStartResize, onUpdate, onDelete, onCommit }) {
   const stopAll = e => e.stopPropagation();
   const taRef = useRef(null);
 
@@ -758,7 +766,7 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onC
       <div onClick={e => { e.stopPropagation(); onSelect(); }}
         style={{
           position: "absolute", left: fb.x, top: fb.y,
-          minWidth: 20, zIndex: 50, cursor: "pointer",
+          minWidth: 20, zIndex: fb.z || 50, cursor: "pointer",
           padding: "2px 4px",
           fontSize: fb.fontSize, fontFamily: fb.fontFamily,
           fontWeight: fb.isBold ? "bold" : "normal",
@@ -773,13 +781,14 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onC
     );
   }
 
-  // Selected — full editor UI
+  // Selected — full editor UI. Container is transparent so the text previews
+  // against the page background; only the toolbar / footer / handle have chrome.
   return (
     <div onClick={e => { e.stopPropagation(); }} style={{
       position: "absolute", left: fb.x, top: fb.y, minWidth: 140,
-      zIndex: 100,
+      zIndex: 1000,
       border: "2px solid #8B1A1A",
-      borderRadius: 4, background: "rgba(255,255,255,0.97)",
+      borderRadius: 4, background: "transparent",
       boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
       boxSizing: "border-box",
     }}>
@@ -830,16 +839,22 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onUpdate, onDelete, onC
         rows={2}
         style={{
           display: "block", width: "100%", minWidth: 120, border: "none",
-          outline: "none", resize: "both", background: "transparent",
+          outline: "none", resize: "none", background: "transparent",
           padding: "5px 8px", fontSize: fb.fontSize, fontFamily: fb.fontFamily,
           fontWeight: fb.isBold ? "bold" : "normal",
           fontStyle: fb.isItalic ? "italic" : "normal",
           color: fb.color || "#000", lineHeight: 1.5, cursor: "text",
           boxSizing: "border-box",
         }} />
-      <div style={{ fontSize: 10, color: "#999", padding: "2px 8px 4px", fontFamily: "sans-serif", borderTop: "1px solid #eee" }}>
-        Tab to save · Esc to cancel
+      <div style={{ fontSize: 10, color: "#666", padding: "2px 8px 4px", fontFamily: "sans-serif", borderTop: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.85)", borderRadius: "0 0 2px 2px" }}>
+        Tab to save · Esc to cancel · drag corner to resize
       </div>
+      {/* Corner resize handle — drags scale the fontSize, matching the picture affordance */}
+      <div onMouseDown={onStartResize} style={{
+        position: "absolute", bottom: -8, right: -8, width: 16, height: 16,
+        background: "#8B1A1A", cursor: "nwse-resize", borderRadius: "50%",
+        border: "2px solid #fff",
+      }} />
     </div>
   );
 }
@@ -881,6 +896,7 @@ export default function App() {
   const [dragging, setDragging] = useState(null);
   const [draggingImg, setDraggingImg] = useState(null);
   const [resizingImg, setResizingImg] = useState(null);
+  const [resizingFb, setResizingFb] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
   const [fontSize, setFontSize] = useState(14);
@@ -889,6 +905,7 @@ export default function App() {
   const dragOffset = useRef({ x: 0, y: 0 });
   const imgDragOrigin = useRef(null);
   const imgResizeOrigin = useRef(null);
+  const fbResizeOrigin = useRef(null);
   const containerRef = useRef(null);
   const canvasRefs = useRef({});
 
@@ -1212,6 +1229,9 @@ export default function App() {
     const id = `float-${floatingIdCounter}`;
     setFloatingBoxes(prev => [...prev, {
       id, page: pageNum,
+      // z baselines stack newer overlays above older ones; bumped on every
+      // create so a text box added after an image lands on top of it.
+      z: 50 + floatingIdCounter,
       x: 80, y: 80, text: "New text",
       fontSize: 14, fontFamily: "Arial, sans-serif",
       isBold: false, isItalic: false, color: "#000000",
@@ -1239,6 +1259,7 @@ export default function App() {
       const id = `img-${floatingIdCounter}`;
       setFloatingImages(prev => [...prev, {
         id, page: pageNum,
+        z: 50 + floatingIdCounter,
         x: 60, y: 60, w: 200, h: 150,
         dataUrl: ev.target.result,
       }]);
@@ -1357,6 +1378,16 @@ export default function App() {
     setResizingImg({ id: fi.id });
   }
 
+  // Drag the corner handle on a text box to scale fontSize. Diagonal drag
+  // (down-right grows, up-left shrinks) feels closest to the picture
+  // resize that scales the image.
+  function startResizeFb(e, fb) {
+    e.preventDefault();
+    e.stopPropagation();
+    fbResizeOrigin.current = { mx: e.clientX, my: e.clientY, fs: fb.fontSize };
+    setResizingFb({ id: fb.id });
+  }
+
   function startDragFloat(e, fb) {
     e.preventDefault();
     e.stopPropagation();
@@ -1396,12 +1427,25 @@ export default function App() {
         : fi
       ));
     }
-  }, [dragging, draggingImg, resizingImg]);
+    if (resizingFb) {
+      const o = fbResizeOrigin.current;
+      if (!o) return;
+      const dx = e.clientX - o.mx;
+      const dy = e.clientY - o.my;
+      const delta = (dx + dy) / 2;
+      const newFs = Math.max(6, Math.min(200, Math.round(o.fs + delta * 0.18)));
+      setFloatingBoxes(prev => prev.map(fb => fb.id === resizingFb.id
+        ? { ...fb, fontSize: newFs }
+        : fb
+      ));
+    }
+  }, [dragging, draggingImg, resizingImg, resizingFb]);
 
   const onMouseUp = useCallback(() => {
     setDragging(null);
     setDraggingImg(null);
     setResizingImg(null);
+    setResizingFb(null);
   }, []);
 
   useEffect(() => {
@@ -1763,7 +1807,7 @@ export default function App() {
 
           {pages.length > 0 && isEncrypted && !encryptionNoticeDismissed && (
             <div onClick={e => e.stopPropagation()} style={{
-              maxWidth: 1280, margin: "20px auto 0", padding: "14px 20px",
+              maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
               background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
               fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
               display: "flex", alignItems: "flex-start", gap: 12,
@@ -1783,7 +1827,7 @@ export default function App() {
 
           {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
             <div onClick={e => e.stopPropagation()} style={{
-              maxWidth: 1280, margin: "20px auto 0", padding: "14px 20px",
+              maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
               background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
               fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
               display: "flex", alignItems: "flex-start", gap: 12,
@@ -1846,6 +1890,7 @@ export default function App() {
                       <FloatingBox key={fb.id} fb={fb} isSel={selected === fb.id}
                         onSelect={() => setSelected(fb.id)}
                         onStartDrag={e => startDragFloat(e, fb)}
+                        onStartResize={e => startResizeFb(e, fb)}
                         onUpdate={u => updateFloatingBox(fb.id, u)}
                         onCommit={() => setSelected(null)}
                         onDelete={() => deleteFloatingBox(fb.id)} />
