@@ -17,6 +17,3 @@
 > **Step C (commit):** add the regression guard.
 > 6. Add a smoke test that round-trips text containing `café résumé piñata` through pdf-lib with embedded Noto Sans (load font from `public/fonts/` via fs in the test) and asserts the bytes contain those exact code points after parse-back.
 
-## Bonus mini-fix to bundle
-
-The "katanapdf" wordmark in the editor toolbar (`<a href="#home">`) only updates `window.location.hash`; when a PDF is open the editor still renders so the click feels broken. Add an `onClick` (or change the link) that also resets the editor state — close all tabs / clear `pages` / `setActiveTabId(null)` — so clicking the wordmark actually returns to the homepage from inside the editor.
