@@ -200,10 +200,12 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
         </div>
       </section>
 
-      {/* WHY KATANAPDF */}
+      {/* WHY KATANAPDF — 6 cards. minmax(360) forces 3 cols at the 1280
+          container so the layout is a clean 3+3 instead of an asymmetric 4+2.
+          Below ~1116 px it falls to 2 cols (2+2+2), then 1 col on phones. */}
       <SectionDivider label="Why katanapdf" />
       <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 18 }}>
           {[
             { t: "100% Free", d: "No paid tier hiding the basic tools." },
             { t: "No Upload Required", d: "Your PDF is processed locally in your browser." },
@@ -1686,7 +1688,7 @@ export default function App() {
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
             <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
             <label style={tbBtn}>Open <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} /></label>
-            <label style={tbBtn} title="">Merge PDF <input type="file" accept="application/pdf,.pdf" onChange={handleAddPdfAsImage} style={hiddenFileInput} /></label>
+            <label style={tbBtn} title="Appends pages into the current document. Add a PDF">Merge PDF <input type="file" accept="application/pdf,.pdf" onChange={handleAddPdfAsImage} style={hiddenFileInput} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
             <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
             <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
