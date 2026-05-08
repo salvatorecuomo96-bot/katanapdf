@@ -148,89 +148,130 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
         </div>
       )}
 
-      {/* HEADER — parchment bg with logo + stamp tags (dark logo, light bg) */}
-      <header style={{ padding: "18px 20px 14px", textAlign: "center" }}>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 6px", opacity: 0.5 }} />
+      {/* HEADER — compact logo + trust badges */}
+      <header style={{ padding: "10px 20px 0", textAlign: "center" }}>
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 4px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(440px, 72vw)", height: "auto", display: "block", marginTop: -8, marginBottom: -10 }} />
+          <img src="/logo.png" alt="katanapdf" style={{ maxWidth: "min(300px, 56vw)", height: "auto", display: "block" }} />
         </div>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "6px auto 14px", opacity: 0.5 }} />
-        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "4px auto 10px", opacity: 0.5 }} />
+        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
           <StampTag>100% Free</StampTag>
           <StampTag>No Upload</StampTag>
-          <StampTag>No Sign-up</StampTag>
-          <StampTag>Unlimited Pages</StampTag>
+          <StampTag>No Sign-Up</StampTag>
+          <StampTag>No Watermark</StampTag>
         </div>
       </header>
 
-      {/* HERO — tagline + CTA */}
-      <section style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "56px 20px 40px", textAlign: "center" }}>
-        <p style={{ marginTop: 0, marginBottom: 36, fontSize: 20, fontFamily: FELL, color: INK, maxWidth: 640, lineHeight: 1.5, fontStyle: "italic" }}>
-          Free PDF editor in your browser. No uploads. No account. No limits.
+      {/* HERO — H1 headline + CTA */}
+      <section style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 20px 28px", textAlign: "center" }}>
+        <h1 style={{
+          fontFamily: CINZEL, fontSize: "clamp(20px, 4vw, 30px)", fontWeight: 700,
+          letterSpacing: 1, color: INK, margin: "0 0 10px", lineHeight: 1.25, maxWidth: 620,
+        }}>
+          Free PDF editor that runs in your browser
+        </h1>
+        <p style={{
+          marginTop: 0, marginBottom: 26, fontSize: 17, fontFamily: FELL,
+          color: "rgba(26,18,8,0.75)", maxWidth: 540, lineHeight: 1.55,
+        }}>
+          Edit PDFs without uploading files. No account, no watermark, no artificial limits.
         </p>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           <label style={{
-            display: "inline-block", padding: "14px 52px", background: LACQUER, color: PARCHMENT, cursor: "pointer",
-            fontFamily: CINZEL, fontSize: 14, letterSpacing: 5, textTransform: "uppercase", fontWeight: 600,
-            border: `1px solid ${GOLD}`, outline: `1px solid ${LACQUER}`, outlineOffset: 4,
+            display: "inline-block", padding: "17px 68px", background: LACQUER, color: PARCHMENT, cursor: "pointer",
+            fontFamily: CINZEL, fontSize: 17, letterSpacing: 3, textTransform: "uppercase", fontWeight: 700,
+            border: `1px solid ${GOLD}`, outline: `1px solid ${LACQUER}`, outlineOffset: 5,
+            lineHeight: 1,
           }}>
             Open PDF
             <input type="file" accept="application/pdf,.pdf" onChange={onFile} style={hiddenFileInput} />
           </label>
           <button onClick={onCreateBlank} style={{
-            background: "transparent", border: "none", color: LACQUER, fontFamily: CINZEL, fontSize: 11,
-            letterSpacing: 3, textTransform: "uppercase", cursor: "pointer", padding: "4px 0", textDecoration: "underline",
+            background: "transparent", border: "none", color: LACQUER, fontFamily: FELL, fontSize: 15,
+            cursor: "pointer", padding: "4px 0", textDecoration: "underline",
           }}>
-            or create a blank PDF
+            Create a blank PDF
           </button>
-          <span style={{ fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.6)", fontStyle: "italic" }}>
+          <span style={{ fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.5)", fontStyle: "italic" }}>
             or drag a PDF anywhere on this page
           </span>
+          <p style={{
+            fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.5)",
+            margin: "6px 0 0", lineHeight: 1.5, maxWidth: 420,
+          }}>
+            Your PDF never leaves your device. Everything runs locally in your browser.
+          </p>
         </div>
       </section>
 
-      {/* PRIVACY NOTICE — parchment, left red border */}
-      <section style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 16px" }}>
-        <div style={{ background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`, padding: "20px 24px", fontFamily: FELL, fontSize: 15, lineHeight: 1.55, color: INK }}>
-          <strong style={{ display: "block", marginBottom: 6, fontFamily: CINZEL, fontSize: 13, letterSpacing: 3, textTransform: "uppercase", color: INK, fontWeight: 600 }}>
-            Your PDF never leaves your computer.
-          </strong>
-          Unlike most PDF editors, katanapdf runs entirely in your browser. Nothing is uploaded to any server.
+      {/* WHAT YOU CAN DO */}
+      <SectionDivider label="What you can do" />
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px 8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: 10 }}>
+          {[
+            { label: "Edit supported text", detail: "Click any text block to edit it in place." },
+            { label: "Add text", detail: "Place new text boxes anywhere on the page." },
+            { label: "Add images", detail: "Insert images, resize, and reposition freely." },
+            { label: "Merge PDFs", detail: "Append pages from a second PDF." },
+          ].map((cap, i) => (
+            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.2)`, padding: "14px 18px" }}>
+              <span style={{ display: "block", fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: LACQUER, fontWeight: 600, marginBottom: 5 }}>
+                {cap.label}
+              </span>
+              <span style={{ fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.68)", lineHeight: 1.4 }}>
+                {cap.detail}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* PRIVACY / TRUST */}
+      <SectionDivider label="Your files stay private" />
+      <section style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`, padding: "20px 24px", fontFamily: FELL, fontSize: 15, lineHeight: 1.6, color: INK }}>
+          <p style={{ margin: "0 0 14px" }}>
+            katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
+          </p>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {["No file upload", "No account required", "No watermark", "No hidden paywall"].map((b, i) => (
+              <li key={i} style={{ marginBottom: 5 }}>{b}</li>
+            ))}
+          </ul>
         </div>
       </section>
 
       {/* HOW TO EDIT */}
       <SectionDivider label="How to edit a PDF online" />
       <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
-            { t: "Open your PDF", b: "click the “Open PDF” button or drag a file onto this page." },
-            { t: "Edit the text", b: "click any text in the document to change it directly." },
-            { t: "Add new text or images", b: "use the “+ Add text” and “+ Add image” buttons on each page." },
-            { t: "Download", b: "click “Download PDF” to save the edited file. Your file stays on your computer the whole time." },
+            "Open your PDF — click the button or drag a file onto this page.",
+            "Edit supported text, add new text boxes, or place images on any page.",
+            "Append pages from another PDF using the Add PDF button if needed.",
+            "Download the finished PDF.",
           ].map((s, i) => (
-            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.25)`, padding: "16px 22px", display: "flex", alignItems: "flex-start", gap: 22 }}>
-              <span style={{ fontFamily: CINZEL, fontSize: 52, color: "rgba(139,26,26,0.28)", lineHeight: 1, fontWeight: 700, flexShrink: 0, minWidth: 44, textAlign: "center" }}>{i + 1}</span>
-              <div style={{ paddingTop: 8, fontFamily: FELL, fontSize: 16, lineHeight: 1.55, color: INK }}>
-                <strong style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>{s.t}</strong>
-                <span style={{ display: "block", marginTop: 4 }}>{s.b}</span>
-              </div>
+            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.2)`, padding: "12px 18px", display: "flex", alignItems: "center", gap: 18 }}>
+              <span style={{ fontFamily: CINZEL, fontSize: 36, color: "rgba(139,26,26,0.22)", lineHeight: 1, fontWeight: 700, flexShrink: 0, minWidth: 36, textAlign: "center" }}>{i + 1}</span>
+              <span style={{ fontFamily: FELL, fontSize: 15, lineHeight: 1.5, color: INK }}>{s}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* WHY KATANAPDF — dark ink feature cards */}
+      {/* WHY KATANAPDF */}
       <SectionDivider label="Why katanapdf" />
       <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
           {[
-            { t: "100% Free", d: "Every feature, every file, every time. No paid tier hidden behind your edits." },
-            { t: "No Upload Required", d: "Your PDF is processed entirely inside your browser — it never touches our servers." },
-            { t: "No Account Needed", d: "No sign-up, no email, no tracking. Just open the file and edit it." },
-            { t: "No File Limits", d: "Edit PDFs of any size or page count. No daily quotas, no “3 tasks per hour.”" },
-            { t: "Edit Existing Text", d: "Click any text to change it. Most competitors lock this behind a paid plan." },
-            { t: "Add Text & Images", d: "Insert new text boxes, drop in images, drag, resize, and download." },
+            { t: "100% Free", d: "No paid tier hiding the basic tools." },
+            { t: "No Upload Required", d: "Your PDF is processed locally in your browser." },
+            { t: "No Account Needed", d: "Open the file and start editing." },
+            { t: "No Watermark", d: "Download a clean PDF." },
+            { t: "Practical Edits", d: "Add text, images, and edit supported text directly." },
+            { t: "Fast by Design", d: "No waiting for server uploads or queues." },
           ].map((x, i) => (
             <div key={i} style={{ background: INK, padding: "20px 22px", position: "relative", border: `1px solid rgba(196,150,58,0.3)` }}>
               <CornerBracket />
@@ -249,7 +290,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
           { q: "Do I need an account?", a: "No. There is no sign-up, no email required, no tracking of who edits what." },
           { q: "What size of PDF can I edit?", a: "Any size your browser can handle — typically files up to a few hundred MB work fine on a modern computer." },
-          { q: "Can I edit existing text in a PDF?", a: "Yes. Click any text in the document and edit it directly. Most competitors only let you do this on a paid plan." },
+          { q: "Can I edit existing text in a PDF?", a: "Yes, if the PDF has a selectable text layer. Click any text block to edit it. PDFs that are scanned images or printed from a browser won't have editable text, but you can still add new text and images on top." },
           { q: "Will the layout of my PDF break?", a: "katanapdf preserves the original page as a high-resolution image and overlays your edits on top, so the visual layout stays intact." },
         ].map((f, i) => (
           <details key={i} style={{ background: PARCHMENT_2, padding: "14px 22px", marginBottom: 10, border: `1px solid rgba(139,26,26,0.25)` }}>
@@ -293,7 +334,7 @@ function StaticPage({ route }) {
           <h2>Analytics and ads</h2>
           <p>We may serve advertisements through third-party providers (such as Google AdSense). These providers may use cookies to serve ads based on prior visits to this and other websites. You can opt out of personalised advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.</p>
           <h2>Cookies</h2>
-          <p>We do not set our own tracking cookies. Third-party cookies may be set by ad providers. You can disable cookies in your browser at any time without affecting the editor’s functionality.</p>
+          <p>We do not set our own tracking cookies. Third-party cookies may be set by ad providers. You can disable cookies in your browser at any time without affecting the editor's functionality.</p>
           <h2>Children</h2>
           <p>This site is not directed at children under 13. We do not knowingly collect personal information from children.</p>
           <h2>Contact</h2>
@@ -321,7 +362,7 @@ function StaticPage({ route }) {
       title: "About katanapdf",
       body: (
         <>
-          <p>katanapdf is a free, browser-based PDF editor. It was built on the simple idea that editing a PDF shouldn’t require uploading your file to a stranger’s server, signing up for an account, or paying a subscription.</p>
+          <p>katanapdf is a free, browser-based PDF editor. It was built on the simple idea that editing a PDF shouldn't require uploading your file to a stranger's server, signing up for an account, or paying a subscription.</p>
           <h2>How it works</h2>
           <p>Everything happens in your browser. We use modern web technologies (PDF.js for rendering, pdf-lib for saving) to open, edit, and download PDFs without ever sending the file anywhere.</p>
           <h2>Why free?</h2>
@@ -1410,8 +1451,8 @@ export default function App() {
     // pdf-lib's standard fonts only cover WinAnsi (latin-1ish). Replace others with "?".
     // Common smart-quote / em-dash substitutions to keep text legible:
     return s
-      .replace(/[‘’]/g, "'")
-      .replace(/[“”]/g, '"')
+      .replace(/['']/g, "'")
+      .replace(/[""]/g, '"')
       .replace(/—/g, "--")
       .replace(/–/g, "-")
       .replace(/…/g, "...")
