@@ -1501,6 +1501,20 @@ export default function App() {
         console.warn(`pdfBytes has ${docPages.length} pages but state has ${pages.length}; using canvas fallback to preserve every page.`);
         return await handleDownloadCanvasFallback();
       }
+      // Stage 2 guard: when a page has a non-zero /Rotate value the canvas
+      // we captured is already the visually-rotated bitmap, but the overlay
+      // math below still uses pre-rotation page coordinates so text/images
+      // would land in the wrong place. Defer to the canvas fallback for
+      // these pages until full rotation math is in. Loses vector quality on
+      // rotated pages only.
+      const hasRotation = docPages.some(p => {
+        const r = p.getRotation();
+        return r && typeof r.angle === "number" && r.angle % 360 !== 0;
+      });
+      if (hasRotation) {
+        console.warn("Rotated page detected; falling back to canvas export so overlays land correctly.");
+        return await handleDownloadCanvasFallback();
+      }
       const fonts = {
         helv: await doc.embedFont(StandardFonts.Helvetica),
         helvB: await doc.embedFont(StandardFonts.HelveticaBold),

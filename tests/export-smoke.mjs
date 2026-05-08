@@ -20,7 +20,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -108,6 +108,19 @@ await check("merge two synthetic PDFs preserves all pages (3 + 2 = 5)", async ()
   const out = await docA.save();
   const reload = await PDFDocument.load(out);
   assert.equal(reload.getPageCount(), 5, `expected 5 pages, got ${reload.getPageCount()}`);
+});
+
+// Stage 2: rotation is preserved through a save/load round-trip and is
+// detectable via getRotation().angle so handleDownload can route rotated
+// pages to the canvas fallback.
+await check("rotation survives save/load and is detectable", async () => {
+  const doc = await PDFDocument.create();
+  const p = doc.addPage([612, 792]);
+  p.setRotation(degrees(90));
+  const out = await doc.save();
+  const reload = await PDFDocument.load(out);
+  const r = reload.getPages()[0].getRotation();
+  assert.equal(r.angle, 90, `expected 90, got ${r.angle}`);
 });
 
 await check("merge then overlay edits keeps merged page count", async () => {
