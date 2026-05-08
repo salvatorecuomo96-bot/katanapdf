@@ -1,4 +1,8 @@
-# Phase 4 — Install fontkit + ship Noto fonts (Step A of Unicode work)
+# Phase 4 — Install fontkit + ship Noto fonts (Step A of Unicode work) ✅ Done 2026-05-08
+
+**Outcome:** Installed `@pdf-lib/fontkit` + `@fontsource/noto-sans` + `@fontsource/noto-serif` + `@fontsource/noto-sans-mono`. Copied 7 `latin-ext` woff2 variants to `public/fonts/` (noto-sans regular/bold/italic/bold-italic, noto-serif regular/bold, noto-sans-mono regular). Total weight ≈407 KB across the 7. No code changes; lint 5, build clean, test:export 8/8.
+
+
 
 **Goal:** get `@pdf-lib/fontkit` and the Noto font files into the project so Phase 5 can wire them up. No behavior change yet — `sanitiseForStdFont` still strips non-Latin characters on save.
 **Effort:** ~15 min, low risk
