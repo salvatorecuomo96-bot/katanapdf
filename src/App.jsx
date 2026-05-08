@@ -10,73 +10,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 const SCALE = 2;
 
-function KatanaLogo({ size = 36 }) {
-  if (size >= 40) {
-    return (
-      <img
-        src="/logo.png"
-        alt="katanapdf"
-        style={{ width: "min(520px, 85vw)", height: "auto", objectFit: "contain", display: "block" }}
-      />
-    );
-  }
-  return (
-    <img
-      src="/logo.png"
-      alt="katanapdf"
-      style={{ height: size * 1.5, width: "auto", objectFit: "contain" }}
-    />
-  );
-}
-function KatanaLogoSVG({ size = 36 }) {
-  return (
-    <svg width={size * 6} height={size * 1.8} viewBox="0 0 300 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* ── KATANA — tip LEFT, handle RIGHT ── */}
-      {/* Nagasa (blade) — curved steel, tip at left */}
-      <path d="M7 24 Q110 18 212 26 L212 30 Q110 24 9 26 Z" fill="#909090"/>
-      {/* Ha (cutting edge) — bright silver upper edge */}
-      <path d="M7 24 Q110 18 210 26 L7 25 Z" fill="#d8d8d8"/>
-      {/* Edge highlight shimmer */}
-      <path d="M12 24 Q110 18.5 208 26.5" stroke="rgba(255,255,255,0.5)" strokeWidth="0.7" fill="none"/>
-      {/* Habaki (blade collar) */}
-      <rect x="210" y="21" width="7" height="13" rx="1.5" fill="#c8c8c8"/>
-      {/* Tsuba (guard) — layered oval */}
-      <ellipse cx="221" cy="27" rx="6" ry="17" fill="#b8b8b8"/>
-      <ellipse cx="221" cy="27" rx="4.5" ry="13" fill="#a0a0a0"/>
-      <ellipse cx="221" cy="27" rx="2.5" ry="8" fill="#888"/>
-      {/* Tsuka (grip) — handle on right */}
-      <rect x="227" y="20" width="68" height="14" rx="7" fill="#6e6e6e"/>
-      {/* Ito wrap — diagonal cross pattern */}
-      {[232,239,246,253,260,267,274,281,288].map((x, i) => (
-        <line key={i} x1={x} y1="20" x2={x + 5} y2="34" stroke="#333" strokeWidth="1.6" opacity="0.85"/>
-      ))}
-      {/* Kashira (pommel cap) */}
-      <ellipse cx="296" cy="27" rx="4" ry="8" fill="#888"/>
-
-      {/* ── SAYA (scabbard) — same orientation ── */}
-      {/* Main body — curved like the blade */}
-      <path d="M14 60 Q110 55 213 64 L213 71 Q110 62 14 67 Z" fill="#4a4a4a"/>
-      {/* Lacquer highlight */}
-      <path d="M18 61 Q110 56 211 65" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none"/>
-      {/* Kojiri (end cap — left) */}
-      <ellipse cx="12" cy="63" rx="7" ry="9" fill="#6a6a6a"/>
-      <ellipse cx="12" cy="63" rx="5" ry="7" fill="#7a7a7a"/>
-      {/* Kurikata (cord knob) */}
-      <rect x="68" y="57" width="12" height="19" rx="4.5" fill="#333"/>
-      <rect x="70" y="59" width="8" height="15" rx="3" fill="#282828"/>
-      {/* Koiguchi (mouth — right end) */}
-      <rect x="210" y="58" width="9" height="14" rx="2" fill="#646464"/>
-      {/* Fuchi + handle section of koshirae */}
-      <rect x="220" y="57" width="8" height="15" rx="2" fill="#5a5a5a"/>
-      <rect x="228" y="56" width="65" height="17" rx="7" fill="#525252"/>
-      {[232,239,246,253,260,267,274,281,288].map((x, i) => (
-        <line key={i} x1={x} y1="56" x2={x + 5} y2="73" stroke="#282828" strokeWidth="1.5" opacity="0.8"/>
-      ))}
-      <ellipse cx="295" cy="64" rx="4" ry="9" fill="#5e5e5e"/>
-    </svg>
-  );
-}
-
 // === Ancient Japan design tokens ===
 const PARCHMENT = "#F5EDD6";
 const PARCHMENT_2 = "#EDE0BC";
@@ -94,7 +27,7 @@ function SectionDivider({ label }) {
   // shifts the visible text left of the geometric centre. Match it with paddingLeft
   // so the label looks visually centred between the gold rules.
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "36px auto 18px", maxWidth: 880, padding: "0 20px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "36px auto 18px", maxWidth: 1080, padding: "0 20px" }}>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
       <span style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 4, paddingLeft: 4, textTransform: "uppercase", color: LACQUER, fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: GOLD }} />
@@ -156,11 +89,11 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           the visible content fills the strip instead of leaving empty
           parchment around it. */}
       <header style={{ padding: "6px 20px 0", textAlign: "center" }}>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 1080, margin: "0 auto", opacity: 0.5 }} />
         <div style={{ height: 130, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
           <img src="/logo.png" alt="katanapdf" style={{ width: "min(540px, 90vw)", height: "auto", display: "block" }} />
         </div>
-        <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 8px", opacity: 0.5 }} />
+        <div style={{ height: 1, background: LACQUER, maxWidth: 1080, margin: "0 auto 8px", opacity: 0.5 }} />
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
           <StampTag>100% Free</StampTag>
           <StampTag>No Upload</StampTag>
@@ -214,8 +147,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* WHAT YOU CAN DO */}
       <SectionDivider label="What you can do" />
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px 8px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: 10 }}>
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px 8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
           {[
             { label: "Edit supported text", detail: "Click any text block to edit it in place." },
             { label: "Add text", detail: "Place new text boxes anywhere on the page." },
@@ -236,7 +169,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* PRIVACY / TRUST */}
       <SectionDivider label="Your files stay private" />
-      <section style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px" }}>
+      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`, padding: "20px 24px", fontFamily: FELL, fontSize: 15, lineHeight: 1.6, color: INK }}>
           <p style={{ margin: "0 0 14px" }}>
             katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
@@ -251,7 +184,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* HOW TO EDIT */}
       <SectionDivider label="How to edit a PDF online" />
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
             "Open your PDF — click the button or drag a file onto this page.",
@@ -269,8 +202,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* WHY KATANAPDF */}
       <SectionDivider label="Why katanapdf" />
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
           {[
             { t: "100% Free", d: "No paid tier hiding the basic tools." },
             { t: "No Upload Required", d: "Your PDF is processed locally in your browser." },
@@ -290,7 +223,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* FAQ */}
       <SectionDivider label="Frequently asked questions" />
-      <section style={{ maxWidth: 880, margin: "0 auto", padding: "0 20px 56px" }}>
+      <section style={{ maxWidth: 980, margin: "0 auto", padding: "0 20px 56px" }}>
         {[
           { q: "Is katanapdf really free?", a: "Yes. Every feature is free with no paid tier. The site is supported by ads and donations." },
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
@@ -414,7 +347,7 @@ function StaticPage({ route }) {
   );
 }
 
-function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, onDelete, onDeselect }) {
+function FloatingImage({ fi, isSel, onSelect, onStartDrag, onStartResize, onDelete, onDeselect }) {
   useEffect(() => {
     if (!isSel) return;
     const handler = (e) => {
@@ -453,20 +386,6 @@ function FloatingImage({ fi, isSel, zoom, onSelect, onStartDrag, onStartResize, 
           border: "2px solid #fff",
         }} />
       </>}
-    </div>
-  );
-}
-
-function AdSlot({ slot, style = {} }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    try { if (window.adsbygoogle) (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch {}
-  }, []);
-  return (
-    <div style={{ textAlign: "center", ...style }}>
-      <ins ref={ref} className="adsbygoogle" style={{ display: "block" }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-        data-ad-slot={slot} data-ad-format="auto" data-full-width-responsive="true" />
     </div>
   );
 }
@@ -1285,7 +1204,7 @@ export default function App() {
   }
 
   // Append another PDF's pages to the current document — fully editable like original pages
-  async function handleAddPdfAsImage(e, _pageNum) {
+  async function handleAddPdfAsImage(e) {
     const file = e.target.files[0];
     if (!file) return;
     e.target.value = "";
@@ -1741,10 +1660,6 @@ export default function App() {
             <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
           </div>
 
-          <div onClick={e => e.stopPropagation()} style={{ background: PARCHMENT, padding: "6px 0", display: "flex", justifyContent: "center" }}>
-            <AdSlot slot="11223344async55" style={{ width: "100%", maxWidth: 728 }} />
-          </div>
-
           {/* TABS STRIP — one PDF per tab */}
           {tabsList.length > 0 && (
             <div onClick={e => e.stopPropagation()} style={{
@@ -1789,7 +1704,7 @@ export default function App() {
 
           {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
             <div onClick={e => e.stopPropagation()} style={{
-              maxWidth: 880, margin: "20px auto 0", padding: "14px 20px",
+              maxWidth: 1080, margin: "20px auto 0", padding: "14px 20px",
               background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
               fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
               display: "flex", alignItems: "flex-start", gap: 12,
@@ -1808,7 +1723,7 @@ export default function App() {
           )}
 
           <div ref={containerRef} style={{ padding: "40px 0 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 48 }}>
-            {pages.map((pg, pgIdx) => {
+            {pages.map((pg) => {
               const dispW = pg.width * zoom;
               const dispH = pg.height * zoom;
               return (
@@ -1865,11 +1780,6 @@ export default function App() {
                         onDelete={() => deleteFloatingImage(fi.id)} />
                     ))}
                   </div>
-                  {pgIdx % 2 === 1 && (
-                    <div onClick={e => e.stopPropagation()} style={{ marginTop: 32, display: "flex", justifyContent: "center" }}>
-                      <AdSlot slot="5566778899" style={{ width: "100%", maxWidth: 728 }} />
-                    </div>
-                  )}
                 </div>
               );
             })}
