@@ -13,8 +13,8 @@ Update this table at the end of every session so any device can see where we are
 | 3 | Encrypted PDF policy | ✅ Done | 2026-05-08 | [03](phases/03-encrypted-pdf-policy.md) |
 | 4 | Install fontkit + ship Noto fonts | ✅ Done | 2026-05-08 | [04](phases/04-noto-fonts-install.md) |
 | 5 | Wire Noto fonts + Unicode smoke test | ✅ Done | 2026-05-08 | [05](phases/05-unicode-fonts-wire.md) |
-| 6 | Reorder pages | ⏳ Next | — | [06](phases/06-reorder-pages.md) |
-| 7 | Delete + rotate pages | Pending | — | [07](phases/07-delete-rotate-pages.md) |
+| 6 | Reorder pages | ✅ Done | 2026-05-08 | [06](phases/06-reorder-pages.md) |
+| 7 | Delete + rotate pages | ⏳ Next | — | [07](phases/07-delete-rotate-pages.md) |
 | 8 | Image to PDF | Pending | — | [08](phases/08-image-to-pdf.md) |
 | 9 | Signature pad | Pending | — | [09](phases/09-signature-pad.md) |
 | 10 | Text highlighting | Pending | — | [10](phases/10-text-highlighting.md) |

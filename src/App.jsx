@@ -172,6 +172,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             { label: "Add text", detail: "Place new text boxes anywhere on the page." },
             { label: "Add images", detail: "Insert images, resize, and reposition freely." },
             { label: "Merge PDFs", detail: "Append pages from a second PDF." },
+            { label: "Reorder pages", detail: "Use the ↑/↓ buttons on each page to rearrange." },
           ].map((cap, i) => (
             <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.2)`, padding: "14px 18px" }}>
               <span style={{ display: "block", fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: LACQUER, fontWeight: 600, marginBottom: 5 }}>
@@ -897,6 +898,11 @@ export default function App() {
   }, []);
 
   const [pages, setPages] = useState([]);
+  // Phase 6: pageOrder is an array of indices into `pages[]` describing the
+  // current display order. When unmodified it equals [0,1,...,n-1]. Reorder
+  // mutates this, not pages[], so textBlocks / floatingBoxes / floatingImages
+  // (keyed by the immutable pg.num) keep working without renumbering.
+  const [pageOrder, setPageOrder] = useState([]);
   const [textBlocks, setTextBlocks] = useState({});
   const [floatingBoxes, setFloatingBoxes] = useState([]);
   const [floatingImages, setFloatingImages] = useState([]);
@@ -908,7 +914,7 @@ export default function App() {
   // Multi-tab state — each loaded PDF is a "tab" with its own state snapshot
   const [tabsList, setTabsList] = useState([]); // [{ id, fileName }]
   const [activeTabId, setActiveTabId] = useState(null);
-  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted } }
+  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted } }
   const liveStateRef = useRef({});
   const [hasTextLayer, setHasTextLayer] = useState(true);
   const [textLayerNoticeDismissed, setTextLayerNoticeDismissed] = useState(false);
@@ -1042,6 +1048,7 @@ export default function App() {
       pageData.push({ num: i, dataUrl: canvas.toDataURL("image/png"), width: vp.width, height: vp.height });
     }
     setPages(pageData);
+    setPageOrder(pageData.map((_, i) => i));
     setTextBlocks(words);
     setFloatingBoxes([]);
     setFloatingImages([]);
@@ -1069,7 +1076,7 @@ export default function App() {
   // Mirror live state into a ref so snapshotCurrent always reads fresh values
   useEffect(() => {
     liveStateRef.current = {
-      pdfBytes, pages, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted,
+      pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted,
     };
   });
 
@@ -1081,6 +1088,7 @@ export default function App() {
   function restoreSnapshot(snap) {
     setPdfBytes(snap.pdfBytes);
     setPages(snap.pages);
+    setPageOrder(snap.pageOrder ?? snap.pages.map((_, i) => i));
     setTextBlocks(snap.textBlocks);
     setFloatingBoxes(snap.floatingBoxes);
     setFloatingImages(snap.floatingImages);
@@ -1111,6 +1119,7 @@ export default function App() {
     setTabsList([]);
     setActiveTabId(null);
     setPages([]);
+    setPageOrder([]);
     setTextBlocks({});
     setFloatingBoxes([]);
     setFloatingImages([]);
@@ -1139,6 +1148,7 @@ export default function App() {
         } else {
           // No tabs left — return to homepage
           setPages([]);
+          setPageOrder([]);
           setTextBlocks({});
           setFloatingBoxes([]);
           setFloatingImages([]);
@@ -1154,6 +1164,27 @@ export default function App() {
 
   function makeTabId() {
     return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  // Phase 6: page reorder. Swaps adjacent entries in pageOrder; pages[] and the
+  // page-keyed state (textBlocks/floatingBoxes/floatingImages) stay untouched.
+  function movePageUp(displayIdx) {
+    if (displayIdx <= 0) return;
+    saveHistory();
+    setPageOrder(prev => {
+      const next = [...prev];
+      [next[displayIdx - 1], next[displayIdx]] = [next[displayIdx], next[displayIdx - 1]];
+      return next;
+    });
+  }
+  function movePageDown(displayIdx) {
+    if (displayIdx >= pageOrder.length - 1) return;
+    saveHistory();
+    setPageOrder(prev => {
+      const next = [...prev];
+      [next[displayIdx + 1], next[displayIdx]] = [next[displayIdx], next[displayIdx + 1]];
+      return next;
+    });
   }
 
   async function createBlankPdf() {
@@ -1371,6 +1402,8 @@ export default function App() {
       }
 
       setPages(prev => [...prev, ...newPages]);
+      // Append the new page indices onto pageOrder so merged pages land at the end.
+      setPageOrder(prev => [...prev, ...newPages.map((_, j) => prev.length + j)]);
       setTextBlocks(newWords);
       setPdfBytes(mergedBytes);
     } catch (err) {
@@ -1504,19 +1537,18 @@ export default function App() {
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
     try {
-      // Try real-text path first: load the original PDF and overlay edits as actual text.
       // Phase 3: don't silently strip encryption. Try strict first; only
       // fall back to ignoreEncryption: true if we hit an actual encryption
       // error — and the user has already been warned via the banner that
       // loadPdfFromBytes set up. Other parse failures still go to the
       // canvas fallback as before.
-      let doc;
+      let srcDoc;
       try {
-        doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
+        srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
       } catch (loadErr) {
         if (/encrypt/i.test(loadErr?.message || "")) {
           try {
-            doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+            srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
           } catch (innerErr) {
             console.warn("pdf-lib couldn't parse this encrypted PDF, falling back to canvas:", innerErr.message);
             return await handleDownloadCanvasFallback();
@@ -1527,13 +1559,13 @@ export default function App() {
         }
       }
 
-      const docPages = doc.getPages();
+      const srcPages = srcDoc.getPages();
       // Stage 1 guard: if pdfBytes has fewer pages than the editor state
       // (e.g. an Add-PDF merge failed earlier), the loop below would silently
       // skip the missing pages. Fall through to the canvas fallback so every
       // visible page lands in the export — even if at raster quality.
-      if (docPages.length < pages.length) {
-        console.warn(`pdfBytes has ${docPages.length} pages but state has ${pages.length}; using canvas fallback to preserve every page.`);
+      if (srcPages.length < pages.length) {
+        console.warn(`pdfBytes has ${srcPages.length} pages but state has ${pages.length}; using canvas fallback to preserve every page.`);
         return await handleDownloadCanvasFallback();
       }
       // Stage 2 guard: when a page has a non-zero /Rotate value the canvas
@@ -1542,7 +1574,7 @@ export default function App() {
       // would land in the wrong place. Defer to the canvas fallback for
       // these pages until full rotation math is in. Loses vector quality on
       // rotated pages only.
-      const hasRotation = docPages.some(p => {
+      const hasRotation = srcPages.some(p => {
         const r = p.getRotation();
         return r && typeof r.angle === "number" && r.angle % 360 !== 0;
       });
@@ -1550,10 +1582,12 @@ export default function App() {
         console.warn("Rotated page detected; falling back to canvas export so overlays land correctly.");
         return await handleDownloadCanvasFallback();
       }
-      // Phase 5: register fontkit + embed Noto woff2 fonts so edits handle full
-      // Unicode (café, résumé, piñata) instead of being stripped to "?". The 7
-      // shipped variants cover Latin Extended; unmapped variants fall back to
-      // the closest in pickPdfLibFont.
+
+      // Phase 6: build a new doc and copyPages from src in the user's pageOrder
+      // so reorders survive download. When pageOrder is identity this is a no-op
+      // beyond the small copyPages overhead. Phase 5 fonts embed on newDoc (not src).
+      const order = pageOrder.length === pages.length ? pageOrder : pages.map((_, i) => i);
+      const doc = await PDFDocument.create();
       doc.registerFontkit(fontkit);
       const noto = await loadNotoFontBytes();
       const fonts = {
@@ -1565,11 +1599,13 @@ export default function App() {
         timesB: await doc.embedFont(noto["noto-serif-bold"], { subset: true }),
         courier: await doc.embedFont(noto["noto-sans-mono-regular"], { subset: true }),
       };
+      const copiedPages = await doc.copyPages(srcDoc, order);
+      for (const p of copiedPages) doc.addPage(p);
 
-      for (let pgIdx = 0; pgIdx < pages.length; pgIdx++) {
-        const pg = pages[pgIdx];
-        const pdfPage = docPages[pgIdx];
-        if (!pdfPage) continue;
+      for (let displayIdx = 0; displayIdx < copiedPages.length; displayIdx++) {
+        const pg = pages[order[displayIdx]];
+        const pdfPage = doc.getPages()[displayIdx];
+        if (!pdfPage || !pg) continue;
         const { width: pdfW, height: pdfH } = pdfPage.getSize();
         const sx = pdfW / pg.width;
         const sy = pdfH / pg.height;
@@ -1675,7 +1711,11 @@ export default function App() {
   // Fallback used when pdf-lib can't parse the original PDF (rare): rasterise via canvas.
   async function handleDownloadCanvasFallback() {
     const doc = await PDFDocument.create();
-    for (const pg of pages) {
+    // Phase 6: iterate by pageOrder so reorders apply in the canvas path too.
+    const order = pageOrder.length === pages.length ? pageOrder : pages.map((_, i) => i);
+    for (const i of order) {
+      const pg = pages[i];
+      if (!pg) continue;
       const canvas = canvasRefs.current[pg.num];
       if (!canvas) continue;
       canvas.width = pg.width;
@@ -1858,13 +1898,22 @@ export default function App() {
           )}
 
           <div ref={containerRef} style={{ padding: "40px 0 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 48 }}>
-            {pages.map((pg) => {
+            {(pageOrder.length === pages.length ? pageOrder : pages.map((_, i) => i)).map((pageIdx, displayIdx, displayOrder) => {
+              const pg = pages[pageIdx];
+              if (!pg) return null;
               const dispW = pg.width * zoom;
               const dispH = pg.height * zoom;
+              const isFirst = displayIdx === 0;
+              const isLast = displayIdx === displayOrder.length - 1;
               return (
                 <div key={pg.num}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
-                    <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {pg.num}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
+                      {/* Phase 6: reorder controls. Disabled at the ends; reorder mutates pageOrder, not the source PDF, until download. */}
+                      <button onClick={e => { e.stopPropagation(); movePageUp(displayIdx); }} disabled={isFirst} aria-label={`Move page ${displayIdx + 1} up`} title="Move page up" style={{ ...pageBtn, padding: "4px 8px", opacity: isFirst ? 0.3 : 1, cursor: isFirst ? "default" : "pointer" }}>↑</button>
+                      <button onClick={e => { e.stopPropagation(); movePageDown(displayIdx); }} disabled={isLast} aria-label={`Move page ${displayIdx + 1} down`} title="Move page down" style={{ ...pageBtn, padding: "4px 8px", opacity: isLast ? 0.3 : 1, cursor: isLast ? "default" : "pointer" }}>↓</button>
+                    </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }} style={pageBtn}>+ Add text</button>
                       <label style={pageBtn} onClick={e => e.stopPropagation()}>

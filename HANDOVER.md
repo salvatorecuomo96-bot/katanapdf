@@ -3,14 +3,14 @@
 _Last updated: 2026-05-08_
 
 ## Context summary (2 sentences)
-katanapdf is a fully client-side PDF editor (React 19 + Vite 8) that opens a PDF, lets the user edit existing text, add text/images, merge PDFs, and download — no server, no upload, no account; deployed at katanapdf.com. The work is structured as a 15-phase ROADMAP (Phases 1–5 shipped, Phase 6 next); each phase is one Claude Code session, all changes land on `main` via GitHub Actions CI.
+katanapdf is a fully client-side PDF editor (React 19 + Vite 8) that opens a PDF, lets the user edit existing text, add text/images, merge PDFs, reorder pages, and download — no server, no upload, no account; deployed at katanapdf.com. The work is structured as a 15-phase ROADMAP (Phases 1–6 shipped, Phase 7 next); each phase is one Claude Code session, all changes land on `main` via GitHub Actions CI.
 
 ## Tech stack
 - **Frontend**: React 19, Vite 8, single-file `src/App.jsx` (~1900 lines), inline styles, ESLint flat config
 - **PDF rendering**: `pdfjs-dist` v5 — legacy build (`pdfjs-dist/legacy/build/pdf.mjs`) for iOS Safari compatibility
 - **PDF save / mutate**: `pdf-lib` v1 + `@pdf-lib/fontkit` (registered per save call)
 - **Fonts**: `@fontsource/noto-sans`, `@fontsource/noto-serif`, `@fontsource/noto-sans-mono` — 7 latin-ext woff2 variants shipped at `public/fonts/` (~407 KB total). Embedded via `embedFont(bytes, { subset: true })`.
-- **Tests**: bare Node `tests/export-smoke.mjs` (no Jest/Vitest), **9 round-trip checks** including a Unicode roundtrip (`café résumé piñata`).
+- **Tests**: bare Node `tests/export-smoke.mjs` (no Jest/Vitest), **10 round-trip checks** including a Unicode roundtrip (`café résumé piñata`) and page-reorder via `copyPages`.
 - **CI**: GitHub Actions `.github/workflows/ci.yml` — `npm ci && lint && build && test:export`. Lint is `continue-on-error: true` (informational); build + test are required.
 - **Hosting**: katanapdf.com (deployment outside the repo)
 
@@ -22,7 +22,7 @@ katanapdf is a fully client-side PDF editor (React 19 + Vite 8) that opens a PDF
 - **Text extraction**: `page.getTextContent()` → words → `clusterWordsIntoLineClusters` → `mergeLineClustersIntoParagraphs` → array of `textBlock`s with `{x, y, baselineY, width, height, fontSize, fontFamily, isBold, isItalic, edited, text, lineBaselines}`.
 - **Editing existing text**: click a textBlock → `EditPopup` opens (transparent bg, lifted z) → on Tab/click-outside, `commitEdit` mutates the block (`edited: true`, new text). The canvas redraws with a white rect + new text. While the popup is open, the active block is white-out blanked on the canvas so the original text doesn't bleed through the transparent popup.
 - **Floating overlays**: `floatingBoxes` (text) and `floatingImages` (images) are absolutely-positioned React divs. Each gets a unique `id` and creation-order `z = 50 + counter` so newer overlays render above older ones. EditPopup-active wrapper z is 3000 to lift above floating images.
-- **Save**: `handleDownload` reloads `pdfBytes` via `pdf-lib` → registers fontkit → `loadNotoFontBytes()` (cached) fetches the 7 woff2 from `/fonts/` and caches the buffers → embeds each with `{ subset: true }` → for each edited block draws white rect + `pdfPage.drawText` → for each floating image, `embedJpg`/`embedPng` + `drawImage` → `doc.save()` → `Blob` → object URL → `<a download>` click. **No bytes leave the browser.**
+- **Save**: `handleDownload` loads `pdfBytes` via `pdf-lib` as `srcDoc`, creates a fresh `doc`, registers fontkit, embeds 7 Noto fonts, then `doc.copyPages(srcDoc, pageOrder)` + `addPage` to assemble pages in display order. For each page in display order, draws white rect + `pdfPage.drawText` for edits, `embedJpg`/`embedPng` + `drawImage` for floating images. `doc.save()` → `Blob` → object URL → `<a download>` click. **No bytes leave the browser.** Reorder happens here on save, not by mutating `srcDoc`.
 - **Canvas fallback** (`handleDownloadCanvasFallback`): rasterizes pages as PNG and emits image-only PDF. Triggered when (a) pdf-lib can't parse the source for a non-encryption reason, (b) `pdfBytes` page count < state page count (Stage 1 merge guard), or (c) any page has non-zero rotation (Stage 2 guard).
 - **Multi-tab**: `tabsList` + `tabSnapshots` (in a ref) preserve full state per open PDF; switch via `restoreSnapshot`.
 - **Undo**: `history` array, max 30 entries; deep-clones via `JSON.parse(JSON.stringify(...))`.
@@ -51,7 +51,7 @@ index.html             SEO meta + Google Fonts preconnect (only outbound network
 ```
 
 ### Key state slots in App (read these first when picking up)
-`pdfBytes`, `pages`, `textBlocks`, `floatingBoxes`, `floatingImages`, `history`, `tabsList`, `tabSnapshots` (ref), `activeTabId`, `isEncrypted`, `hasTextLayer`, plus `dragging`/`resizingImg`/`resizingFb` transient drag state.
+`pdfBytes`, `pages`, `pageOrder` (array of indices into `pages` for display order), `textBlocks`, `floatingBoxes`, `floatingImages`, `history`, `tabsList`, `tabSnapshots` (ref), `activeTabId`, `isEncrypted`, `hasTextLayer`, plus `dragging`/`resizingImg`/`resizingFb` transient drag state.
 
 ## Roadmap
 
@@ -61,10 +61,10 @@ index.html             SEO meta + Google Fonts preconnect (only outbound network
 3. ✅ Encrypted PDF policy (banner + strict-first load)
 4. ✅ fontkit + 7 Noto fonts shipped to `public/fonts/`
 5. ✅ Wire fontkit + Noto fonts in `handleDownload`, drop `sanitiseForStdFont`, Unicode round-trip smoke test (`café résumé piñata`)
+6. ✅ Reorder pages (↑/↓ buttons per page → `pageOrder[]` array → `doc.copyPages(srcDoc, order)` on save)
 
 **Pending:**
-- 6: ⏳ **Reorder pages** (drag handle on page header → `pageOrder[]` → `copyPages`)
-- 7: Delete + rotate pages (drops the Stage 2 raster fallback)
+- 7: ⏳ **Delete + rotate pages** (drops the Stage 2 raster fallback)
 - 8: Image to PDF (drop JPG/PNG on homepage → 1-page editable PDF)
 - 9: Signature pad (modal canvas → transparent PNG → floatingImage)
 - 10: Text highlighting (block-level, 4 color presets, low-alpha rectangle behind text)

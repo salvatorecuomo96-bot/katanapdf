@@ -200,6 +200,32 @@ await check("Unicode round-trip: café résumé piñata via Noto Sans woff2", as
   assert.ok(out.byteLength > 2000, `expected real font data embedded; got ${out.byteLength} bytes`);
 });
 
+// Phase 6: reorder pages via copyPages([2, 0, 1]). Mirrors what handleDownload
+// does on save when the user has reordered pageOrder. Verifies all pages survive
+// and the new doc reports the right count; a follow-up byte-level check would
+// need pdfjs to read text content (out of scope for smoke).
+await check("reorder pages: copyPages([2, 0, 1]) keeps all 3 pages", async () => {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  for (let i = 1; i <= 3; i++) {
+    const p = doc.addPage([612, 792]);
+    p.drawText(`PAGE ${i}`, { x: 50, y: 700, size: 18, font });
+  }
+  const src = await doc.save();
+
+  const srcDoc = await PDFDocument.load(src);
+  const newDoc = await PDFDocument.create();
+  const order = [2, 0, 1];
+  const reordered = await newDoc.copyPages(srcDoc, order);
+  for (const p of reordered) newDoc.addPage(p);
+  const out = await newDoc.save();
+
+  const reload = await PDFDocument.load(out);
+  assert.equal(reload.getPageCount(), 3, `expected 3 pages, got ${reload.getPageCount()}`);
+  // Sanity: the saved bytes contain page content streams; non-trivial size.
+  assert.ok(out.byteLength > 1000, `expected real content; got ${out.byteLength} bytes`);
+});
+
 await check("merge then overlay edits keeps merged page count", async () => {
   const a = await buildSynth(2);
   const b = await buildSynth(2);
