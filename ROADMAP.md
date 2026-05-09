@@ -12,7 +12,7 @@ Update this table at the end of every session so any device can see where we are
 | 2 | Add "Merge PDF" to top toolbar | ✅ Done | 2026-05-08 | [02](phases/02-merge-pdf-toolbar.md) |
 | 3 | Encrypted PDF policy | ✅ Done | 2026-05-08 | [03](phases/03-encrypted-pdf-policy.md) |
 | 4 | Install fontkit + ship Noto fonts | ✅ Done | 2026-05-08 | [04](phases/04-noto-fonts-install.md) |
-| 5 | Wire Noto fonts + Unicode smoke test | ⏳ Next | — | [05](phases/05-unicode-fonts-wire.md) |
+| 5 | Wire Noto fonts + Unicode smoke test | 🟡 In progress | 2026-05-08 | [05](phases/05-unicode-fonts-wire.md) |
 | 6 | Reorder pages | Pending | — | [06](phases/06-reorder-pages.md) |
 | 7 | Delete + rotate pages | Pending | — | [07](phases/07-delete-rotate-pages.md) |
 | 8 | Image to PDF | Pending | — | [08](phases/08-image-to-pdf.md) |

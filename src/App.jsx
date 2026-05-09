@@ -1,6 +1,24 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+
+// Loaded once and cached so handleDownload doesn't re-fetch on every save.
+let _notoFontBytesCache = null;
+async function loadNotoFontBytes() {
+  if (_notoFontBytesCache) return _notoFontBytesCache;
+  const names = [
+    "noto-sans-regular", "noto-sans-bold", "noto-sans-italic", "noto-sans-bold-italic",
+    "noto-serif-regular", "noto-serif-bold",
+    "noto-sans-mono-regular",
+  ];
+  const entries = await Promise.all(names.map(async (n) => {
+    const res = await fetch(`/fonts/${n}.woff2`);
+    return [n, await res.arrayBuffer()];
+  }));
+  _notoFontBytesCache = Object.fromEntries(entries);
+  return _notoFontBytesCache;
+}
 
 // Legacy build is transpiled for older Safari / iOS — improves cross-device compatibility
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -1462,15 +1480,18 @@ export default function App() {
 
   function pickPdfLibFont(fonts, family, bold, italic) {
     const f = (family || "").toLowerCase();
-    let key;
+    // Noto Sans has full set; Noto Serif has regular + bold; Noto Sans Mono has
+    // regular only. Fall back to the closest variant we shipped.
     if (f.includes("times") || f.includes("georgia") || f.includes("serif")) {
-      key = bold && italic ? "timesBI" : bold ? "timesB" : italic ? "timesI" : "times";
-    } else if (f.includes("courier") || f.includes("mono")) {
-      key = bold && italic ? "courierBI" : bold ? "courierB" : italic ? "courierI" : "courier";
-    } else {
-      key = bold && italic ? "helvBI" : bold ? "helvB" : italic ? "helvI" : "helv";
+      return bold ? fonts.timesB : fonts.times;
     }
-    return fonts[key];
+    if (f.includes("courier") || f.includes("mono")) {
+      return fonts.courier;
+    }
+    if (bold && italic) return fonts.helvBI;
+    if (bold) return fonts.helvB;
+    if (italic) return fonts.helvI;
+    return fonts.helv;
   }
 
   function hexToRgb(hex) {
@@ -1478,19 +1499,6 @@ export default function App() {
     if (!m) return rgb(0, 0, 0);
     const n = parseInt(m[1], 16);
     return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
-  }
-
-  // Replace any character pdf-lib's WinAnsi standard font can't encode
-  function sanitiseForStdFont(s) {
-    // pdf-lib's standard fonts only cover WinAnsi (latin-1ish). Replace others with "?".
-    // Common smart-quote / em-dash substitutions to keep text legible:
-    return s
-      .replace(/['']/g, "'")
-      .replace(/[""]/g, '"')
-      .replace(/—/g, "--")
-      .replace(/–/g, "-")
-      .replace(/…/g, "...")
-      .replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, "?");
   }
 
   async function handleDownload() {
@@ -1542,19 +1550,20 @@ export default function App() {
         console.warn("Rotated page detected; falling back to canvas export so overlays land correctly.");
         return await handleDownloadCanvasFallback();
       }
+      // Phase 5: register fontkit + embed Noto woff2 fonts so edits handle full
+      // Unicode (café, résumé, piñata) instead of being stripped to "?". The 7
+      // shipped variants cover Latin Extended; unmapped variants fall back to
+      // the closest in pickPdfLibFont.
+      doc.registerFontkit(fontkit);
+      const noto = await loadNotoFontBytes();
       const fonts = {
-        helv: await doc.embedFont(StandardFonts.Helvetica),
-        helvB: await doc.embedFont(StandardFonts.HelveticaBold),
-        helvI: await doc.embedFont(StandardFonts.HelveticaOblique),
-        helvBI: await doc.embedFont(StandardFonts.HelveticaBoldOblique),
-        times: await doc.embedFont(StandardFonts.TimesRoman),
-        timesB: await doc.embedFont(StandardFonts.TimesRomanBold),
-        timesI: await doc.embedFont(StandardFonts.TimesRomanItalic),
-        timesBI: await doc.embedFont(StandardFonts.TimesRomanBoldItalic),
-        courier: await doc.embedFont(StandardFonts.Courier),
-        courierB: await doc.embedFont(StandardFonts.CourierBold),
-        courierI: await doc.embedFont(StandardFonts.CourierOblique),
-        courierBI: await doc.embedFont(StandardFonts.CourierBoldOblique),
+        helv: await doc.embedFont(noto["noto-sans-regular"], { subset: true }),
+        helvB: await doc.embedFont(noto["noto-sans-bold"], { subset: true }),
+        helvI: await doc.embedFont(noto["noto-sans-italic"], { subset: true }),
+        helvBI: await doc.embedFont(noto["noto-sans-bold-italic"], { subset: true }),
+        times: await doc.embedFont(noto["noto-serif-regular"], { subset: true }),
+        timesB: await doc.embedFont(noto["noto-serif-bold"], { subset: true }),
+        courier: await doc.embedFont(noto["noto-sans-mono-regular"], { subset: true }),
       };
 
       for (let pgIdx = 0; pgIdx < pages.length; pgIdx++) {
@@ -1568,7 +1577,7 @@ export default function App() {
         // 1. Edited original text → white rectangle over the original area + new text on top
         const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
         for (const e of edits) {
-          const text = sanitiseForStdFont(e.text || "");
+          const text = e.text || "";
           const lines = text.split(/\r?\n/);
           const numLines = Math.max(1, lines.length);
           const lhCanvas = e.fontSize * 1.22;
@@ -1606,7 +1615,7 @@ export default function App() {
 
         // 2. New floating text boxes
         for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-          const text = sanitiseForStdFont(fb.text || "");
+          const text = fb.text || "";
           if (!text) continue;
           const font = pickPdfLibFont(fonts, fb.fontFamily, fb.isBold, fb.isItalic);
           const fs = fb.fontSize * sy;
