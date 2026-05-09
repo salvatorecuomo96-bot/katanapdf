@@ -925,6 +925,9 @@ export default function App() {
   const [resizingImg, setResizingImg] = useState(null);
   const [resizingFb, setResizingFb] = useState(null);
   const [zoom, setZoom] = useState(1);
+  const [isGridView, setIsGridView] = useState(false);
+  const [draggedPageNum, setDraggedPageNum] = useState(null);
+  const [dragOverPageNum, setDragOverPageNum] = useState(null);
   const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
   const [fontSize, setFontSize] = useState(14);
   const [isBold, setIsBold] = useState(false);
@@ -1219,23 +1222,30 @@ export default function App() {
     return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  // Phase 6: page reorder. Swaps adjacent entries in pageOrder; pages[] and the
-  // page-keyed state (textBlocks/floatingBoxes/floatingImages) stay untouched.
-  function movePageUp(displayIdx) {
-    if (displayIdx <= 0) return;
+  function movePageTo(pageNum, targetDisplayIdx) {
     saveHistory();
     setPageOrder(prev => {
+      const pageOrderIdx = prev.findIndex(pIdx => pages[pIdx]?.num === pageNum);
+      if (pageOrderIdx === -1) return prev;
+
       const next = [...prev];
-      [next[displayIdx - 1], next[displayIdx]] = [next[displayIdx], next[displayIdx - 1]];
-      return next;
-    });
-  }
-  function movePageDown(displayIdx) {
-    if (displayIdx >= pageOrder.length - 1) return;
-    saveHistory();
-    setPageOrder(prev => {
-      const next = [...prev];
-      [next[displayIdx + 1], next[displayIdx]] = [next[displayIdx], next[displayIdx + 1]];
+      const [item] = next.splice(pageOrderIdx, 1);
+
+      let visibleCount = 0;
+      let insertIdx = next.length;
+      for (let i = 0; i < next.length; i++) {
+        if (visibleCount === targetDisplayIdx) {
+          insertIdx = i;
+          break;
+        }
+        const pIdx = next[i];
+        const pg = pages[pIdx];
+        if (pg && !deletedPages.has(pg.num)) {
+          visibleCount++;
+        }
+      }
+      
+      next.splice(insertIdx, 0, item);
       return next;
     });
   }
@@ -1899,6 +1909,10 @@ export default function App() {
             <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
             <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={tbIconBtn}>−</button>
+            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
+            <button onClick={() => setIsGridView(g => !g)} style={{ ...tbBtn, background: isGridView ? LACQUER : "transparent", color: isGridView ? PARCHMENT : GOLD }}>
+              {isGridView ? "Exit Grid" : "Grid View"}
+            </button>
             <div style={{ flex: 1 }} />
             <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
           </div>
@@ -1985,58 +1999,118 @@ export default function App() {
             </div>
           )}
 
-          <div ref={containerRef} style={{ padding: "40px 0 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 48 }}>
+          <div ref={containerRef} style={{
+            padding: "40px 20px 80px",
+            display: isGridView ? "grid" : "flex",
+            gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined,
+            flexDirection: isGridView ? undefined : "column",
+            alignItems: isGridView ? "start" : "center",
+            gap: isGridView ? 20 : 48,
+            width: "100%",
+            boxSizing: "border-box"
+          }}>
             {visiblePages.map((pg, displayIdx) => {
               if (!pg) return null;
               const rotation = rotatedPages[pg.num] || 0;
               const swap = rotation === 90 || rotation === 270;
-              const dispW = (swap ? pg.height : pg.width) * zoom;
-              const dispH = (swap ? pg.width : pg.height) * zoom;
-              const isFirst = displayIdx === 0;
-              const isLast = displayIdx === visiblePages.length - 1;
+              const scale = isGridView ? Math.min(240 / (swap ? pg.height : pg.width), 0.5) : zoom;
+              const dispW = (swap ? pg.height : pg.width) * scale;
+              const dispH = (swap ? pg.width : pg.height) * scale;
               return (
-                <div key={pg.num}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
-                      {/* Phase 6: reorder controls. Disabled at the ends; reorder mutates pageOrder, not the source PDF, until download. */}
-                      <button onClick={e => { e.stopPropagation(); movePageUp(displayIdx); }} disabled={isFirst} aria-label={`Move page ${displayIdx + 1} up`} title="Move page up" style={{ ...pageBtn, padding: "4px 8px", opacity: isFirst ? 0.3 : 1, cursor: isFirst ? "default" : "pointer" }}>↑</button>
-                      <button onClick={e => { e.stopPropagation(); movePageDown(displayIdx); }} disabled={isLast} aria-label={`Move page ${displayIdx + 1} down`} title="Move page down" style={{ ...pageBtn, padding: "4px 8px", opacity: isLast ? 0.3 : 1, cursor: isLast ? "default" : "pointer" }}>↓</button>
-                      <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90°" style={{ ...pageBtn, padding: "4px 8px" }}>↻</button>
-                      <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>×</button>
+                <div key={pg.num}
+                     draggable={isGridView}
+                     onDragStart={e => {
+                       if (isGridView) {
+                         e.dataTransfer.effectAllowed = "move";
+                         setTimeout(() => setDraggedPageNum(pg.num), 0);
+                       }
+                     }}
+                     onDragOver={e => {
+                       if (isGridView && draggedPageNum !== null && draggedPageNum !== pg.num) {
+                         e.preventDefault();
+                         e.dataTransfer.dropEffect = "move";
+                         setDragOverPageNum(pg.num);
+                       }
+                     }}
+                     onDragLeave={() => {
+                       if (dragOverPageNum === pg.num) setDragOverPageNum(null);
+                     }}
+                     onDrop={e => {
+                       if (isGridView && draggedPageNum !== null) {
+                         e.preventDefault();
+                         movePageTo(draggedPageNum, displayIdx);
+                         setDraggedPageNum(null);
+                         setDragOverPageNum(null);
+                       }
+                     }}
+                     onDragEnd={() => {
+                       setDraggedPageNum(null);
+                       setDragOverPageNum(null);
+                     }}
+                     style={{
+                       opacity: draggedPageNum === pg.num ? 0.5 : 1,
+                       border: dragOverPageNum === pg.num ? `2px dashed ${LACQUER}` : "2px solid transparent",
+                       padding: isGridView ? 4 : 0,
+                       boxSizing: "border-box"
+                     }}>
+                  {!isGridView && (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
+                        {/* Phase 6: reorder controls. Disabled at the ends; reorder mutates pageOrder, not the source PDF, until download. */}
+                        <input type="number" min="1" max={visiblePages.length} value={displayIdx + 1}
+                          onChange={e => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val) && val !== displayIdx + 1) movePageTo(pg.num, val - 1);
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") e.target.blur();
+                          }}
+                          title="Swap to page"
+                          style={{ ...pageBtn, padding: "2px 4px", width: 44, textAlign: "center" }}
+                        />
+                        <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90°" style={{ ...pageBtn, padding: "4px 8px" }}>↻</button>
+                        <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>×</button>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => addFloatingBox(pg.num)} style={pageBtn}>+ Add text</button>
+                        <label style={pageBtn}>
+                          + Add image
+                          <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
+                        </label>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button style={pageBtn}>+ Add text</button>
-                      <label style={pageBtn}>
-                        + Add image
-                        <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
-                      </label>
+                  )}
+                  {isGridView && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                       <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
+                       <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "2px 6px", fontSize: 10 }}>×</button>
                     </div>
-                  </div>
-                  <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden" }}>
+                  )}
+                  <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden", pointerEvents: isGridView ? "none" : "auto" }}>
                     <div style={{
                       position: "absolute",
                       left: "50%",
                       top: "50%",
-                      width: pg.width * zoom,
-                      height: pg.height * zoom,
+                      width: pg.width * scale,
+                      height: pg.height * scale,
                       transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
                       transformOrigin: "center center"
                     }}>
-                      <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: pg.width * zoom, height: pg.height * zoom }} />
-                      {(textBlocks[pg.num] || []).map(tb => {
+                      <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: pg.width * scale, height: pg.height * scale }} />
+                      {!isGridView && (textBlocks[pg.num] || []).map(tb => {
                         const isOpen = activePopup?.blockId === tb.id;
                         return (
                           <div key={tb.id} style={{
-                            position: "absolute", left: tb.x * zoom, top: tb.y * zoom,
-                            width: Math.max(tb.width * zoom, 8),
-                            height: Math.max(tb.height * zoom, tb.fontSize * zoom * 0.9),
+                            position: "absolute", left: tb.x * scale, top: tb.y * scale,
+                            width: Math.max(tb.width * scale, 8),
+                            height: Math.max(tb.height * scale, tb.fontSize * scale * 0.9),
                             // When the popup is open, lift the whole wrapper above floating images
                             // (which use z = 50 + counter, ~1000 when selected) so the popup renders on top.
                             zIndex: isOpen ? 3000 : 10, cursor: "text",
                           }} onClick={e => clickTextBlock(tb, e)}>
                             {isOpen && (
-                              <EditPopup block={tb} zoom={zoom} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
+                              <EditPopup block={tb} zoom={scale} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
                                 offsetX={activePopup.offsetX ?? 0} offsetY={activePopup.offsetY ?? 0}
                                 onOffsetChange={(ox, oy) => setActivePopup(ap => (ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap))}
                                 onCommit={newText => commitEdit(tb.id, tb.page, newText)}
@@ -2045,7 +2119,7 @@ export default function App() {
                           </div>
                         );
                       })}
-                      {floatingBoxes.filter(fb => fb.page === pg.num).map(fb => (
+                      {!isGridView && floatingBoxes.filter(fb => fb.page === pg.num).map(fb => (
                         <FloatingBox key={fb.id} fb={fb} isSel={selected === fb.id}
                           onSelect={() => setSelected(fb.id)}
                           onStartDrag={e => startDragFloat(e, fb)}
@@ -2054,8 +2128,8 @@ export default function App() {
                           onCommit={() => setSelected(null)}
                           onDelete={() => deleteFloatingBox(fb.id)} />
                       ))}
-                      {floatingImages.filter(fi => fi.page === pg.num).map(fi => (
-                        <FloatingImage key={fi.id} fi={fi} isSel={selected === fi.id} zoom={zoom}
+                      {!isGridView && floatingImages.filter(fi => fi.page === pg.num).map(fi => (
+                        <FloatingImage key={fi.id} fi={fi} isSel={selected === fi.id} zoom={scale}
                           onSelect={() => setSelected(fi.id)}
                           onDeselect={() => setSelected(null)}
                           onStartDrag={e => startDragImg(e, fi)}

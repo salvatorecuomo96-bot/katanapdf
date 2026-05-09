@@ -36,6 +36,7 @@ Pre-roadmap groundwork (already shipped):
 - **At session start**, run `git fetch && git status`. If behind `origin/main`, pull before any edits. The laptop pushes from a different machine, so the worktree is often stale at session start — discover that on turn 1, not turn 5.
 - **When picking the next phase**, read only this `ROADMAP.md` (status table + rules) and the one phase file you're about to execute. Don't read all 15 phase files.
 - One phase per Claude session. Don't bundle.
+- **At the end of every task**, explicitly list out what the user should manually check before confirming that the task was successful. Provide a clear testing checklist.
 - After each phase: `npm run lint && npm run build && npm run test:export`. If green, commit + push.
 - After each phase: also update the **Status** table above so progress is visible from any device.
 - If a phase blocks (limit hit, weird behaviour), stop and resume next day. Don't fight it.
