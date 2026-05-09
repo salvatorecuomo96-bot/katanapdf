@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument, rgb, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 
-// Loaded once and cached so handleDownload doesn't re-fetch on every save.
+// Loaded once and cached so handleDownload doesn\'t re-fetch on every save.
 let _notoFontBytesCache = null;
 async function loadNotoFontBytes() {
   if (_notoFontBytesCache) return _notoFontBytesCache;
@@ -35,8 +35,8 @@ const LACQUER = "#8B1A1A";
 const GOLD = "#C4963A";
 const INK = "#1a1208";
 
-const CINZEL = '"Cinzel", "Times New Roman", serif';
-const FELL = '"Lora", Georgia, "Times New Roman", serif';
+const CINZEL = \'"Cinzel", "Times New Roman", serif\';
+const FELL = \'"Lora", Georgia, "Times New Roman", serif\';
 
 const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
 
@@ -194,7 +194,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
           </p>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {["No file upload", "No account required", "No watermark", "No hidden paywall"].map((b, i) => (
+            {[\'No file upload\', \'No account required\', \'No watermark\', \'No hidden paywall\'].map((b, i) => (
               <li key={i} style={{ marginBottom: 5 }}>{b}</li>
             ))}
           </ul>
@@ -250,7 +250,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
           { q: "Do I need an account?", a: "No. There is no sign-up, no email required, no tracking of who edits what." },
           { q: "What size of PDF can I edit?", a: "Any size your browser can handle — typically files up to a few hundred MB work fine on a modern computer." },
-          { q: "Can I edit existing text in a PDF?", a: "Yes, if the PDF has a selectable text layer. Click any text block to edit it. PDFs that are scanned images or printed from a browser won't have editable text, but you can still add new text and images on top." },
+          { q: "Can I edit existing text in a PDF?", a: "Yes, if the PDF has a selectable text layer. Click any text block to edit it. PDFs that are scanned images or printed from a browser won\'t have editable text, but you can still add new text and images on top." },
           { q: "Will the layout of my PDF break?", a: "katanapdf preserves the original page as a high-resolution image and overlays your edits on top, so the visual layout stays intact." },
         ].map((f, i) => (
           <details key={i} style={{ background: PARCHMENT_2, padding: "14px 22px", marginBottom: 10, border: `1px solid rgba(139,26,26,0.25)` }}>
@@ -294,7 +294,7 @@ function StaticPage({ route }) {
           <h2>Analytics and ads</h2>
           <p>We may serve advertisements through third-party providers (such as Google AdSense). These providers may use cookies to serve ads based on prior visits to this and other websites. You can opt out of personalised advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.</p>
           <h2>Cookies</h2>
-          <p>We do not set our own tracking cookies. Third-party cookies may be set by ad providers. You can disable cookies in your browser at any time without affecting the editor's functionality.</p>
+          <p>We do not set our own tracking cookies. Third-party cookies may be set by ad providers. You can disable cookies in your browser at any time without affecting the editor\'s functionality.</p>
           <h2>Children</h2>
           <p>This site is not directed at children under 13. We do not knowingly collect personal information from children.</p>
           <h2>Contact</h2>
@@ -322,7 +322,7 @@ function StaticPage({ route }) {
       title: "About katanapdf",
       body: (
         <>
-          <p>katanapdf is a free, browser-based PDF editor. It was built on the simple idea that editing a PDF shouldn't require uploading your file to a stranger's server, signing up for an account, or paying a subscription.</p>
+          <p>katanapdf is a free, browser-based PDF editor. It was built on the simple idea that editing a PDF shouldn\'t require uploading your file to a stranger\'s server, signing up for an account, or paying a subscription.</p>
           <h2>How it works</h2>
           <p>Everything happens in your browser. We use modern web technologies (PDF.js for rendering, pdf-lib for saving) to open, edit, and download PDFs without ever sending the file anywhere.</p>
           <h2>Why free?</h2>
@@ -532,7 +532,7 @@ function paragraphWordsToTextBlock(words, paraIdx) {
   const lineClusters = clusterWordsIntoLineClusters(words);
   const sortedLines = [...lineClusters].sort((a, b) => Math.min(...a.map((w) => w.y)) - Math.min(...b.map((w) => w.y)));
   const linesText = sortedLines.map((lc) => [...lc].sort((a, b) => a.x - b.x).map((w) => w.text).join(" "));
-  const text = linesText.join("\n");
+  const text = linesText.join("\\n");
 
   const minX = Math.min(...words.map((w) => w.x));
   const maxR = Math.max(...words.map((w) => w.x + w.width));
@@ -581,7 +581,7 @@ function redrawPage(canvas, dataUrl, edits) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     for (const e of edits) {
-      const lines = e.text.split(/\r?\n/);
+      const lines = e.text.split(/\\r?\\n/);
       const lh = e.fontSize * 1.22;
       const lineCount = Math.max(1, lines.length);
       const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
@@ -663,15 +663,15 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
 
   const cssFontSize = (fontSize != null ? fontSize * SCALE : block.fontSize) * zoom;
   const lineHeightPx = Math.max(cssFontSize * 1.22, 15);
-  const nLines = Math.max(1, text.split(/\r?\n/).length);
-  const origNLines = Math.max(1, block.text.split(/\r?\n/).length);
+  const nLines = Math.max(1, text.split(/\\r?\\n/).length);
+  const origNLines = Math.max(1, block.text.split(/\\r?\\n/).length);
   const padX = 10;
   const vw = typeof window !== "undefined" ? window.innerWidth * 0.96 : 900;
 
   useEffect(() => {
     const el = measureRef.current;
     if (!el) return;
-    const lines = text.split(/\r?\n/);
+    const lines = text.split(/\\r?\\n/);
     let mw = 0;
     el.style.fontWeight = isBold ? "bold" : "normal";
     el.style.fontStyle = isItalic ? "italic" : "normal";
@@ -691,7 +691,7 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
     lineHeightPx * Math.max(nLines, origNLines) + 10,
     lineHeightPx * 1.35
   );
-  const singleVisualLine = text.split(/\r?\n/).length <= 1;
+  const singleVisualLine = text.split(/\\r?\\n/).length <= 1;
   const sharedFont = {
     fontSize: cssFontSize,
     fontFamily,
@@ -903,6 +903,8 @@ export default function App() {
   // mutates this, not pages[], so textBlocks / floatingBoxes / floatingImages
   // (keyed by the immutable pg.num) keep working without renumbering.
   const [pageOrder, setPageOrder] = useState([]);
+  const [rotatedPages, setRotatedPages] = useState({}); // { [pageNum]: angle }
+  const [deletedPages, setDeletedPages] = useState(new Set());
   const [textBlocks, setTextBlocks] = useState({});
   const [floatingBoxes, setFloatingBoxes] = useState([]);
   const [floatingImages, setFloatingImages] = useState([]);
@@ -914,7 +916,7 @@ export default function App() {
   // Multi-tab state — each loaded PDF is a "tab" with its own state snapshot
   const [tabsList, setTabsList] = useState([]); // [{ id, fileName }]
   const [activeTabId, setActiveTabId] = useState(null);
-  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted } }
+  const tabSnapshots = useRef({}); // { [id]: { pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted, rotatedPages, deletedPages } }
   const liveStateRef = useRef({});
   const [hasTextLayer, setHasTextLayer] = useState(true);
   const [textLayerNoticeDismissed, setTextLayerNoticeDismissed] = useState(false);
@@ -950,7 +952,7 @@ export default function App() {
       setActiveTabId(id);
     } catch (err) {
       console.error("Failed to load PDF:", err);
-      alert("Couldn't open this PDF: " + (err.message || err) + "\n\nTry a different file or refresh the page.");
+      alert("Couldn\'t open this PDF: " + (err.message || err) + "\\n\\nTry a different file or refresh the page.");
     }
   }
 
@@ -965,9 +967,9 @@ export default function App() {
     setPdfBytes(bytes);
 
     // Phase 3 — encryption probe. pdfjs renders encrypted PDFs fine (it has
-    // its own decryption), but pdf-lib's strict load throws EncryptedPDFError
+    // its own decryption), but pdf-lib\'s strict load throws EncryptedPDFError
     // when the trailer has /Encrypt. We use the strict load purely as a flag:
-    // if it's encrypted, we surface a banner so the user knows their saved
+    // if it\'s encrypted, we surface a banner so the user knows their saved
     // copy may differ from the original (any password protection / signature
     // metadata is lost on save).
     let encrypted = false;
@@ -975,7 +977,7 @@ export default function App() {
       await PDFDocument.load(bytes, { ignoreEncryption: false });
     } catch (probeErr) {
       if (/encrypt/i.test(probeErr?.message || "")) encrypted = true;
-      // Other parse errors aren't our concern here — pdfjs may still render.
+      // Other parse errors aren\'t our concern here — pdfjs may still render.
     }
     setIsEncrypted(encrypted);
     setEncryptionNoticeDismissed(false);
@@ -1010,7 +1012,7 @@ export default function App() {
         const styleFamily = (styleEntry.fontFamily || "").toString();
         const fn = ((item.fontName || "") + " " + styleFamily).toLowerCase();
         let ff;
-        if (styleFamily && /\w/.test(styleFamily)) {
+        if (styleFamily && /\\w/.test(styleFamily)) {
           ff = `"${styleFamily}", Arial, sans-serif`;
           if (/serif/i.test(styleFamily)) ff = `"${styleFamily}", "Times New Roman", serif`;
           else if (/mono|courier/i.test(styleFamily)) ff = `"${styleFamily}", "Courier New", monospace`;
@@ -1018,12 +1020,12 @@ export default function App() {
         else if (fn.includes("courier") || fn.includes("mono")) ff = "Courier New, monospace";
         else if (fn.includes("georgia")) ff = "Georgia, serif";
         else if (fn.includes("verdana")) ff = "Verdana, sans-serif";
-        else if (fn.includes("calibri") || fn.includes("segoe")) ff = "Calibri, 'Segoe UI', Arial, sans-serif";
+        else if (fn.includes("calibri") || fn.includes("segoe")) ff = "Calibri, \'Segoe UI\', Arial, sans-serif";
         else ff = "Arial, sans-serif";
         const bold = /bold|black|heavy|semibold|medium/.test(fn);
         const italic = /italic|oblique/.test(fn);
 
-        const parts = item.str.split(/(\s+)/);
+        const parts = item.str.split(/(\\s+)/);
         const charW = totalW / Math.max(item.str.length, 1);
         let ox = 0;
         for (let wi = 0; wi < parts.length; wi++) {
@@ -1049,6 +1051,8 @@ export default function App() {
     }
     setPages(pageData);
     setPageOrder(pageData.map((_, i) => i));
+    setRotatedPages({});
+    setDeletedPages(new Set());
     setTextBlocks(words);
     setFloatingBoxes([]);
     setFloatingImages([]);
@@ -1077,18 +1081,26 @@ export default function App() {
   useEffect(() => {
     liveStateRef.current = {
       pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted,
+      rotatedPages, deletedPages,
     };
   });
 
   function snapshotCurrentTab() {
     if (!activeTabId) return;
-    tabSnapshots.current[activeTabId] = { ...liveStateRef.current };
+    const snap = liveStateRef.current;
+    tabSnapshots.current[activeTabId] = {
+      ...snap,
+      // Convert Set to Array for JSON serialization
+      deletedPages: [...(snap.deletedPages || [])],
+    };
   }
 
   function restoreSnapshot(snap) {
     setPdfBytes(snap.pdfBytes);
     setPages(snap.pages);
     setPageOrder(snap.pageOrder ?? snap.pages.map((_, i) => i));
+    setRotatedPages(snap.rotatedPages || {});
+    setDeletedPages(new Set(snap.deletedPages || []));
     setTextBlocks(snap.textBlocks);
     setFloatingBoxes(snap.floatingBoxes);
     setFloatingImages(snap.floatingImages);
@@ -1112,7 +1124,7 @@ export default function App() {
   }
 
   // Close the editor entirely and return to the homepage. Wired to the
-  // 'katanapdf' wordmark in the editor toolbar — without this the link only
+  // \'katanapdf\' wordmark in the editor toolbar — without this the link only
   // updates the URL hash and the editor still renders because pages.length > 0.
   function goHome() {
     tabSnapshots.current = {};
@@ -1120,6 +1132,8 @@ export default function App() {
     setActiveTabId(null);
     setPages([]);
     setPageOrder([]);
+    setRotatedPages({});
+    setDeletedPages(new Set());
     setTextBlocks({});
     setFloatingBoxes([]);
     setFloatingImages([]);
@@ -1149,6 +1163,8 @@ export default function App() {
           // No tabs left — return to homepage
           setPages([]);
           setPageOrder([]);
+          setRotatedPages({});
+          setDeletedPages(new Set());
           setTextBlocks({});
           setFloatingBoxes([]);
           setFloatingImages([]);
@@ -1187,6 +1203,22 @@ export default function App() {
     });
   }
 
+  // Phase 7: delete/rotate pages. These are soft-deletes/rotates, tracked in
+  // state and applied to the UI immediately, but only committed to the PDF on
+  // download.
+  function deletePage(pageNum) {
+    saveHistory();
+    setDeletedPages(prev => new Set(prev).add(pageNum));
+  }
+
+  function rotatePage(pageNum) {
+    saveHistory();
+    setRotatedPages(prev => ({
+      ...prev,
+      [pageNum]: ((prev[pageNum] || 0) + 90) % 360,
+    }));
+  }
+
   async function createBlankPdf() {
     snapshotCurrentTab();
     const doc = await PDFDocument.create();
@@ -1213,6 +1245,9 @@ export default function App() {
       textBlocks: JSON.parse(JSON.stringify(textBlocks)),
       floatingBoxes: JSON.parse(JSON.stringify(floatingBoxes)),
       floatingImages: JSON.parse(JSON.stringify(floatingImages)),
+      // Phase 7 history
+      rotatedPages: { ...rotatedPages },
+      deletedPages: new Set(deletedPages),
     }]);
   }
 
@@ -1222,6 +1257,9 @@ export default function App() {
     setTextBlocks(snap.textBlocks);
     setFloatingBoxes(snap.floatingBoxes);
     setFloatingImages(snap.floatingImages || []);
+    // Phase 7 history
+    if (snap.rotatedPages) setRotatedPages(snap.rotatedPages);
+    if (snap.deletedPages) setDeletedPages(snap.deletedPages);
     setHistory(h => h.slice(0, -1));
     setActivePopup(null);
     setSelected(null);
@@ -1320,7 +1358,7 @@ export default function App() {
     reader.readAsDataURL(file);
   }
 
-  // Append another PDF's pages to the current document — fully editable like original pages
+  // Append another PDF\'s pages to the current document — fully editable like original pages
   async function handleAddPdfAsImage(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -1364,7 +1402,7 @@ export default function App() {
           else if (fn.includes("georgia")) ff = "Georgia, serif";
           const bold = fn.includes("bold");
           const italic = fn.includes("italic") || fn.includes("oblique");
-          const parts = item.str.split(/(\s+)/);
+          const parts = item.str.split(/(\\s+)/);
           const charW = totalW / Math.max(item.str.length, 1);
           let ox = 0;
           for (let wi = 0; wi < parts.length; wi++) {
@@ -1408,7 +1446,7 @@ export default function App() {
       setPdfBytes(mergedBytes);
     } catch (err) {
       console.error("Add PDF error:", err);
-      alert("Couldn't append this PDF: " + (err.message || err));
+      alert("Couldn\'t append this PDF: " + (err.message || err));
     }
   }
 
@@ -1537,7 +1575,7 @@ export default function App() {
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
     try {
-      // Phase 3: don't silently strip encryption. Try strict first; only
+      // Phase 3: don\'t silently strip encryption. Try strict first; only
       // fall back to ignoreEncryption: true if we hit an actual encryption
       // error — and the user has already been warned via the banner that
       // loadPdfFromBytes set up. Other parse failures still go to the
@@ -1550,11 +1588,11 @@ export default function App() {
           try {
             srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
           } catch (innerErr) {
-            console.warn("pdf-lib couldn't parse this encrypted PDF, falling back to canvas:", innerErr.message);
+            console.warn("pdf-lib couldn\'t parse this encrypted PDF, falling back to canvas:", innerErr.message);
             return await handleDownloadCanvasFallback();
           }
         } else {
-          console.warn("pdf-lib couldn't parse this PDF, falling back to canvas:", loadErr.message);
+          console.warn("pdf-lib couldn\'t parse this PDF, falling back to canvas:", loadErr.message);
           return await handleDownloadCanvasFallback();
         }
       }
@@ -1574,19 +1612,21 @@ export default function App() {
       // would land in the wrong place. Defer to the canvas fallback for
       // these pages until full rotation math is in. Loses vector quality on
       // rotated pages only.
-      const hasRotation = srcPages.some(p => {
+      const hasSrcRotation = srcPages.some(p => {
         const r = p.getRotation();
         return r && typeof r.angle === "number" && r.angle % 360 !== 0;
       });
-      if (hasRotation) {
+      // Phase 7: if we have local rotations, we must use canvas fallback for now.
+      if (hasSrcRotation || Object.keys(rotatedPages).length > 0) {
         console.warn("Rotated page detected; falling back to canvas export so overlays land correctly.");
         return await handleDownloadCanvasFallback();
       }
 
-      // Phase 6: build a new doc and copyPages from src in the user's pageOrder
+      // Phase 6: build a new doc and copyPages from src in the user\'s pageOrder
       // so reorders survive download. When pageOrder is identity this is a no-op
       // beyond the small copyPages overhead. Phase 5 fonts embed on newDoc (not src).
-      const order = pageOrder.length === pages.length ? pageOrder : pages.map((_, i) => i);
+      // Phase 7: filter out deleted pages from the final document.
+      const finalPageOrder = pageOrder.filter(pIdx => !deletedPages.has(pages[pIdx].num));
       const doc = await PDFDocument.create();
       doc.registerFontkit(fontkit);
       const noto = await loadNotoFontBytes();
@@ -1599,11 +1639,11 @@ export default function App() {
         timesB: await doc.embedFont(noto["noto-serif-bold"], { subset: true }),
         courier: await doc.embedFont(noto["noto-sans-mono-regular"], { subset: true }),
       };
-      const copiedPages = await doc.copyPages(srcDoc, order);
+      const copiedPages = await doc.copyPages(srcDoc, finalPageOrder);
       for (const p of copiedPages) doc.addPage(p);
 
       for (let displayIdx = 0; displayIdx < copiedPages.length; displayIdx++) {
-        const pg = pages[order[displayIdx]];
+        const pg = pages[finalPageOrder[displayIdx]];
         const pdfPage = doc.getPages()[displayIdx];
         if (!pdfPage || !pg) continue;
         const { width: pdfW, height: pdfH } = pdfPage.getSize();
@@ -1614,7 +1654,7 @@ export default function App() {
         const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
         for (const e of edits) {
           const text = e.text || "";
-          const lines = text.split(/\r?\n/);
+          const lines = text.split(/\\r?\\n/);
           const numLines = Math.max(1, lines.length);
           const lhCanvas = e.fontSize * 1.22;
           const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
@@ -1656,7 +1696,7 @@ export default function App() {
           const font = pickPdfLibFont(fonts, fb.fontFamily, fb.isBold, fb.isItalic);
           const fs = fb.fontSize * sy;
           const lhCanvas = fb.fontSize * 1.5;
-          const lines = text.split(/\r?\n/);
+          const lines = text.split(/\\r?\\n/);
           const color = hexToRgb(fb.color || "#000000");
           lines.forEach((ln, i) => {
             if (!ln) return;
@@ -1671,7 +1711,7 @@ export default function App() {
 
         // 3. Floating images
         for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-          const isJpg = /^data:image\/jpe?g/i.test(fi.dataUrl);
+          const isJpg = /^data:image\\/jpe?g/i.test(fi.dataUrl);
           const data = await (await fetch(fi.dataUrl)).arrayBuffer();
           let img;
           try {
@@ -1701,19 +1741,20 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = (fileName || "document").replace(/\.pdf$/i, "") + "_edited.pdf";
+    a.download = (fileName || "document").replace(/\\.pdf$/i, "") + "_edited.pdf";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
 
-  // Fallback used when pdf-lib can't parse the original PDF (rare): rasterise via canvas.
+  // Fallback used when pdf-lib can\'t parse the original PDF (rare): rasterise via canvas.
   async function handleDownloadCanvasFallback() {
     const doc = await PDFDocument.create();
-    // Phase 6: iterate by pageOrder so reorders apply in the canvas path too.
-    const order = pageOrder.length === pages.length ? pageOrder : pages.map((_, i) => i);
-    for (const i of order) {
+    // Phase 6+7: iterate by pageOrder, filtering deleted, so reorders/deletes apply in the canvas path too.
+    const finalPageOrder = pageOrder.filter(pIdx => !deletedPages.has(pages[pIdx].num));
+
+    for (const i of finalPageOrder) {
       const pg = pages[i];
       if (!pg) continue;
       const canvas = canvasRefs.current[pg.num];
@@ -1721,14 +1762,23 @@ export default function App() {
       canvas.width = pg.width;
       canvas.height = pg.height;
       const ctx = canvas.getContext("2d");
+
+      // Phase 7: Apply rotation to the canvas before drawing anything else.
+      const rotation = rotatedPages[pg.num] || 0;
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(rotation * Math.PI / 180);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
       await new Promise(resolve => {
         const img = new Image();
         img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
         img.src = pg.dataUrl;
       });
+
       const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
       for (const e of edits) {
-        const lines = e.text.split(/\r?\n/);
+        const lines = e.text.split(/\\r?\\n/);
         const lh = e.fontSize * 1.22;
         const lineCount = Math.max(1, lines.length);
         const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
@@ -1750,7 +1800,7 @@ export default function App() {
         else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
       }
       for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-        const lines = fb.text.split(/\r?\n/);
+        const lines = fb.text.split(/\\r?\\n/);
         ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
         ctx.fillStyle = fb.color || "#000";
         ctx.textBaseline = "top";
@@ -1763,6 +1813,8 @@ export default function App() {
           img.src = fi.dataUrl;
         });
       }
+      ctx.restore();
+
       const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
       const pngImg = await doc.embedPng(pngBytes);
       const pdfPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
@@ -1773,6 +1825,7 @@ export default function App() {
   }
 
   const isNoFile = pages.length === 0;
+  const visiblePages = pageOrder.map(pIdx => pages[pIdx]).filter(pg => pg && !deletedPages.has(pg.num));
 
   return (
     <div style={{ fontFamily: FELL, minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
@@ -1804,7 +1857,7 @@ export default function App() {
             </select>
             <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
-            <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 4px" }} />
+            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
             <label style={tbBtn}>Open <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} /></label>
             <label style={tbBtn} title="Add a PDF at the end">Merge PDF <input type="file" accept="application/pdf,.pdf" onChange={handleAddPdfAsImage} style={hiddenFileInput} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
@@ -1835,7 +1888,7 @@ export default function App() {
                     cursor: "pointer", maxWidth: 220,
                   }}>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {t.fileName.replace(/\.pdf$/i, "")}
+                      {t.fileName.replace(/\\.pdf$/i, "")}
                     </span>
                     <span onClick={e => { e.stopPropagation(); closeTab(t.id); }}
                       title="Close" style={{
@@ -1888,7 +1941,7 @@ export default function App() {
                 <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
                   No editable text in this PDF
                 </strong>
-                This PDF doesn't have a selectable text layer — it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
+                This PDF doesn\'t have a selectable text layer — it\'s likely a scanned image or printed from a browser. You can\'t edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
               </div>
               <button onClick={() => setTextLayerNoticeDismissed(true)} style={{
                 background: "transparent", border: "none", color: LACQUER,
@@ -1898,13 +1951,14 @@ export default function App() {
           )}
 
           <div ref={containerRef} style={{ padding: "40px 0 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 48 }}>
-            {(pageOrder.length === pages.length ? pageOrder : pages.map((_, i) => i)).map((pageIdx, displayIdx, displayOrder) => {
-              const pg = pages[pageIdx];
+            {visiblePages.map((pg, displayIdx) => {
               if (!pg) return null;
-              const dispW = pg.width * zoom;
-              const dispH = pg.height * zoom;
+              const rotation = rotatedPages[pg.num] || 0;
+              const swap = rotation === 90 || rotation === 270;
+              const dispW = (swap ? pg.height : pg.width) * zoom;
+              const dispH = (swap ? pg.width : pg.height) * zoom;
               const isFirst = displayIdx === 0;
-              const isLast = displayIdx === displayOrder.length - 1;
+              const isLast = displayIdx === visiblePages.length - 1;
               return (
                 <div key={pg.num}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
@@ -1913,21 +1967,19 @@ export default function App() {
                       {/* Phase 6: reorder controls. Disabled at the ends; reorder mutates pageOrder, not the source PDF, until download. */}
                       <button onClick={e => { e.stopPropagation(); movePageUp(displayIdx); }} disabled={isFirst} aria-label={`Move page ${displayIdx + 1} up`} title="Move page up" style={{ ...pageBtn, padding: "4px 8px", opacity: isFirst ? 0.3 : 1, cursor: isFirst ? "default" : "pointer" }}>↑</button>
                       <button onClick={e => { e.stopPropagation(); movePageDown(displayIdx); }} disabled={isLast} aria-label={`Move page ${displayIdx + 1} down`} title="Move page down" style={{ ...pageBtn, padding: "4px 8px", opacity: isLast ? 0.3 : 1, cursor: isLast ? "default" : "pointer" }}>↓</button>
+                      <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90°" style={{ ...pageBtn, padding: "4px 8px" }}>↻</button>
+                      <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>×</button>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }} style={pageBtn}>+ Add text</button>
-                      <label style={pageBtn} onClick={e => e.stopPropagation()}>
+                      <button style={pageBtn}>+ Add text</button>
+                      <label style={pageBtn}>
                         + Add image
                         <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
-                      </label>
-                      <label style={pageBtn} onClick={e => e.stopPropagation()}>
-                        + Add PDF
-                        <input type="file" accept="application/pdf,.pdf" onChange={e => handleAddPdfAsImage(e, pg.num)} style={hiddenFileInput} />
                       </label>
                     </div>
                   </div>
                   <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden" }}>
-                    <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: dispW, height: dispH }} />
+                    <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: dispW, height: dispH, transform: `rotate(${rotation}deg)` }} />
                     {(textBlocks[pg.num] || []).map(tb => {
                       const isOpen = activePopup?.blockId === tb.id;
                       return (
