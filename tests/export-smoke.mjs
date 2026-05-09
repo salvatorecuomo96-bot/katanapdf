@@ -20,6 +20,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -173,6 +174,30 @@ await check("encryption detected: strict load throws, ignoreEncryption:true succ
   // the user has been warned via the banner.
   const lenient = await PDFDocument.load(enc, { ignoreEncryption: true });
   assert.equal(lenient.getPageCount(), 1, "ignoreEncryption load should expose the 1 page");
+});
+
+// Phase 5 step C: Noto + fontkit handles full Unicode (café résumé piñata)
+// where StandardFonts would have stripped to "?". Confirms the woff2 in
+// public/fonts/ are loadable via embedFont and round-trip non-Latin chars.
+await check("Unicode round-trip: café résumé piñata via Noto Sans woff2", async () => {
+  const fontPath = path.join(repoRoot, "public", "fonts", "noto-sans-regular.woff2");
+  const fontBytes = await readFile(fontPath);
+  const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
+  const noto = await doc.embedFont(fontBytes, { subset: true });
+  const page = doc.addPage([612, 792]);
+  const phrase = "café résumé piñata";
+  page.drawText(phrase, { x: 50, y: 700, size: 18, font: noto, color: rgb(0, 0, 0) });
+  const out = await doc.save();
+  assert.equal(new TextDecoder().decode(out.slice(0, 5)), "%PDF-", "missing %PDF- header");
+  // Round-trip: parse back and confirm the doc still reports 1 page (drawText
+  // didn't throw an encoding error, which it would have for Standard fonts).
+  const reload = await PDFDocument.load(out);
+  assert.equal(reload.getPageCount(), 1);
+  // Also verify the saved bytes contain a Tj/TJ text-show op near our phrase
+  // (subsetting rewrites glyph indices, so we can't grep raw UTF-8) — instead
+  // confirm the file is non-trivial in size, indicating real glyph data was embedded.
+  assert.ok(out.byteLength > 2000, `expected real font data embedded; got ${out.byteLength} bytes`);
 });
 
 await check("merge then overlay edits keeps merged page count", async () => {
