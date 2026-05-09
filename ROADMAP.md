@@ -15,8 +15,8 @@ Update this table at the end of every session so any device can see where we are
 | 5 | Wire Noto fonts + Unicode smoke test | ✅ Done | 2026-05-08 | [05](phases/05-unicode-fonts-wire.md) |
 | 6 | Reorder pages | ✅ Done | 2026-05-08 | [06](phases/06-reorder-pages.md) |
 | 7 | Delete + rotate pages | ✅ Done | 2026-05-09 | [07](phases/07-delete-rotate-pages.md) |
-| 8 | Image to PDF | ⏳ Next | — | [08](phases/08-image-to-pdf.md) |
-| 9 | Signature pad | Pending | — | [09](phases/09-signature-pad.md) |
+| 8 | Image to PDF | ✅ Done | 2026-05-09 | [08](phases/08-image-to-pdf.md) |
+| 9 | Signature pad | ⏳ Next | — | [09](phases/09-signature-pad.md) |
 | 10 | Text highlighting | Pending | — | [10](phases/10-text-highlighting.md) |
 | 11 | Per-page fallback + IndexedDB recovery | Pending | — | [11](phases/11-per-page-fallback.md) |
 | 12 | Original text color | Pending | — | [12](phases/12-original-text-color.md) |
