@@ -248,7 +248,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
           { q: "Do I need an account?", a: "No. There is no sign-up, no email required, no tracking of who edits what." },
           { q: "What size of PDF can I edit?", a: "Any size your browser can handle — typically files up to a few hundred MB work fine on a modern computer." },
-          { q: "Can I edit existing text in a PDF?", a: "Yes, if the PDF has a selectable text layer. Click any text block to edit it. PDFs that are scanned images or printed from a browser won\'t have editable text, but you can still add new text and images on top." },
+          { q: "Can I edit existing text in a PDF?", a: "Yes, if the PDF has a selectable text layer. Click any text block to edit it. PDFs that are scanned images or printed from a browser won't have editable text, but you can still add new text and images on top." },
           { q: "Will the layout of my PDF break?", a: "katanapdf preserves the original page as a high-resolution image and overlays your edits on top, so the visual layout stays intact." },
         ].map((f, i) => (
           <details key={i} style={{ background: PARCHMENT_2, padding: "14px 22px", marginBottom: 10, border: `1px solid rgba(139,26,26,0.25)` }}>
@@ -292,7 +292,7 @@ function StaticPage({ route }) {
           <h2>Analytics and ads</h2>
           <p>We may serve advertisements through third-party providers (such as Google AdSense). These providers may use cookies to serve ads based on prior visits to this and other websites. You can opt out of personalised advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.</p>
           <h2>Cookies</h2>
-          <p>We do not set our own tracking cookies. Third-party cookies may be set by ad providers. You can disable cookies in your browser at any time without affecting the editor\'s functionality.</p>
+          <p>We do not set our own tracking cookies. Third-party cookies may be set by ad providers. You can disable cookies in your browser at any time without affecting the editor's functionality.</p>
           <h2>Children</h2>
           <p>This site is not directed at children under 13. We do not knowingly collect personal information from children.</p>
           <h2>Contact</h2>
@@ -320,7 +320,7 @@ function StaticPage({ route }) {
       title: "About katanapdf",
       body: (
         <>
-          <p>katanapdf is a free, browser-based PDF editor. It was built on the simple idea that editing a PDF shouldn\'t require uploading your file to a stranger\'s server, signing up for an account, or paying a subscription.</p>
+          <p>katanapdf is a free, browser-based PDF editor. It was built on the simple idea that editing a PDF shouldn't require uploading your file to a stranger's server, signing up for an account, or paying a subscription.</p>
           <h2>How it works</h2>
           <p>Everything happens in your browser. We use modern web technologies (PDF.js for rendering, pdf-lib for saving) to open, edit, and download PDFs without ever sending the file anywhere.</p>
           <h2>Why free?</h2>
@@ -1976,7 +1976,7 @@ export default function App() {
                 <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
                   No editable text in this PDF
                 </strong>
-                This PDF doesn\'t have a selectable text layer — it\'s likely a scanned image or printed from a browser. You can\'t edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
+                This PDF doesn't have a selectable text layer — it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
               </div>
               <button onClick={() => setTextLayerNoticeDismissed(true)} style={{
                 background: "transparent", border: "none", color: LACQUER,
