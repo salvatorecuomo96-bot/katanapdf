@@ -3,7 +3,7 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import { PDFDocument, rgb, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 
-// Loaded once and cached so handleDownload doesn\'t re-fetch on every save.
+// Loaded once and cached so handleDownload doesn't re-fetch on every save.
 let _notoFontBytesCache = null;
 async function loadNotoFontBytes() {
   if (_notoFontBytesCache) return _notoFontBytesCache;
@@ -21,10 +21,7 @@ async function loadNotoFontBytes() {
 }
 
 // Legacy build is transpiled for older Safari / iOS — improves cross-device compatibility
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
-  import.meta.url
-).href;
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url).href;
 
 const SCALE = 2;
 
@@ -35,8 +32,8 @@ const LACQUER = "#8B1A1A";
 const GOLD = "#C4963A";
 const INK = "#1a1208";
 
-const CINZEL = \'"Cinzel", "Times New Roman", serif\';
-const FELL = \'"Lora", Georgia, "Times New Roman", serif\';
+const CINZEL = '"Cinzel", "Times New Roman", serif';
+const FELL = '"Lora", Georgia, "Times New Roman", serif';
 
 const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
 
@@ -194,7 +191,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
           </p>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {[\'No file upload\', \'No account required\', \'No watermark\', \'No hidden paywall\'].map((b, i) => (
+            {['No file upload', 'No account required', 'No watermark', 'No hidden paywall'].map((b, i) => (
               <li key={i} style={{ marginBottom: 5 }}>{b}</li>
             ))}
           </ul>
@@ -1711,7 +1708,7 @@ export default function App() {
 
         // 3. Floating images
         for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-          const isJpg = /^data:image\\/jpe?g/i.test(fi.dataUrl);
+          const isJpg = /^data:image\/jpe?g/i.test(fi.dataUrl);
           const data = await (await fetch(fi.dataUrl)).arrayBuffer();
           let img;
           try {

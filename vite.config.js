@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Target older Safari/iOS versions so the site works on iPhones running iOS 13–15
+  // Target modern environments to support import.meta, while maintaining compatibility via build target if needed
   build: {
-    target: ['es2017', 'safari13'],
+    target: 'es2020',
   },
   esbuild: {
-    target: 'es2017',
+    target: 'es2020',
   },
 })
