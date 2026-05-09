@@ -35,7 +35,8 @@ const LACQUER = "#8B1A1A";
 const GOLD = "#C4963A";
 const INK = "#1a1208";
 
-const CINZEL = \'"Cinzel", "Times New Roman", serif\';
+const CINZEL = '"Cinzel", "Times New Roman", serif';
+const FELL = '"Lora", Georgia, "Times New Roman", serif';
 const FELL = \'"Lora", Georgia, "Times New Roman", serif\';
 
 const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
