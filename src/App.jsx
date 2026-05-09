@@ -1760,13 +1760,7 @@ export default function App() {
       canvas.height = pg.height;
       const ctx = canvas.getContext("2d");
 
-      // Phase 7: Apply rotation to the canvas before drawing anything else.
       const rotation = rotatedPages[pg.num] || 0;
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(rotation * Math.PI / 180);
-      ctx.translate(-canvas.width / 2, -canvas.height / 2);
-
       await new Promise(resolve => {
         const img = new Image();
         img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
@@ -1775,7 +1769,7 @@ export default function App() {
 
       const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
       for (const e of edits) {
-        const lines = e.text.split(/\\r?\\n/);
+        const lines = e.text.split(/\r?\n/);
         const lh = e.fontSize * 1.22;
         const lineCount = Math.max(1, lines.length);
         const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
@@ -1797,7 +1791,7 @@ export default function App() {
         else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
       }
       for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-        const lines = fb.text.split(/\\r?\\n/);
+        const lines = fb.text.split(/\r?\n/);
         ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
         ctx.fillStyle = fb.color || "#000";
         ctx.textBaseline = "top";
@@ -1810,11 +1804,11 @@ export default function App() {
           img.src = fi.dataUrl;
         });
       }
-      ctx.restore();
 
       const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
       const pngImg = await doc.embedPng(pngBytes);
       const pdfPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
+      pdfPage.setRotation(degrees(rotation));
       pdfPage.drawImage(pngImg, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
     }
     const bytes = await doc.save();
@@ -1976,45 +1970,55 @@ export default function App() {
                     </div>
                   </div>
                   <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden" }}>
-                    <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: dispW, height: dispH, transform: `rotate(${rotation}deg)` }} />
-                    {(textBlocks[pg.num] || []).map(tb => {
-                      const isOpen = activePopup?.blockId === tb.id;
-                      return (
-                        <div key={tb.id} style={{
-                          position: "absolute", left: tb.x * zoom, top: tb.y * zoom,
-                          width: Math.max(tb.width * zoom, 8),
-                          height: Math.max(tb.height * zoom, tb.fontSize * zoom * 0.9),
-                          // When the popup is open, lift the whole wrapper above floating images
-                          // (which use z = 50 + counter, ~1000 when selected) so the popup renders on top.
-                          zIndex: isOpen ? 3000 : 10, cursor: "text",
-                        }} onClick={e => clickTextBlock(tb, e)}>
-                          {isOpen && (
-                            <EditPopup block={tb} zoom={zoom} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
-                              offsetX={activePopup.offsetX ?? 0} offsetY={activePopup.offsetY ?? 0}
-                              onOffsetChange={(ox, oy) => setActivePopup(ap => (ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap))}
-                              onCommit={newText => commitEdit(tb.id, tb.page, newText)}
-                              onCancel={cancelEdit} />
-                          )}
-                        </div>
-                      );
-                    })}
-                    {floatingBoxes.filter(fb => fb.page === pg.num).map(fb => (
-                      <FloatingBox key={fb.id} fb={fb} isSel={selected === fb.id}
-                        onSelect={() => setSelected(fb.id)}
-                        onStartDrag={e => startDragFloat(e, fb)}
-                        onStartResize={e => startResizeFb(e, fb)}
-                        onUpdate={u => updateFloatingBox(fb.id, u)}
-                        onCommit={() => setSelected(null)}
-                        onDelete={() => deleteFloatingBox(fb.id)} />
-                    ))}
-                    {floatingImages.filter(fi => fi.page === pg.num).map(fi => (
-                      <FloatingImage key={fi.id} fi={fi} isSel={selected === fi.id} zoom={zoom}
-                        onSelect={() => setSelected(fi.id)}
-                        onDeselect={() => setSelected(null)}
-                        onStartDrag={e => startDragImg(e, fi)}
-                        onStartResize={e => startResizeImg(e, fi)}
-                        onDelete={() => deleteFloatingImage(fi.id)} />
-                    ))}
+                    <div style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      width: pg.width * zoom,
+                      height: pg.height * zoom,
+                      transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                      transformOrigin: "center center"
+                    }}>
+                      <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: pg.width * zoom, height: pg.height * zoom }} />
+                      {(textBlocks[pg.num] || []).map(tb => {
+                        const isOpen = activePopup?.blockId === tb.id;
+                        return (
+                          <div key={tb.id} style={{
+                            position: "absolute", left: tb.x * zoom, top: tb.y * zoom,
+                            width: Math.max(tb.width * zoom, 8),
+                            height: Math.max(tb.height * zoom, tb.fontSize * zoom * 0.9),
+                            // When the popup is open, lift the whole wrapper above floating images
+                            // (which use z = 50 + counter, ~1000 when selected) so the popup renders on top.
+                            zIndex: isOpen ? 3000 : 10, cursor: "text",
+                          }} onClick={e => clickTextBlock(tb, e)}>
+                            {isOpen && (
+                              <EditPopup block={tb} zoom={zoom} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
+                                offsetX={activePopup.offsetX ?? 0} offsetY={activePopup.offsetY ?? 0}
+                                onOffsetChange={(ox, oy) => setActivePopup(ap => (ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap))}
+                                onCommit={newText => commitEdit(tb.id, tb.page, newText)}
+                                onCancel={cancelEdit} />
+                            )}
+                          </div>
+                        );
+                      })}
+                      {floatingBoxes.filter(fb => fb.page === pg.num).map(fb => (
+                        <FloatingBox key={fb.id} fb={fb} isSel={selected === fb.id}
+                          onSelect={() => setSelected(fb.id)}
+                          onStartDrag={e => startDragFloat(e, fb)}
+                          onStartResize={e => startResizeFb(e, fb)}
+                          onUpdate={u => updateFloatingBox(fb.id, u)}
+                          onCommit={() => setSelected(null)}
+                          onDelete={() => deleteFloatingBox(fb.id)} />
+                      ))}
+                      {floatingImages.filter(fi => fi.page === pg.num).map(fi => (
+                        <FloatingImage key={fi.id} fi={fi} isSel={selected === fi.id} zoom={zoom}
+                          onSelect={() => setSelected(fi.id)}
+                          onDeselect={() => setSelected(null)}
+                          onStartDrag={e => startDragImg(e, fi)}
+                          onStartResize={e => startResizeImg(e, fi)}
+                          onDelete={() => deleteFloatingImage(fi.id)} />
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
