@@ -37,7 +37,6 @@ const INK = "#1a1208";
 
 const CINZEL = '"Cinzel", "Times New Roman", serif';
 const FELL = '"Lora", Georgia, "Times New Roman", serif';
-const FELL = \'"Lora", Georgia, "Times New Roman", serif\';
 
 const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
 
@@ -98,7 +97,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
                       border: `4px dashed ${LACQUER}`, display: "flex", alignItems: "center", justifyContent: "center",
                       pointerEvents: "none" }}>
           <div style={{ background: PARCHMENT, padding: "20px 40px", color: LACQUER, fontFamily: CINZEL, fontSize: 18, letterSpacing: 4, textTransform: "uppercase", border: `1px solid ${GOLD}`, outline: `1px solid ${LACQUER}`, outlineOffset: 4 }}>
-            Drop your PDF here
+            Drop your PDF or image here
           </div>
         </div>
       )}
@@ -143,8 +142,8 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             border: `1px solid ${GOLD}`, outline: `1px solid ${LACQUER}`, outlineOffset: 5,
             lineHeight: 1,
           }}>
-            Open PDF
-            <input type="file" accept="application/pdf,.pdf" onChange={onFile} style={hiddenFileInput} />
+            Open PDF or Image
+            <input type="file" accept="application/pdf,.pdf,image/*" onChange={onFile} style={hiddenFileInput} />
           </label>
           <button onClick={onCreateBlank} style={{
             background: "transparent", border: "none", color: LACQUER, fontFamily: FELL, fontSize: 15,
@@ -153,7 +152,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             Create a blank PDF
           </button>
           <span style={{ fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.5)", fontStyle: "italic" }}>
-            or drag a PDF anywhere on this page
+            or drag a PDF or image anywhere on this page
           </span>
           <p style={{
             fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.5)",
@@ -172,6 +171,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             { label: "Edit supported text", detail: "Click any text block to edit it in place." },
             { label: "Add text", detail: "Place new text boxes anywhere on the page." },
             { label: "Add images", detail: "Insert images, resize, and reposition freely." },
+            { label: "Image to PDF", detail: "Convert any image into an editable PDF instantly." },
             { label: "Merge PDFs", detail: "Append pages from a second PDF." },
             { label: "Reorder pages", detail: "Use the ↑/↓ buttons on each page to rearrange." },
           ].map((cap, i) => (
@@ -195,7 +195,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
           </p>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {[\'No file upload\', \'No account required\', \'No watermark\', \'No hidden paywall\'].map((b, i) => (
+            {['No file upload', 'No account required', 'No watermark', 'No hidden paywall'].map((b, i) => (
               <li key={i} style={{ marginBottom: 5 }}>{b}</li>
             ))}
           </ul>
@@ -533,7 +533,7 @@ function paragraphWordsToTextBlock(words, paraIdx) {
   const lineClusters = clusterWordsIntoLineClusters(words);
   const sortedLines = [...lineClusters].sort((a, b) => Math.min(...a.map((w) => w.y)) - Math.min(...b.map((w) => w.y)));
   const linesText = sortedLines.map((lc) => [...lc].sort((a, b) => a.x - b.x).map((w) => w.text).join(" "));
-  const text = linesText.join("\\n");
+  const text = linesText.join("\n");
 
   const minX = Math.min(...words.map((w) => w.x));
   const maxR = Math.max(...words.map((w) => w.x + w.width));
@@ -582,7 +582,7 @@ function redrawPage(canvas, dataUrl, edits) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     for (const e of edits) {
-      const lines = e.text.split(/\\r?\\n/);
+      const lines = e.text.split(/\r?\n/);
       const lh = e.fontSize * 1.22;
       const lineCount = Math.max(1, lines.length);
       const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
@@ -664,15 +664,15 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
 
   const cssFontSize = (fontSize != null ? fontSize * SCALE : block.fontSize) * zoom;
   const lineHeightPx = Math.max(cssFontSize * 1.22, 15);
-  const nLines = Math.max(1, text.split(/\\r?\\n/).length);
-  const origNLines = Math.max(1, block.text.split(/\\r?\\n/).length);
+  const nLines = Math.max(1, text.split(/\r?\n/).length);
+  const origNLines = Math.max(1, block.text.split(/\r?\n/).length);
   const padX = 10;
   const vw = typeof window !== "undefined" ? window.innerWidth * 0.96 : 900;
 
   useEffect(() => {
     const el = measureRef.current;
     if (!el) return;
-    const lines = text.split(/\\r?\\n/);
+    const lines = text.split(/\r?\n/);
     let mw = 0;
     el.style.fontWeight = isBold ? "bold" : "normal";
     el.style.fontStyle = isItalic ? "italic" : "normal";
@@ -692,7 +692,7 @@ function EditPopup({ block, zoom, fontSize, fontFamily, isBold, isItalic, offset
     lineHeightPx * Math.max(nLines, origNLines) + 10,
     lineHeightPx * 1.35
   );
-  const singleVisualLine = text.split(/\\r?\\n/).length <= 1;
+  const singleVisualLine = text.split(/\r?\n/).length <= 1;
   const sharedFont = {
     fontSize: cssFontSize,
     fontFamily,
@@ -939,6 +939,37 @@ export default function App() {
   const containerRef = useRef(null);
   const canvasRefs = useRef({});
 
+  async function convertImageToPdfBytes(file) {
+    const doc = await PDFDocument.create();
+    const arrayBuffer = await file.arrayBuffer();
+    let img;
+    const type = file.type.toLowerCase();
+    try {
+      if (type === "image/jpeg" || type === "image/jpg") {
+        img = await doc.embedJpg(arrayBuffer);
+      } else if (type === "image/png") {
+        img = await doc.embedPng(arrayBuffer);
+      } else {
+        throw new Error("Use canvas fallback");
+      }
+    } catch (e) {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0);
+      const pngBuf = await new Promise(res => {
+        canvas.toBlob(async b => res(await b.arrayBuffer()), "image/png");
+      });
+      img = await doc.embedPng(pngBuf);
+    }
+    const { width, height } = img.scale(1);
+    const page = doc.addPage([width, height]);
+    page.drawImage(img, { x: 0, y: 0, width, height });
+    return await doc.save();
+  }
+
   async function handleFile(e) {
     const input = e.target;
     const file = input.files && input.files[0];
@@ -949,18 +980,26 @@ export default function App() {
       snapshotCurrentTab();
       await loadPdfFromFile(file);
       const id = makeTabId();
-      setTabsList(prev => [...prev, { id, fileName: file.name }]);
+      setTabsList(prev => [...prev, { id, fileName: file.name.match(/\.pdf$/i) ? file.name : file.name.replace(/\.[^/.]+$/, "") + ".pdf" }]);
       setActiveTabId(id);
     } catch (err) {
-      console.error("Failed to load PDF:", err);
-      alert("Couldn\'t open this PDF: " + (err.message || err) + "\\n\\nTry a different file or refresh the page.");
+      console.error("Failed to load PDF/Image:", err);
+      alert("Couldn't open this file: " + (err.message || err) + "\n\nTry a different file or refresh the page.");
     }
   }
 
   async function loadPdfFromFile(file) {
-    setFileName(file.name);
-    const buf = await file.arrayBuffer();
-    const bytes = new Uint8Array(buf);
+    let bytes;
+    if (file.type === "application/pdf") {
+      setFileName(file.name);
+      const buf = await file.arrayBuffer();
+      bytes = new Uint8Array(buf);
+    } else if (file.type.startsWith("image/")) {
+      setFileName(file.name.replace(/\.[^/.]+$/, "") + ".pdf");
+      bytes = await convertImageToPdfBytes(file);
+    } else {
+      throw new Error("Unsupported file type: " + file.type);
+    }
     await loadPdfFromBytes(bytes);
   }
 
@@ -1013,7 +1052,7 @@ export default function App() {
         const styleFamily = (styleEntry.fontFamily || "").toString();
         const fn = ((item.fontName || "") + " " + styleFamily).toLowerCase();
         let ff;
-        if (styleFamily && /\\w/.test(styleFamily)) {
+        if (styleFamily && /\w/.test(styleFamily)) {
           ff = `"${styleFamily}", Arial, sans-serif`;
           if (/serif/i.test(styleFamily)) ff = `"${styleFamily}", "Times New Roman", serif`;
           else if (/mono|courier/i.test(styleFamily)) ff = `"${styleFamily}", "Courier New", monospace`;
@@ -1026,7 +1065,7 @@ export default function App() {
         const bold = /bold|black|heavy|semibold|medium/.test(fn);
         const italic = /italic|oblique/.test(fn);
 
-        const parts = item.str.split(/(\\s+)/);
+        const parts = item.str.split(/(\s+)/);
         const charW = totalW / Math.max(item.str.length, 1);
         let ox = 0;
         for (let wi = 0; wi < parts.length; wi++) {
@@ -1233,12 +1272,16 @@ export default function App() {
   }
 
   async function handleDroppedFile(file) {
-    if (!file || file.type !== "application/pdf") return;
-    snapshotCurrentTab();
-    await loadPdfFromFile(file);
-    const id = makeTabId();
-    setTabsList(prev => [...prev, { id, fileName: file.name }]);
-    setActiveTabId(id);
+    if (!file) return;
+    try {
+      snapshotCurrentTab();
+      await loadPdfFromFile(file);
+      const id = makeTabId();
+      setTabsList(prev => [...prev, { id, fileName: file.name.match(/\.pdf$/i) ? file.name : file.name.replace(/\.[^/.]+$/, "") + ".pdf" }]);
+      setActiveTabId(id);
+    } catch (err) {
+      console.error("Drop error:", err);
+    }
   }
 
   function saveHistory() {
@@ -1403,7 +1446,7 @@ export default function App() {
           else if (fn.includes("georgia")) ff = "Georgia, serif";
           const bold = fn.includes("bold");
           const italic = fn.includes("italic") || fn.includes("oblique");
-          const parts = item.str.split(/(\\s+)/);
+          const parts = item.str.split(/(\s+)/);
           const charW = totalW / Math.max(item.str.length, 1);
           let ox = 0;
           for (let wi = 0; wi < parts.length; wi++) {
@@ -1655,7 +1698,7 @@ export default function App() {
         const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
         for (const e of edits) {
           const text = e.text || "";
-          const lines = text.split(/\\r?\\n/);
+          const lines = text.split(/\r?\n/);
           const numLines = Math.max(1, lines.length);
           const lhCanvas = e.fontSize * 1.22;
           const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
@@ -1697,7 +1740,7 @@ export default function App() {
           const font = pickPdfLibFont(fonts, fb.fontFamily, fb.isBold, fb.isItalic);
           const fs = fb.fontSize * sy;
           const lhCanvas = fb.fontSize * 1.5;
-          const lines = text.split(/\\r?\\n/);
+          const lines = text.split(/\r?\n/);
           const color = hexToRgb(fb.color || "#000000");
           lines.forEach((ln, i) => {
             if (!ln) return;
@@ -1712,7 +1755,7 @@ export default function App() {
 
         // 3. Floating images
         for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-          const isJpg = /^data:image\\/jpe?g/i.test(fi.dataUrl);
+          const isJpg = /^data:image\/jpe?g/i.test(fi.dataUrl);
           const data = await (await fetch(fi.dataUrl)).arrayBuffer();
           let img;
           try {
@@ -1742,7 +1785,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = (fileName || "document").replace(/\\.pdf$/i, "") + "_edited.pdf";
+    a.download = (fileName || "document").replace(/\.pdf$/i, "") + "_edited.pdf";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1779,7 +1822,7 @@ export default function App() {
 
       const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
       for (const e of edits) {
-        const lines = e.text.split(/\\r?\\n/);
+        const lines = e.text.split(/\r?\n/);
         const lh = e.fontSize * 1.22;
         const lineCount = Math.max(1, lines.length);
         const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
@@ -1801,7 +1844,7 @@ export default function App() {
         else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
       }
       for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-        const lines = fb.text.split(/\\r?\\n/);
+        const lines = fb.text.split(/\r?\n/);
         ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
         ctx.fillStyle = fb.color || "#000";
         ctx.textBaseline = "top";
@@ -1859,7 +1902,7 @@ export default function App() {
             <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
             <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
-            <label style={tbBtn}>Open <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} /></label>
+            <label style={tbBtn}>Open PDF/Image <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} /></label>
             <label style={tbBtn} title="Add a PDF at the end">Merge PDF <input type="file" accept="application/pdf,.pdf" onChange={handleAddPdfAsImage} style={hiddenFileInput} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
             <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
@@ -1889,7 +1932,7 @@ export default function App() {
                     cursor: "pointer", maxWidth: 220,
                   }}>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {t.fileName.replace(/\\.pdf$/i, "")}
+                      {t.fileName.replace(/\.pdf$/i, "")}
                     </span>
                     <span onClick={e => { e.stopPropagation(); closeTab(t.id); }}
                       title="Close" style={{
@@ -1904,9 +1947,9 @@ export default function App() {
                 width: 30, height: 26,
                 border: `1px solid ${LACQUER}`, color: LACQUER,
                 fontFamily: CINZEL, fontSize: 16, fontWeight: 600, cursor: "pointer",
-              }} title="Open another PDF in a new tab">
+              }} title="Open another PDF or Image in a new tab">
                 +
-                <input type="file" accept="application/pdf,.pdf" onChange={handleFile} style={hiddenFileInput} />
+                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} />
               </label>
             </div>
           )}
