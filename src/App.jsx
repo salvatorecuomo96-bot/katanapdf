@@ -170,7 +170,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             { label: "Add images", detail: "Insert images, resize, and reposition freely." },
             { label: "Image to PDF", detail: "Convert any image into an editable PDF instantly." },
             { label: "Merge PDFs", detail: "Append pages from a second PDF." },
-            { label: "Reorder pages", detail: "Use the ↑/↓ buttons on each page to rearrange." },
+            { label: "Visual Reordering", detail: "Rearrange your document by dragging pages in the sidebar or grid view." },
           ].map((cap, i) => (
             <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.2)`, padding: "14px 18px" }}>
               <span style={{ display: "block", fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: LACQUER, fontWeight: 600, marginBottom: 5 }}>
@@ -1409,15 +1409,20 @@ export default function App() {
     reader.readAsDataURL(file);
   }
 
-  // Append another PDF\'s pages to the current document — fully editable like original pages
-  async function handleAddPdfAsImage(e) {
+  // Append another PDF or Image's pages to the current document — fully editable like original pages
+  async function handleAppendFile(e) {
     const file = e.target.files[0];
     if (!file) return;
     e.target.value = "";
     try {
       saveHistory();
-      const buf = await file.arrayBuffer();
-      const bytes = new Uint8Array(buf);
+      let bytes;
+      if (file.type.startsWith("image/")) {
+        bytes = await convertImageToPdfBytes(file);
+      } else {
+        const buf = await file.arrayBuffer();
+        bytes = new Uint8Array(buf);
+      }
       const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
 
       // Pick up where current pages end
@@ -1873,7 +1878,16 @@ export default function App() {
   const visiblePages = pageOrder.map(pIdx => pages[pIdx]).filter(pg => pg && !deletedPages.has(pg.num));
 
   return (
-    <div style={{ fontFamily: FELL, minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
+    <div style={{ fontFamily: FELL, minHeight: "100dvh", height: isNoFile ? "auto" : "100dvh", display: "flex", flexDirection: "column", overflow: isNoFile ? "auto" : "hidden", background: PARCHMENT, backgroundImage: CROSSHATCH, userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
+      <style>{`
+        body { margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #8B1A1A; }
+        .dragon-scroll::-webkit-scrollbar { width: 10px; }
+        .dragon-scroll::-webkit-scrollbar-track { background: transparent; }
+        .dragon-scroll::-webkit-scrollbar-thumb { background: repeating-linear-gradient(45deg, #8B1A1A 0, #8B1A1A 8px, #C4963A 8px, #C4963A 10px); }
+      `}</style>
       {route !== "home" ? (
         <StaticPage route={route} />
       ) : isNoFile ? (
@@ -1884,7 +1898,7 @@ export default function App() {
         />
       ) : (
         <>
-          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, position: "sticky", top: 0, zIndex: 300, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
+          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
             <a href="#home" onClick={(e) => { e.preventDefault(); goHome(); window.location.hash = "#home"; }} style={{ textDecoration: "none" }}>
               <span style={{ fontFamily: CINZEL, fontSize: 14, color: PARCHMENT, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>katanapdf</span>
             </a>
@@ -1904,15 +1918,11 @@ export default function App() {
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
             <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
             <label style={tbBtn}>Open PDF/Image <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} /></label>
-            <label style={tbBtn} title="Add a PDF at the end">Merge PDF <input type="file" accept="application/pdf,.pdf" onChange={handleAddPdfAsImage} style={hiddenFileInput} /></label>
+            <label style={tbBtn} title="Add a PDF or Image at the end">Merge PDF <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} /></label>
             <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>↩ Undo</button>
             <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
             <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={tbIconBtn}>−</button>
-            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
-            <button onClick={() => setIsGridView(g => !g)} style={{ ...tbBtn, background: isGridView ? LACQUER : "transparent", color: isGridView ? PARCHMENT : GOLD }}>
-              {isGridView ? "Exit Grid" : "Grid View"}
-            </button>
             <div style={{ flex: 1 }} />
             <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
           </div>
@@ -1922,7 +1932,6 @@ export default function App() {
             <div onClick={e => e.stopPropagation()} style={{
               background: PARCHMENT_2, borderBottom: `1px solid rgba(139,26,26,0.25)`,
               padding: "8px 16px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
-              position: "sticky", top: 52, zIndex: 290,
             }}>
               {tabsList.map(t => {
                 const isActive = t.id === activeTabId;
@@ -1999,76 +2008,164 @@ export default function App() {
             </div>
           )}
 
-          <div ref={containerRef} style={{
-            padding: "40px 20px 80px",
-            display: isGridView ? "grid" : "flex",
-            gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined,
-            flexDirection: isGridView ? undefined : "column",
-            alignItems: isGridView ? "start" : "center",
-            gap: isGridView ? 20 : 48,
-            width: "100%",
-            boxSizing: "border-box"
-          }}>
-            {visiblePages.map((pg, displayIdx) => {
-              if (!pg) return null;
-              const rotation = rotatedPages[pg.num] || 0;
-              const swap = rotation === 90 || rotation === 270;
-              const scale = isGridView ? Math.min(240 / (swap ? pg.height : pg.width), 0.5) : zoom;
-              const dispW = (swap ? pg.height : pg.width) * scale;
-              const dispH = (swap ? pg.width : pg.height) * scale;
-              return (
-                <div key={pg.num}
-                     draggable={isGridView}
-                     onDragStart={e => {
-                       if (isGridView) {
+          <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%' }}>
+            {/* Left Sidebar */}
+            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
+                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                  ⊞
+                </button>
+                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
+                  +
+                  <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+                </label>
+              </div>
+              
+              <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {visiblePages.map((pg, i) => {
+                const rotation = rotatedPages[pg.num] || 0;
+                const swap = rotation === 90 || rotation === 270;
+                return (
+                  <div key={`side-${pg.num}`}
+                       draggable={true}
+                       onDragStart={e => {
                          e.dataTransfer.effectAllowed = "move";
                          setTimeout(() => setDraggedPageNum(pg.num), 0);
-                       }
-                     }}
-                     onDragOver={e => {
-                       if (isGridView && draggedPageNum !== null && draggedPageNum !== pg.num) {
-                         e.preventDefault();
-                         e.dataTransfer.dropEffect = "move";
-                         setDragOverPageNum(pg.num);
-                       }
-                     }}
-                     onDragLeave={() => {
-                       if (dragOverPageNum === pg.num) setDragOverPageNum(null);
-                     }}
-                     onDrop={e => {
-                       if (isGridView && draggedPageNum !== null) {
-                         e.preventDefault();
-                         movePageTo(draggedPageNum, displayIdx);
+                       }}
+                       onDragOver={e => {
+                         if (draggedPageNum !== null && draggedPageNum !== pg.num) {
+                           e.preventDefault();
+                           e.dataTransfer.dropEffect = "move";
+                           setDragOverPageNum(pg.num);
+                         }
+                       }}
+                       onDragLeave={() => {
+                         if (dragOverPageNum === pg.num) setDragOverPageNum(null);
+                       }}
+                       onDrop={e => {
+                         if (draggedPageNum !== null) {
+                           e.preventDefault();
+                           movePageTo(draggedPageNum, i);
+                           setDraggedPageNum(null);
+                           setDragOverPageNum(null);
+                         }
+                       }}
+                       onDragEnd={() => {
                          setDraggedPageNum(null);
                          setDragOverPageNum(null);
-                       }
-                     }}
-                     onDragEnd={() => {
-                       setDraggedPageNum(null);
-                       setDragOverPageNum(null);
-                     }}
-                     style={{
-                       opacity: draggedPageNum === pg.num ? 0.5 : 1,
-                       border: dragOverPageNum === pg.num ? `2px dashed ${LACQUER}` : "2px solid transparent",
-                       padding: isGridView ? 4 : 0,
-                       boxSizing: "border-box"
-                     }}>
+                       }}
+                       style={{
+                         opacity: draggedPageNum === pg.num ? 0.5 : 1,
+                         borderBottom: dragOverPageNum === pg.num ? `4px solid ${LACQUER}` : "none",
+                         transition: 'opacity 0.2s'
+                       }}>
+                    <div style={{ 
+                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
+                      aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                    }}>
+                      <img src={pg.dataUrl} alt={`Page ${i+1}`} 
+                        style={{ 
+                          transform: `rotate(${rotation}deg)`, 
+                          width: swap ? 'auto' : '100%', 
+                          height: swap ? '100%' : 'auto',
+                          display: 'block' 
+                        }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
+                      <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, fontWeight: 600 }}>{i + 1}</span>
+                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Rotate">↻</button>
+                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">✕</button>
+                    </div>
+                    
+                    {i < visiblePages.length - 1 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
+                        <label style={{ width: 20, height: 20, borderRadius: '50%', border: 'none', background: GOLD, color: PARCHMENT, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
+                          +
+                          <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 10px', border: `1px dashed ${LACQUER}`, background: 'rgba(139,26,26,0.05)', color: LACQUER, cursor: 'pointer', marginTop: 12 }}>
+                <span style={{ fontSize: 20 }}>+</span>
+                <span style={{ fontFamily: CINZEL, fontSize: 10, letterSpacing: 1, fontWeight: 600 }}>Add PDF, image files</span>
+                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+              </label>
+              </div>
+            </aside>
+
+            {/* Right Main Area */}
+            <div ref={containerRef} style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: PARCHMENT, backgroundImage: CROSSHATCH, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
+              {visiblePages.map((pg, displayIdx) => {
+                if (!pg) return null;
+                const rotation = rotatedPages[pg.num] || 0;
+                const swap = rotation === 90 || rotation === 270;
+                const scale = isGridView ? Math.min(240 / (swap ? pg.height : pg.width), 0.5) : zoom;
+                const dispW = (swap ? pg.height : pg.width) * scale;
+                const dispH = (swap ? pg.width : pg.height) * scale;
+                return (
+                  <div key={pg.num}
+                       draggable={isGridView}
+                       onDragStart={e => {
+                         if (isGridView) {
+                           e.dataTransfer.effectAllowed = "move";
+                           setTimeout(() => setDraggedPageNum(pg.num), 0);
+                         }
+                       }}
+                       onDragOver={e => {
+                         if (isGridView && draggedPageNum !== null && draggedPageNum !== pg.num) {
+                           e.preventDefault();
+                           e.dataTransfer.dropEffect = "move";
+                           setDragOverPageNum(pg.num);
+                         }
+                       }}
+                       onDragLeave={() => {
+                         if (dragOverPageNum === pg.num) setDragOverPageNum(null);
+                       }}
+                       onDrop={e => {
+                         if (isGridView && draggedPageNum !== null) {
+                           e.preventDefault();
+                           movePageTo(draggedPageNum, displayIdx);
+                           setDraggedPageNum(null);
+                           setDragOverPageNum(null);
+                         }
+                       }}
+                       onDragEnd={() => {
+                         setDraggedPageNum(null);
+                         setDragOverPageNum(null);
+                       }}
+                       style={{
+                         opacity: draggedPageNum === pg.num ? 0.5 : 1,
+                         border: dragOverPageNum === pg.num ? `2px dashed ${LACQUER}` : "2px solid transparent",
+                         padding: isGridView ? 4 : 0,
+                         boxSizing: "border-box"
+                       }}>
                   {!isGridView && (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: Math.min(dispW, window.innerWidth * 0.96) }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: dispW, maxWidth: "100%" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
                         {/* Phase 6: reorder controls. Disabled at the ends; reorder mutates pageOrder, not the source PDF, until download. */}
-                        <input type="number" min="1" max={visiblePages.length} value={displayIdx + 1}
-                          onChange={e => {
-                            const val = parseInt(e.target.value, 10);
-                            if (!isNaN(val) && val !== displayIdx + 1) movePageTo(pg.num, val - 1);
-                          }}
-                          onKeyDown={e => {
-                            if (e.key === "Enter") e.target.blur();
-                          }}
-                          title="Swap to page"
-                          style={{ ...pageBtn, padding: "2px 4px", width: 44, textAlign: "center" }}
-                        />
+                        <div style={{ ...pageBtn, display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 600 }}>MOVE TO:</span>
+                          <select 
+                            value={displayIdx + 1}
+                            onChange={e => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val !== displayIdx + 1) movePageTo(pg.num, val - 1);
+                            }}
+                            style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, fontWeight: 600, background: "transparent", border: "none" }}
+                          >
+                            {visiblePages.map((_, i) => (
+                              <option key={i} value={i + 1} style={{ background: PARCHMENT, color: INK }}>
+                                {i + 1}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90°" style={{ ...pageBtn, padding: "4px 8px" }}>↻</button>
                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>×</button>
                       </div>
@@ -2087,7 +2184,7 @@ export default function App() {
                        <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "2px 6px", fontSize: 10 }}>×</button>
                     </div>
                   )}
-                  <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "96vw", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden", pointerEvents: isGridView ? "none" : "auto" }}>
+                  <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "100%", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden", pointerEvents: isGridView ? "none" : "auto" }}>
                     <div style={{
                       position: "absolute",
                       left: "50%",
@@ -2141,6 +2238,7 @@ export default function App() {
                 </div>
               );
             })}
+            </div>
           </div>
         </>
       )}
