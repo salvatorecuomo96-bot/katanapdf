@@ -168,6 +168,7 @@ function Homepage({ onFile, onDropFile, onCreateBlank }) {
             { label: "Edit supported text", detail: "Click any text block to edit it in place." },
             { label: "Add text", detail: "Place new text boxes anywhere on the page." },
             { label: "Add images", detail: "Insert images, resize, and reposition freely." },
+            { label: "Sign PDF", detail: "Draw your signature and place it anywhere." },
             { label: "Image to PDF", detail: "Convert any image into an editable PDF instantly." },
             { label: "Merge PDFs", detail: "Append pages from a second PDF." },
             { label: "Visual Reordering", detail: "Rearrange your document by dragging pages in the sidebar or grid view." },
@@ -879,6 +880,213 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onStartResize, onUpdate
   );
 }
 
+function SignatureModal({ onClose, onInsert, color, setColor }) {
+  const canvasRef = useRef(null);
+  const hiddenCanvasRef = useRef(null);
+  const isDrawing = useRef(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+  const [signTab, setSignTab] = useState("draw");
+  const [typeText, setTypeText] = useState("");
+  const [selectedSignFont, setSelectedSignFont] = useState("Whisper");
+  const [uploadDataUrl, setUploadDataUrl] = useState(null);
+
+  useEffect(() => {
+    if (signTab !== "draw") return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = color;
+  }, [color, signTab]);
+
+  useEffect(() => {
+    if (signTab === "type" && hiddenCanvasRef.current) {
+      const canvas = hiddenCanvasRef.current;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (typeText) {
+        ctx.fillStyle = color;
+        ctx.font = `64px "${selectedSignFont}", cursive`;
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "center";
+        ctx.fillText(typeText, canvas.width / 2, canvas.height / 2);
+      }
+    }
+  }, [typeText, color, signTab, selectedSignFont]);
+
+  const getPos = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    // Scale coords to match actual canvas resolution if CSS sizes it down
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
+  const startDrawing = (e) => {
+    e.preventDefault(); // Prevent scrolling on touch
+    isDrawing.current = true;
+    lastPos.current = getPos(e);
+  };
+
+  const draw = (e) => {
+    e.preventDefault();
+    if (!isDrawing.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const newPos = getPos(e);
+
+    ctx.beginPath();
+    ctx.moveTo(lastPos.current.x, lastPos.current.y);
+    ctx.lineTo(newPos.x, newPos.y);
+    ctx.stroke();
+
+    lastPos.current = newPos;
+  };
+
+  const stopDrawing = () => {
+    isDrawing.current = false;
+  };
+
+  const handleClear = () => {
+    if (signTab === "draw") {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    } else if (signTab === "type") {
+      setTypeText("");
+    } else if (signTab === "upload") {
+      setUploadDataUrl(null);
+    }
+  };
+
+  const handleInsert = () => {
+    if (signTab === "draw") {
+      const canvas = canvasRef.current;
+      onInsert(canvas.toDataURL("image/png"));
+    } else if (signTab === "type") {
+      const canvas = hiddenCanvasRef.current;
+      onInsert(canvas.toDataURL("image/png"));
+    } else if (signTab === "upload") {
+      if (uploadDataUrl) {
+        onInsert(uploadDataUrl);
+      }
+    }
+  };
+
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      setUploadDataUrl(ev.target.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(26,18,8,0.8)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: PARCHMENT, border: `2px solid ${GOLD}`, padding: "24px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: "90vw", boxSizing: "border-box" }} onClick={e => e.stopPropagation()}>
+        <h2 style={{ margin: 0, fontFamily: CINZEL, color: LACQUER, fontSize: 24, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>Sign Document</h2>
+        
+        <div style={{ display: "flex", gap: 8, borderBottom: `1px solid ${GOLD}`, paddingBottom: 8, width: "100%", justifyContent: "center" }}>
+          {["draw", "type", "upload"].map(tab => (
+            <button key={tab} onClick={() => setSignTab(tab)} style={{ ...pageBtn, background: signTab === tab ? LACQUER : "transparent", color: signTab === tab ? PARCHMENT : LACQUER }}>
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {signTab === "draw" && (
+          <canvas
+            ref={canvasRef}
+            width={500}
+            height={200}
+            style={{ border: `1px solid ${LACQUER}`, background: "transparent", touchAction: "none", cursor: "crosshair", maxWidth: "100%" }}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+            onTouchCancel={stopDrawing}
+          />
+        )}
+
+        {signTab === "type" && (
+          <div style={{ width: 500, maxWidth: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+            <input 
+              type="text" 
+              value={typeText} 
+              onChange={e => setTypeText(e.target.value)} 
+              placeholder="Type your signature..."
+              style={{ padding: "12px 16px", fontSize: 18, border: `1px solid ${LACQUER}`, background: "#fff", color: "#000", outline: "none", fontFamily: "sans-serif" }}
+            />
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+              {["Whisper", "Great Vibes", "Dancing Script"].map(f => (
+                <label key={f} style={{ 
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
+                  fontFamily: `"${f}", cursive`, fontSize: 32, 
+                  color: selectedSignFont === f ? LACQUER : INK,
+                  border: selectedSignFont === f ? `2px solid ${GOLD}` : "2px solid transparent",
+                  padding: "4px 12px", borderRadius: 4, background: "rgba(0,0,0,0.02)"
+                }}>
+                  <input type="radio" name="signFont" value={f} checked={selectedSignFont === f} onChange={() => setSelectedSignFont(f)} style={{ display: "none" }} />
+                  Signature
+                </label>
+              ))}
+            </div>
+            <canvas ref={hiddenCanvasRef} width={500} height={200} style={{ display: "none" }} />
+            <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${LACQUER}`, color: color, fontFamily: `"${selectedSignFont}", cursive`, fontSize: 64, overflow: "hidden" }}>
+              {typeText}
+            </div>
+          </div>
+        )}
+
+        {signTab === "upload" && (
+          <div style={{ width: 500, height: 200, maxWidth: "100%", border: `1px dashed ${LACQUER}`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+            {uploadDataUrl ? (
+              <img src={uploadDataUrl} alt="Signature preview" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+            ) : (
+              <span style={{ fontFamily: FELL, color: LACQUER, fontSize: 16 }}>Click to upload image</span>
+            )}
+            <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleUpload} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={handleClear} style={{ ...pageBtn, padding: "8px 16px" }}>Clear</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button onClick={() => setColor(INK)} style={{ width: 24, height: 24, borderRadius: "50%", background: INK, border: color === INK ? `2px solid ${GOLD}` : "2px solid transparent", cursor: "pointer", padding: 0 }} aria-label="Ink Black" title="Ink Black" />
+              <button onClick={() => setColor(LACQUER)} style={{ width: 24, height: 24, borderRadius: "50%", background: LACQUER, border: color === LACQUER ? `2px solid ${GOLD}` : "2px solid transparent", cursor: "pointer", padding: 0 }} aria-label="Lacquer Red" title="Lacquer Red" />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: "1px solid transparent", color: INK }}>Cancel</button>
+            <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: PARCHMENT }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function makeTabId() {
+  return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export default function App() {
   const [pdfBytes, setPdfBytes] = useState(null);
   const [route, setRoute] = useState(() => {
@@ -926,6 +1134,8 @@ export default function App() {
   const [resizingFb, setResizingFb] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [isGridView, setIsGridView] = useState(false);
+  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [signatureColor, setSignatureColor] = useState("#000000");
   const [draggedPageNum, setDraggedPageNum] = useState(null);
   const [dragOverPageNum, setDragOverPageNum] = useState(null);
   const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
@@ -952,7 +1162,7 @@ export default function App() {
       } else {
         throw new Error("Use canvas fallback");
       }
-    } catch (e) {
+    } catch (e) { // eslint-disable-line no-unused-vars
       const bitmap = await createImageBitmap(file);
       const canvas = document.createElement("canvas");
       canvas.width = bitmap.width;
@@ -1060,7 +1270,7 @@ export default function App() {
         else if (fn.includes("courier") || fn.includes("mono")) ff = "Courier New, monospace";
         else if (fn.includes("georgia")) ff = "Georgia, serif";
         else if (fn.includes("verdana")) ff = "Verdana, sans-serif";
-        else if (fn.includes("calibri") || fn.includes("segoe")) ff = "Calibri, \'Segoe UI\', Arial, sans-serif";
+        else if (fn.includes("calibri") || fn.includes("segoe")) ff = "Calibri, 'Segoe UI', Arial, sans-serif";
         else ff = "Arial, sans-serif";
         const bold = /bold|black|heavy|semibold|medium/.test(fn);
         const italic = /italic|oblique/.test(fn);
@@ -1216,10 +1426,6 @@ export default function App() {
       }
       return next;
     });
-  }
-
-  function makeTabId() {
-    return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   function movePageTo(pageNum, targetDisplayIdx) {
@@ -1409,6 +1615,43 @@ export default function App() {
     reader.readAsDataURL(file);
   }
 
+  function handleInsertSignature(dataUrl) {
+    saveHistory();
+    floatingIdCounter++;
+    const id = `img-${floatingIdCounter}`;
+    let targetPageNum = pages.length ? pageOrder.map(pIdx => pages[pIdx]).filter(pg => pg && !deletedPages.has(pg.num))[0]?.num : null;
+    
+    // Attempt to find the most visible page
+    if (containerRef.current) {
+      const windowHeight = window.innerHeight;
+      let maxVisibleHeight = 0;
+      containerRef.current.querySelectorAll("[data-pgwrap]").forEach(el => {
+        const rect = el.getBoundingClientRect();
+        const visibleHeight = Math.min(rect.bottom, windowHeight) - Math.max(rect.top, 0);
+        if (visibleHeight > maxVisibleHeight) {
+          maxVisibleHeight = visibleHeight;
+          const pgNum = parseInt(el.getAttribute("data-pgwrap"), 10);
+          if (!isNaN(pgNum)) targetPageNum = pgNum;
+        }
+      });
+    }
+
+    if (targetPageNum == null) targetPageNum = pages[0]?.num;
+    if (targetPageNum == null) return;
+
+    // Center of viewport roughly
+    // The exact position inside the page would depend on scale, but 60, 60 is what handleAddImage uses.
+    // Let's use 100, 100 for better visibility.
+    setFloatingImages(prev => [...prev, {
+      id, page: targetPageNum,
+      z: 50 + floatingIdCounter,
+      x: 100, y: 100, w: 180, h: 70,
+      dataUrl,
+    }]);
+    setSelected(id);
+    setIsSignModalOpen(false);
+  }
+
   // Append another PDF or Image's pages to the current document — fully editable like original pages
   async function handleAppendFile(e) {
     const file = e.target.files[0];
@@ -1500,9 +1743,10 @@ export default function App() {
       setPageOrder(prev => [...prev, ...newPages.map((_, j) => prev.length + j)]);
       setTextBlocks(newWords);
       setPdfBytes(mergedBytes);
+      setTimeout(snapshotCurrentTab, 0); // Wait for state to settle before taking snapshot
     } catch (err) {
       console.error("Add PDF error:", err);
-      alert("Couldn\'t append this PDF: " + (err.message || err));
+      alert("Couldn't append this PDF: " + (err.message || err));
     }
   }
 
@@ -1644,11 +1888,11 @@ export default function App() {
           try {
             srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
           } catch (innerErr) {
-            console.warn("pdf-lib couldn\'t parse this encrypted PDF, falling back to canvas:", innerErr.message);
+            console.warn("pdf-lib couldn't parse this encrypted PDF, falling back to canvas:", innerErr.message);
             return await handleDownloadCanvasFallback();
           }
         } else {
-          console.warn("pdf-lib couldn\'t parse this PDF, falling back to canvas:", loadErr.message);
+          console.warn("pdf-lib couldn't parse this PDF, falling back to canvas:", loadErr.message);
           return await handleDownloadCanvasFallback();
         }
       }
@@ -1740,7 +1984,7 @@ export default function App() {
               const yPdf = pdfH - baselineCanvas * sy;
               try {
                 pdfPage.drawText(ln, { x: e.x * sx, y: yPdf, size: fs, font, color: rgb(0, 0, 0) });
-              } catch {}
+              } catch { /* ignore */ }
             });
           }
         }
@@ -1761,8 +2005,7 @@ export default function App() {
             const yPdf = pdfH - baselineCanvas * sy;
             try {
               pdfPage.drawText(ln, { x: fb.x * sx, y: yPdf, size: fs, font, color });
-            } catch {}
-          });
+            } catch { /* ignore */ }          });
         }
 
         // 3. Floating images
@@ -1878,9 +2121,10 @@ export default function App() {
   const visiblePages = pageOrder.map(pIdx => pages[pIdx]).filter(pg => pg && !deletedPages.has(pg.num));
 
   return (
-    <div style={{ fontFamily: FELL, minHeight: "100dvh", height: isNoFile ? "auto" : "100dvh", display: "flex", flexDirection: "column", overflow: isNoFile ? "auto" : "hidden", background: PARCHMENT, backgroundImage: CROSSHATCH, userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
+    <div style={{ position: isNoFile ? "relative" : "fixed", inset: isNoFile ? "auto" : 0, display: "flex", flexDirection: "column", overflow: isNoFile ? "visible" : "hidden", height: isNoFile ? "auto" : "100dvh", fontFamily: FELL, background: PARCHMENT, backgroundImage: CROSSHATCH, userSelect: dragging ? "none" : "auto" }} onClick={handleBgClick}>
       <style>{`
-        body { margin: 0; padding: 0; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Whisper&family=Great+Vibes&family=Dancing+Script&display=swap');
+        body { margin: 0; padding: 0; overflow: ${isNoFile ? "auto" : "hidden"}; }
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #8B1A1A; }
@@ -1916,6 +2160,7 @@ export default function App() {
             </select>
             <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
+            <button onClick={() => setIsSignModalOpen(true)} style={{ ...tbBtn, padding: "5px 12px" }}>🖋 Sign</button>
             <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
             <label style={tbBtn}>Open PDF/Image <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} /></label>
             <label style={tbBtn} title="Add a PDF or Image at the end">Merge PDF <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} /></label>
@@ -1968,47 +2213,54 @@ export default function App() {
             </div>
           )}
 
-          {pages.length > 0 && isEncrypted && !encryptionNoticeDismissed && (
-            <div onClick={e => e.stopPropagation()} style={{
-              maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
-              background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
-              fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
-              display: "flex", alignItems: "flex-start", gap: 12,
-            }}>
-              <div style={{ flex: 1 }}>
-                <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
-                  Password-protected PDF
-                </strong>
-                This PDF is password-protected. Decrypted contents may not save correctly. Decrypt it first, then re-open.
+          {/* Banners Container - Absolute to prevent pushing layout */}
+          <div style={{ position: 'absolute', top: 90, left: 0, right: 0, zIndex: 500, pointerEvents: 'none' }}>
+            {pages.length > 0 && isEncrypted && !encryptionNoticeDismissed && (
+              <div onClick={e => e.stopPropagation()} style={{
+                maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
+                background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
+                fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
+                display: "flex", alignItems: "flex-start", gap: 12,
+                pointerEvents: 'auto',
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+              }}>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                    Password-protected PDF
+                  </strong>
+                  This PDF is password-protected. Decrypted contents may not save correctly. Decrypt it first, then re-open.
+                </div>
+                <button onClick={() => setEncryptionNoticeDismissed(true)} aria-label="Dismiss password-protected notice" style={{
+                  background: "transparent", border: "none", color: LACQUER,
+                  fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
+                }}>✕</button>
               </div>
-              <button onClick={() => setEncryptionNoticeDismissed(true)} aria-label="Dismiss password-protected notice" style={{
-                background: "transparent", border: "none", color: LACQUER,
-                fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
-              }}>✕</button>
-            </div>
-          )}
+            )}
 
-          {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
-            <div onClick={e => e.stopPropagation()} style={{
-              maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
-              background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
-              fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
-              display: "flex", alignItems: "flex-start", gap: 12,
-            }}>
-              <div style={{ flex: 1 }}>
-                <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
-                  No editable text in this PDF
-                </strong>
-                This PDF doesn't have a selectable text layer — it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
+            {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
+              <div onClick={e => e.stopPropagation()} style={{
+                maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
+                background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
+                fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
+                display: "flex", alignItems: "flex-start", gap: 12,
+                pointerEvents: 'auto',
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+              }}>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                    No editable text in this PDF
+                  </strong>
+                  This PDF doesn't have a selectable text layer — it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
+                </div>
+                <button onClick={() => setTextLayerNoticeDismissed(true)} style={{
+                  background: "transparent", border: "none", color: LACQUER,
+                  fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
+                }}>✕</button>
               </div>
-              <button onClick={() => setTextLayerNoticeDismissed(true)} style={{
-                background: "transparent", border: "none", color: LACQUER,
-                fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
-              }}>✕</button>
-            </div>
-          )}
+            )}
+          </div>
 
-          <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%' }}>
+          <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
             {/* Left Sidebar */}
             <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
               <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
@@ -2241,6 +2493,14 @@ export default function App() {
             </div>
           </div>
         </>
+      )}
+      {isSignModalOpen && (
+        <SignatureModal
+          onClose={() => setIsSignModalOpen(false)}
+          onInsert={handleInsertSignature}
+          color={signatureColor}
+          setColor={setSignatureColor}
+        />
       )}
     </div>
   );
