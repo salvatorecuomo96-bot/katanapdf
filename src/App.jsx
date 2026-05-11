@@ -809,6 +809,7 @@ function FloatingBox({ fb, isSel, onSelect, onStartDrag, onStartResize, onUpdate
       position: "absolute", left: fb.x, top: fb.y, minWidth: 140,
       zIndex: 1000,
       border: "2px solid #8B1A1A",
+      transform: `rotate(${fb.angle || 0}deg)`,
       borderRadius: 4, background: "transparent",
       boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
       boxSizing: "border-box",
@@ -1069,8 +1070,7 @@ function SignatureModal({ onClose, onInsert, color, setColor }) {
           <div style={{ display: "flex", gap: 12 }}>
             <button onClick={handleClear} style={{ ...pageBtn, padding: "8px 16px" }}>Clear</button>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button onClick={() => setColor(INK)} style={{ width: 24, height: 24, borderRadius: "50%", background: INK, border: color === INK ? `2px solid ${GOLD}` : "2px solid transparent", cursor: "pointer", padding: 0 }} aria-label="Ink Black" title="Ink Black" />
-              <button onClick={() => setColor(LACQUER)} style={{ width: 24, height: 24, borderRadius: "50%", background: LACQUER, border: color === LACQUER ? `2px solid ${GOLD}` : "2px solid transparent", cursor: "pointer", padding: 0 }} aria-label="Lacquer Red" title="Lacquer Red" />
+              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 32, height: 32, borderRadius: "4px", border: `2px solid ${GOLD}`, background: "transparent", cursor: "pointer", padding: 0 }} aria-label="Signature Color" title="Signature Color" />
             </div>
           </div>
           <div style={{ display: "flex", gap: 12 }}>
@@ -1604,10 +1604,11 @@ export default function App() {
       saveHistory();
       floatingIdCounter++;
       const id = `img-${floatingIdCounter}`;
+      const pg = pages.find(p => p.num === pageNum);
       setFloatingImages(prev => [...prev, {
         id, page: pageNum,
         z: 50 + floatingIdCounter,
-        x: 60, y: 60, w: 200, h: 150,
+        x: (pg?.width || 600) / 2 - 60, y: (pg?.height || 800) / 2 - 20, w: 200, h: 150,
         dataUrl: ev.target.result,
       }]);
       setSelected(id);
@@ -2022,7 +2023,7 @@ export default function App() {
           const w = fi.w * sx;
           const h = fi.h * sy;
           const yPdf = pdfH - (fi.y + fi.h) * sy;
-          pdfPage.drawImage(img, { x, y: yPdf, width: w, height: h });
+          pdfPage.drawImage(img, { x: x, y: yPdf, width: w, height: h, rotate: degrees(fi.angle || 0) });
         }
       }
 
@@ -2280,6 +2281,13 @@ export default function App() {
                 return (
                   <div key={`side-${pg.num}`}
                        draggable={true}
+                       onClick={() => {
+                         if (isGridView) setIsGridView(false);
+                         setTimeout(() => {
+                           const el = containerRef.current?.querySelector(`[data-pgwrap="${pg.num}"]`);
+                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                         }, 50);
+                       }}
                        onDragStart={e => {
                          e.dataTransfer.effectAllowed = "move";
                          setTimeout(() => setDraggedPageNum(pg.num), 0);
@@ -2361,6 +2369,7 @@ export default function App() {
                 const dispH = (swap ? pg.width : pg.height) * scale;
                 return (
                   <div key={pg.num}
+                       onClick={() => { if (isGridView) { setIsGridView(false); setTimeout(() => { document.querySelector(`[data-pgwrap="${pg.num}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); } }}
                        draggable={isGridView}
                        onDragStart={e => {
                          if (isGridView) {
@@ -2436,7 +2445,7 @@ export default function App() {
                        <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "2px 6px", fontSize: 10 }}>×</button>
                     </div>
                   )}
-                  <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "100%", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden", pointerEvents: isGridView ? "none" : "auto" }}>
+                  <div data-pgwrap={pg.num} onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "100%", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden" }}>
                     <div style={{
                       position: "absolute",
                       left: "50%",
