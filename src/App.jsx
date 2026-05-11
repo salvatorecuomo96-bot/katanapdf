@@ -2284,8 +2284,9 @@ export default function App() {
                        onClick={() => {
                          if (isGridView) setIsGridView(false);
                          setTimeout(() => {
-                           const el = containerRef.current?.querySelector(`[data-pgwrap="${pg.num}"]`);
-                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                           const container = containerRef.current;
+                           const el = container?.querySelector(`[data-pgwrap="${pg.num}"]`);
+                           if (container && el) container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
                          }, 50);
                        }}
                        onDragStart={e => {
@@ -2369,7 +2370,6 @@ export default function App() {
                 const dispH = (swap ? pg.width : pg.height) * scale;
                 return (
                   <div key={pg.num}
-                       onClick={() => { if (isGridView) { setIsGridView(false); setTimeout(() => { document.querySelector(`[data-pgwrap="${pg.num}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); } }}
                        draggable={isGridView}
                        onDragStart={e => {
                          if (isGridView) {
@@ -2518,6 +2518,10 @@ export default function App() {
 // iOS-friendly hidden file input — display:none breaks file picker on some iOS Safari versions
 const hiddenFileInput = { position: "absolute", width: 0.1, height: 0.1, opacity: 0, overflow: "hidden", pointerEvents: "none" };
 const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 11, background: "transparent", color: GOLD, cursor: "pointer", userSelect: "none", fontFamily: CINZEL, letterSpacing: 2, textTransform: "uppercase" };
+const tbIconBtn = { width: 28, height: 28, border: "1px solid rgba(196,150,58,0.4)", fontSize: 13, background: "transparent", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: CINZEL, padding: 0 };
+const tbSelect = { padding: "4px 8px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 12, background: INK, color: PARCHMENT, cursor: "pointer", fontFamily: CINZEL, letterSpacing: 1 };
+const pageBtn = { padding: "7px 16px", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, background: "transparent", color: LACQUER, cursor: "pointer", userSelect: "none" };
+ter", userSelect: "none", fontFamily: CINZEL, letterSpacing: 2, textTransform: "uppercase" };
 const tbIconBtn = { width: 28, height: 28, border: "1px solid rgba(196,150,58,0.4)", fontSize: 13, background: "transparent", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: CINZEL, padding: 0 };
 const tbSelect = { padding: "4px 8px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 12, background: INK, color: PARCHMENT, cursor: "pointer", fontFamily: CINZEL, letterSpacing: 1 };
 const pageBtn = { padding: "7px 16px", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, background: "transparent", color: LACQUER, cursor: "pointer", userSelect: "none" };
