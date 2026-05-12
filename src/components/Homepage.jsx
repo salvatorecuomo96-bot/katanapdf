@@ -178,7 +178,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
       <SectionDivider label="Frequently asked questions" />
       <section style={{ maxWidth: 1300, margin: "0 auto", padding: "0 20px 56px" }}>
         {[
-          { q: "Is katanapdf really free?", a: "Yes. Every feature is free with no paid tier. The site is supported by ads and donations." },
+          { q: "Is katanapdf really free?", a: "Yes. Every feature is free with no paid tier." },
           { q: "Are my files uploaded somewhere?", a: "No. The PDF is opened, edited, and saved entirely inside your browser. We have no servers that receive your file." },
           { q: "Do I need an account?", a: "No. There is no sign-up, no email required, no tracking of who edits what." },
           { q: "What size of PDF can I edit?", a: "Any size your browser can handle - typically files up to a few hundred MB work fine on a modern computer." },

@@ -1161,130 +1161,9 @@ export default function PDFEditor() {
         />
       ) : (
         <>
-          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
-            <a href="#home" onClick={(e) => { e.preventDefault(); goHome(); window.location.hash = "#home"; }} style={{ textDecoration: "none" }}>
-              <span style={{ fontFamily: CINZEL, fontSize: 14, color: PARCHMENT, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>katanapdf</span>
-            </a>
-            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
-            <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={tbSelect}>
-              <option value="Arial, sans-serif">Arial</option>
-              <option value="Times New Roman, serif">Times New Roman</option>
-              <option value="Courier New, monospace">Courier</option>
-              <option value="Georgia, serif">Georgia</option>
-            </select>
-            <select value={fontSize} onChange={e => setFontSize(parseInt(e.target.value))} style={{ ...tbSelect, width: 58, textAlign: "center" }}>
-              {[6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120].map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
-            <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
-            <button onClick={() => setIsSignModalOpen(true)} style={{ ...tbBtn, padding: "5px 12px" }}>Edit Sign</button>
-            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
-            <label style={tbBtn}>Open PDF/Image <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} /></label>
-            <label style={tbBtn} title="Add a PDF or Image at the end">Merge PDF <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} /></label>
-            <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>&#8630; UNDO</button>
-            <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
-            <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={tbIconBtn}>-</button>
-            <div style={{ flex: 1 }} />
-            <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
-          </div>
-
-          {/* TABS STRIP - one PDF per tab */}
-          {tabsList.length > 0 && (
-            <div onClick={e => e.stopPropagation()} style={{
-              background: "transparent", borderBottom: `1px solid rgba(139,26,26,0.25)`,
-              padding: "8px 16px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
-            }}>
-              {tabsList.map(t => {
-                const isActive = t.id === activeTabId;
-                return (
-                  <div key={t.id} onClick={() => switchTab(t.id)} style={{
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                    padding: "5px 10px 5px 14px",
-                    border: `1px solid ${isActive ? GOLD : "rgba(139,26,26,0.3)"}`,
-                    background: isActive ? INK : "rgba(255,255,255,0.5)",
-                    color: isActive ? GOLD : INK,
-                    fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase",
-                    cursor: "pointer", maxWidth: 220,
-                  }}>
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {t.fileName.replace(/\.pdf$/i, "")}
-                    </span>
-                    <span onClick={e => { e.stopPropagation(); closeTab(t.id); }}
-                      title="Close" style={{
-                        cursor: "pointer", padding: "0 4px", fontWeight: 700,
-                        opacity: 0.7,
-                      }}>X</span>
-                  </div>
-                );
-              })}
-              <label style={{
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-                width: 30, height: 26,
-                border: `1px solid ${LACQUER}`, color: LACQUER, background: "rgba(255,255,255,0.5)",
-                fontFamily: CINZEL, fontSize: 16, fontWeight: 600, cursor: "pointer",
-              }} title="Open another PDF or Image in a new tab">
-                +
-                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} />
-              </label>
-            </div>
-          )}
-
-          {/* Banners Container - Relative to push layout naturally */}
-          {( (pages.length > 0 && isEncrypted && !encryptionNoticeDismissed) || (pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed) ) && (
-            <div style={{ position: 'relative', zIndex: 500, background: 'transparent', paddingBottom: 20 }}>
-              {pages.length > 0 && isEncrypted && !encryptionNoticeDismissed && (
-                <div onClick={e => e.stopPropagation()} style={{
-                  maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
-                  background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
-                  fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
-                  display: "flex", alignItems: "flex-start", gap: 12,
-                  pointerEvents: 'auto',
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
-                      Password-protected PDF
-                    </strong>
-                    This PDF is password-protected. Decrypted contents may not save correctly. Decrypt it first, then re-open.
-                  </div>
-                  <button onClick={() => setEncryptionNoticeDismissed(true)} aria-label="Dismiss password-protected notice" style={{
-                    background: "transparent", border: "none", color: LACQUER,
-                    fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
-                  }}>X</button>
-                </div>
-              )}
-
-              {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
-                <div onClick={e => e.stopPropagation()} style={{
-                  maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
-                  background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
-                  fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
-                  display: "flex", alignItems: "flex-start", gap: 12,
-                  pointerEvents: 'auto',
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
-                      No editable text in this PDF
-                    </strong>
-                    This PDF doesn't have a selectable text layer - it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
-                  </div>
-                  <button onClick={() => setTextLayerNoticeDismissed(true)} style={{
-                    background: "transparent", border: "none", color: LACQUER,
-                    fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
-                  }}>X</button>
-                </div>
-              )}
-            </div>
-          )}
-
-
           <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
-            {/* Left Sidebar */}
-            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+{/* Left Sidebar */}
+            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, borderTop: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
               <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
                 <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <GridIcon />
@@ -1382,7 +1261,231 @@ export default function PDFEditor() {
               </div>
             </aside>
 
-            {/* Right Main Area */}
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
+<div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
+{/* Left Sidebar */}
+            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, borderTop: `1px solid rgba(139,26,26,0.5)`, borderTop: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
+                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <GridIcon />
+                </button>
+                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
+                  +
+                  <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+                </label>
+              </div>
+              
+              <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {visiblePages.map((pg, i) => {
+                const rotation = rotatedPages[pg.num] || 0;
+                const swap = rotation === 90 || rotation === 270;
+                return (
+                  <div key={`side-${pg.num}`}
+                       draggable={true}
+                       onClick={() => {
+                         if (isGridView) setIsGridView(false);
+                         setTimeout(() => {
+                           const container = containerRef.current;
+                           const el = container?.querySelector(`[data-pgwrap="${pg.num}"]`);
+                           if (container && el) container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
+                         }, 50);
+                       }}
+                       onDragStart={e => {
+                         e.dataTransfer.effectAllowed = "move";
+                         setTimeout(() => setDraggedPageNum(pg.num), 0);
+                       }}
+                       onDragOver={e => {
+                         if (draggedPageNum !== null && draggedPageNum !== pg.num) {
+                           e.preventDefault();
+                           e.dataTransfer.dropEffect = "move";
+                           setDragOverPageNum(pg.num);
+                         }
+                       }}
+                       onDragLeave={() => {
+                         if (dragOverPageNum === pg.num) setDragOverPageNum(null);
+                       }}
+                       onDrop={e => {
+                         if (draggedPageNum !== null) {
+                           e.preventDefault();
+                           movePageTo(draggedPageNum, i);
+                           setDraggedPageNum(null);
+                           setDragOverPageNum(null);
+                         }
+                       }}
+                       onDragEnd={() => {
+                         setDraggedPageNum(null);
+                         setDragOverPageNum(null);
+                       }}
+                       style={{
+                         opacity: draggedPageNum === pg.num ? 0.5 : 1,
+                         borderBottom: dragOverPageNum === pg.num ? `4px solid ${LACQUER}` : "none",
+                         transition: 'opacity 0.2s'
+                       }}>
+                    <div style={{ 
+                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
+                      aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                    }}>
+                      <img src={pg.dataUrl} alt={`Page ${i+1}`} 
+                        style={{ 
+                          transform: `rotate(${rotation}deg)`, 
+                          width: swap ? 'auto' : '100%', 
+                          height: swap ? '100%' : 'auto',
+                          display: 'block' 
+                        }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
+                      <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, fontWeight: 600 }}>{i + 1}</span>
+                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
+                        <RotateIcon size={14} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
+                    </div>
+                    
+                    {i < visiblePages.length - 1 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
+                        <label style={{ width: 20, height: 20, borderRadius: '50%', border: 'none', background: GOLD, color: PARCHMENT, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
+                          +
+                          <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 10px', border: `1px dashed ${LACQUER}`, background: 'rgba(139,26,26,0.05)', color: LACQUER, cursor: 'pointer', marginTop: 12 }}>
+                <span style={{ fontSize: 20 }}>+</span>
+                <span style={{ fontFamily: CINZEL, fontSize: 10, letterSpacing: 1, fontWeight: 600 }}>Add PDF, image files</span>
+                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+              </label>
+              </div>
+            </aside>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
+<div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
+            <a href="#home" onClick={(e) => { e.preventDefault(); goHome(); window.location.hash = "#home"; }} style={{ textDecoration: "none" }}>
+              <span style={{ fontFamily: CINZEL, fontSize: 14, color: PARCHMENT, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>katanapdf</span>
+            </a>
+            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
+            <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={tbSelect}>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="Times New Roman, serif">Times New Roman</option>
+              <option value="Courier New, monospace">Courier</option>
+              <option value="Georgia, serif">Georgia</option>
+            </select>
+            <select value={fontSize} onChange={e => setFontSize(parseInt(e.target.value))} style={{ ...tbSelect, width: 58, textAlign: "center" }}>
+              {[6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
+            <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
+            <button onClick={() => setIsSignModalOpen(true)} style={{ ...tbBtn, padding: "5px 12px" }}>SIGN</button>
+            <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
+            <label style={tbBtn}>Open PDF/Image <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} /></label>
+            <label style={tbBtn} title="Add a PDF or Image at the end">Merge PDF <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} /></label>
+            <button onClick={undo} disabled={!history.length} style={{ ...tbBtn, opacity: history.length ? 1 : 0.3 }}>&#8630; UNDO</button>
+            <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
+            <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
+            <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={tbIconBtn}>-</button>
+            <div style={{ flex: 1 }} />
+            <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
+          </div>
+
+          {/* TABS STRIP - one PDF per tab */}
+          {tabsList.length > 0 && (
+            <div onClick={e => e.stopPropagation()} style={{
+              background: "transparent", borderBottom: `1px solid rgba(139,26,26,0.25)`,
+              padding: "8px 16px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
+            }}>
+              {tabsList.map(t => {
+                const isActive = t.id === activeTabId;
+                return (
+                  <div key={t.id} onClick={() => switchTab(t.id)} style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "5px 10px 5px 14px",
+                    border: `1px solid ${isActive ? GOLD : "rgba(139,26,26,0.3)"}`,
+                    background: isActive ? INK : "rgba(255,255,255,0.5)",
+                    color: isActive ? GOLD : INK,
+                    fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase",
+                    cursor: "pointer", maxWidth: 220,
+                  }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {t.fileName.replace(/\.pdf$/i, "")}
+                    </span>
+                    <span onClick={e => { e.stopPropagation(); closeTab(t.id); }}
+                      title="Close" style={{
+                        cursor: "pointer", padding: "0 4px", fontWeight: 700,
+                        opacity: 0.7,
+                      }}>X</span>
+                  </div>
+                );
+              })}
+              <label style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: 30, height: 26,
+                border: `1px solid ${LACQUER}`, color: LACQUER, background: "rgba(255,255,255,0.5)",
+                fontFamily: CINZEL, fontSize: 16, fontWeight: 600, cursor: "pointer",
+              }} title="Open another PDF or Image in a new tab">
+                +
+                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} />
+              </label>
+            </div>
+          )}
+
+          {/* Banners Container - Relative to push layout naturally */}
+          {( (pages.length > 0 && isEncrypted && !encryptionNoticeDismissed) || (pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed) ) && (
+            <div style={{ position: 'relative', zIndex: 500, backgroundColor: PARCHMENT, backgroundImage: CROSSHATCH, paddingBottom: 20 }}>
+              {pages.length > 0 && isEncrypted && !encryptionNoticeDismissed && (
+                <div onClick={e => e.stopPropagation()} style={{
+                  maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
+                  background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
+                  fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
+                  display: "flex", alignItems: "flex-start", gap: 12,
+                  pointerEvents: 'auto',
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                      Password-protected PDF
+                    </strong>
+                    This PDF is password-protected. Decrypted contents may not save correctly. Decrypt it first, then re-open.
+                  </div>
+                  <button onClick={() => setEncryptionNoticeDismissed(true)} aria-label="Dismiss password-protected notice" style={{
+                    background: "transparent", border: "none", color: LACQUER,
+                    fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
+                  }}>X</button>
+                </div>
+              )}
+
+              {pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed && (
+                <div onClick={e => e.stopPropagation()} style={{
+                  maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
+                  background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`,
+                  fontFamily: FELL, fontSize: 14, lineHeight: 1.5, color: INK,
+                  display: "flex", alignItems: "flex-start", gap: 12,
+                  pointerEvents: 'auto',
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ fontFamily: CINZEL, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                      No editable text in this PDF
+                    </strong>
+                    This PDF doesn't have a selectable text layer - it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still <em>add new text and images</em> on top using the buttons on each page.
+                  </div>
+                  <button onClick={() => setTextLayerNoticeDismissed(true)} style={{
+                    background: "transparent", border: "none", color: LACQUER,
+                    fontFamily: CINZEL, fontSize: 14, cursor: "pointer", padding: "0 4px", fontWeight: 700,
+                  }}>X</button>
+                </div>
+              )}
+            </div>
+          )}
+
+
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
+{/* Right Main Area */}
             <div ref={containerRef} style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: PARCHMENT, backgroundImage: CROSSHATCH, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
               {visiblePages.map((pg, displayIdx) => {
                 if (!pg) return null;
@@ -1542,6 +1645,7 @@ export default function PDFEditor() {
             })}
             </div>
           </div>
+        </div>
         </>
       )}
       {isSignModalOpen && (
