@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:export": "node tests/export-smoke.mjs"
+    "test:export": "node tests/export-smoke.mjs",
+    "test:utils": "node tests/utils-smoke.mjs",
+    "test": "npm run test:export && npm run test:utils"
   },
   "dependencies": {
     "@fontsource/noto-sans": "^5.2.10",
