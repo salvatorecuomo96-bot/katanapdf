@@ -1161,209 +1161,7 @@ export default function PDFEditor() {
         />
       ) : (
         <>
-          <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
-{/* Left Sidebar */}
-            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, borderTop: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
-                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <GridIcon />
-                </button>
-                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
-                  +
-                  <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
-                </label>
-              </div>
-              
-              <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {visiblePages.map((pg, i) => {
-                const rotation = rotatedPages[pg.num] || 0;
-                const swap = rotation === 90 || rotation === 270;
-                return (
-                  <div key={`side-${pg.num}`}
-                       draggable={true}
-                       onClick={() => {
-                         if (isGridView) setIsGridView(false);
-                         setTimeout(() => {
-                           const container = containerRef.current;
-                           const el = container?.querySelector(`[data-pgwrap="${pg.num}"]`);
-                           if (container && el) container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
-                         }, 50);
-                       }}
-                       onDragStart={e => {
-                         e.dataTransfer.effectAllowed = "move";
-                         setTimeout(() => setDraggedPageNum(pg.num), 0);
-                       }}
-                       onDragOver={e => {
-                         if (draggedPageNum !== null && draggedPageNum !== pg.num) {
-                           e.preventDefault();
-                           e.dataTransfer.dropEffect = "move";
-                           setDragOverPageNum(pg.num);
-                         }
-                       }}
-                       onDragLeave={() => {
-                         if (dragOverPageNum === pg.num) setDragOverPageNum(null);
-                       }}
-                       onDrop={e => {
-                         if (draggedPageNum !== null) {
-                           e.preventDefault();
-                           movePageTo(draggedPageNum, i);
-                           setDraggedPageNum(null);
-                           setDragOverPageNum(null);
-                         }
-                       }}
-                       onDragEnd={() => {
-                         setDraggedPageNum(null);
-                         setDragOverPageNum(null);
-                       }}
-                       style={{
-                         opacity: draggedPageNum === pg.num ? 0.5 : 1,
-                         borderBottom: dragOverPageNum === pg.num ? `4px solid ${LACQUER}` : "none",
-                         transition: 'opacity 0.2s'
-                       }}>
-                    <div style={{ 
-                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
-                      aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
-                    }}>
-                      <img src={pg.dataUrl} alt={`Page ${i+1}`} 
-                        style={{ 
-                          transform: `rotate(${rotation}deg)`, 
-                          width: swap ? 'auto' : '100%', 
-                          height: swap ? '100%' : 'auto',
-                          display: 'block' 
-                        }} />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
-                      <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, fontWeight: 600 }}>{i + 1}</span>
-                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
-                        <RotateIcon size={14} />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
-                    </div>
-                    
-                    {i < visiblePages.length - 1 && (
-                      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-                        <label style={{ width: 20, height: 20, borderRadius: '50%', border: 'none', background: GOLD, color: PARCHMENT, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
-                          +
-                          <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 10px', border: `1px dashed ${LACQUER}`, background: 'rgba(139,26,26,0.05)', color: LACQUER, cursor: 'pointer', marginTop: 12 }}>
-                <span style={{ fontSize: 20 }}>+</span>
-                <span style={{ fontFamily: CINZEL, fontSize: 10, letterSpacing: 1, fontWeight: 600 }}>Add PDF, image files</span>
-                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
-              </label>
-              </div>
-            </aside>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
-<div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
-{/* Left Sidebar */}
-            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, borderTop: `1px solid rgba(139,26,26,0.5)`, borderTop: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
-                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <GridIcon />
-                </button>
-                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
-                  +
-                  <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
-                </label>
-              </div>
-              
-              <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {visiblePages.map((pg, i) => {
-                const rotation = rotatedPages[pg.num] || 0;
-                const swap = rotation === 90 || rotation === 270;
-                return (
-                  <div key={`side-${pg.num}`}
-                       draggable={true}
-                       onClick={() => {
-                         if (isGridView) setIsGridView(false);
-                         setTimeout(() => {
-                           const container = containerRef.current;
-                           const el = container?.querySelector(`[data-pgwrap="${pg.num}"]`);
-                           if (container && el) container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
-                         }, 50);
-                       }}
-                       onDragStart={e => {
-                         e.dataTransfer.effectAllowed = "move";
-                         setTimeout(() => setDraggedPageNum(pg.num), 0);
-                       }}
-                       onDragOver={e => {
-                         if (draggedPageNum !== null && draggedPageNum !== pg.num) {
-                           e.preventDefault();
-                           e.dataTransfer.dropEffect = "move";
-                           setDragOverPageNum(pg.num);
-                         }
-                       }}
-                       onDragLeave={() => {
-                         if (dragOverPageNum === pg.num) setDragOverPageNum(null);
-                       }}
-                       onDrop={e => {
-                         if (draggedPageNum !== null) {
-                           e.preventDefault();
-                           movePageTo(draggedPageNum, i);
-                           setDraggedPageNum(null);
-                           setDragOverPageNum(null);
-                         }
-                       }}
-                       onDragEnd={() => {
-                         setDraggedPageNum(null);
-                         setDragOverPageNum(null);
-                       }}
-                       style={{
-                         opacity: draggedPageNum === pg.num ? 0.5 : 1,
-                         borderBottom: dragOverPageNum === pg.num ? `4px solid ${LACQUER}` : "none",
-                         transition: 'opacity 0.2s'
-                       }}>
-                    <div style={{ 
-                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
-                      aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
-                    }}>
-                      <img src={pg.dataUrl} alt={`Page ${i+1}`} 
-                        style={{ 
-                          transform: `rotate(${rotation}deg)`, 
-                          width: swap ? 'auto' : '100%', 
-                          height: swap ? '100%' : 'auto',
-                          display: 'block' 
-                        }} />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
-                      <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, fontWeight: 600 }}>{i + 1}</span>
-                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
-                        <RotateIcon size={14} />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
-                    </div>
-                    
-                    {i < visiblePages.length - 1 && (
-                      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-                        <label style={{ width: 20, height: 20, borderRadius: '50%', border: 'none', background: GOLD, color: PARCHMENT, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
-                          +
-                          <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 10px', border: `1px dashed ${LACQUER}`, background: 'rgba(139,26,26,0.05)', color: LACQUER, cursor: 'pointer', marginTop: 12 }}>
-                <span style={{ fontSize: 20 }}>+</span>
-                <span style={{ fontFamily: CINZEL, fontSize: 10, letterSpacing: 1, fontWeight: 600 }}>Add PDF, image files</span>
-                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
-              </label>
-              </div>
-            </aside>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
-<div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
+          <div data-edit-toolbar style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: 52, background: INK, borderBottom: `1px solid ${GOLD}`, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
             <a href="#home" onClick={(e) => { e.preventDefault(); goHome(); window.location.hash = "#home"; }} style={{ textDecoration: "none" }}>
               <span style={{ fontFamily: CINZEL, fontSize: 14, color: PARCHMENT, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>katanapdf</span>
             </a>
@@ -1381,7 +1179,7 @@ export default function PDFEditor() {
             </select>
             <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
             <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
-            <button onClick={() => setIsSignModalOpen(true)} style={{ ...tbBtn, padding: "5px 12px" }}>SIGN</button>
+            <button onClick={() => setIsSignModalOpen(true)} style={{ ...tbBtn, padding: "5px 12px" }}>Edit Sign</button>
             <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
             <label style={tbBtn}>Open PDF/Image <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} /></label>
             <label style={tbBtn} title="Add a PDF or Image at the end">Merge PDF <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} /></label>
@@ -1436,7 +1234,7 @@ export default function PDFEditor() {
 
           {/* Banners Container - Relative to push layout naturally */}
           {( (pages.length > 0 && isEncrypted && !encryptionNoticeDismissed) || (pages.length > 0 && !hasTextLayer && !textLayerNoticeDismissed) ) && (
-            <div style={{ position: 'relative', zIndex: 500, backgroundColor: PARCHMENT, backgroundImage: CROSSHATCH, paddingBottom: 20 }}>
+            <div style={{ position: 'relative', zIndex: 500, background: 'transparent', paddingBottom: 20 }}>
               {pages.length > 0 && isEncrypted && !encryptionNoticeDismissed && (
                 <div onClick={e => e.stopPropagation()} style={{
                   maxWidth: 1600, margin: "20px auto 0", padding: "14px 20px",
@@ -1484,8 +1282,107 @@ export default function PDFEditor() {
           )}
 
 
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
-{/* Right Main Area */}
+          <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
+            {/* Left Sidebar */}
+            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
+                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <GridIcon />
+                </button>
+                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
+                  +
+                  <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+                </label>
+              </div>
+              
+              <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {visiblePages.map((pg, i) => {
+                const rotation = rotatedPages[pg.num] || 0;
+                const swap = rotation === 90 || rotation === 270;
+                return (
+                  <div key={`side-${pg.num}`}
+                       draggable={true}
+                       onClick={() => {
+                         if (isGridView) setIsGridView(false);
+                         setTimeout(() => {
+                           const container = containerRef.current;
+                           const el = container?.querySelector(`[data-pgwrap="${pg.num}"]`);
+                           if (container && el) container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
+                         }, 50);
+                       }}
+                       onDragStart={e => {
+                         e.dataTransfer.effectAllowed = "move";
+                         setTimeout(() => setDraggedPageNum(pg.num), 0);
+                       }}
+                       onDragOver={e => {
+                         if (draggedPageNum !== null && draggedPageNum !== pg.num) {
+                           e.preventDefault();
+                           e.dataTransfer.dropEffect = "move";
+                           setDragOverPageNum(pg.num);
+                         }
+                       }}
+                       onDragLeave={() => {
+                         if (dragOverPageNum === pg.num) setDragOverPageNum(null);
+                       }}
+                       onDrop={e => {
+                         if (draggedPageNum !== null) {
+                           e.preventDefault();
+                           movePageTo(draggedPageNum, i);
+                           setDraggedPageNum(null);
+                           setDragOverPageNum(null);
+                         }
+                       }}
+                       onDragEnd={() => {
+                         setDraggedPageNum(null);
+                         setDragOverPageNum(null);
+                       }}
+                       style={{
+                         opacity: draggedPageNum === pg.num ? 0.5 : 1,
+                         borderBottom: dragOverPageNum === pg.num ? `4px solid ${LACQUER}` : "none",
+                         transition: 'opacity 0.2s'
+                       }}>
+                    <div style={{ 
+                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
+                      aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                    }}>
+                      <img src={pg.dataUrl} alt={`Page ${i+1}`} 
+                        style={{ 
+                          transform: `rotate(${rotation}deg)`, 
+                          width: swap ? 'auto' : '100%', 
+                          height: swap ? '100%' : 'auto',
+                          display: 'block' 
+                        }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
+                      <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, fontWeight: 600 }}>{i + 1}</span>
+                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
+                        <RotateIcon size={14} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
+                    </div>
+                    
+                    {i < visiblePages.length - 1 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
+                        <label style={{ width: 20, height: 20, borderRadius: '50%', border: 'none', background: GOLD, color: PARCHMENT, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
+                          +
+                          <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 10px', border: `1px dashed ${LACQUER}`, background: 'rgba(139,26,26,0.05)', color: LACQUER, cursor: 'pointer', marginTop: 12 }}>
+                <span style={{ fontSize: 20 }}>+</span>
+                <span style={{ fontFamily: CINZEL, fontSize: 10, letterSpacing: 1, fontWeight: 600 }}>Add PDF, image files</span>
+                <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
+              </label>
+              </div>
+            </aside>
+
+            {/* Right Main Area */}
             <div ref={containerRef} style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: PARCHMENT, backgroundImage: CROSSHATCH, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
               {visiblePages.map((pg, displayIdx) => {
                 if (!pg) return null;
@@ -1645,7 +1542,6 @@ export default function PDFEditor() {
             })}
             </div>
           </div>
-        </div>
         </>
       )}
       {isSignModalOpen && (
