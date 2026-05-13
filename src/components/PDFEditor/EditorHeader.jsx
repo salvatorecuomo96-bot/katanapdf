@@ -1,7 +1,7 @@
 import { GOLD, INK, CINZEL, LACQUER, hiddenFileInput } from "../utils/constant";
 
 export default function EditorHeader({
-  tabsList,
+  tabsList = [],
   activeTabId,
   switchTab,
   closeTab,

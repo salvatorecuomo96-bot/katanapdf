@@ -1,7 +1,7 @@
 import { PARCHMENT_2, LACQUER, INK, CINZEL, FELL } from "../utils/constant";
 
 export default function EditorNotices({
-  pages,
+  pages = [],
   hasTextLayer,
   textLayerNoticeDismissed,
   setTextLayerNoticeDismissed,

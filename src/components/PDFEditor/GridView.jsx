@@ -1,11 +1,11 @@
 import { LACQUER, PARCHMENT, CROSSHATCH, CINZEL, pageBtn } from "../utils/constant";
 
 export default function GridView({
-  visiblePages,
-  rotatedPages,
-  deletedPages,
-  pageOrder,
-  pages,
+  visiblePages = [],
+  rotatedPages = {},
+  deletedPages = new Set(),
+  pageOrder = [],
+  pages = [],
   setIsGridView,
   rotatePage,
   deletePage,

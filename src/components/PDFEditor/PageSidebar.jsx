@@ -13,8 +13,8 @@ export const RotateIcon = ({ size = 14 }) => (
 );
 
 export default function PageSidebar({
-  visiblePages,
-  rotatedPages,
+  visiblePages = [],
+  rotatedPages = {},
   isGridView,
   setIsGridView,
   handleAppendFile,
