@@ -10,13 +10,11 @@ import SignatureModal from "./SignatureModal";
 import EditorNotices from "./EditorNotices";
 import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
-import PageSidebar, { GridIcon, RotateIcon } from "./PageSidebar";
-import GridView from "./GridView";
-import PageView from "./PageView";
+import { GridIcon, RotateIcon } from "./PageSidebar";
 import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../utils/pdfLoadUtils";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
-import { CINZEL, CROSSHATCH, FELL, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE, tbBtn, tbIconBtn, tbSelect } from "../utils/constant";
+import { CINZEL, CROSSHATCH, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
 
 import "./PDFEditor.css";
 
@@ -84,37 +82,6 @@ export default function PDFEditor() {
   const fbResizeOrigin = useRef(null);
   const containerRef = useRef(null);
   const canvasRefs = useRef({});
-
-  async function convertImageToPdfBytes(file) {
-    const doc = await PDFDocument.create();
-    const arrayBuffer = await file.arrayBuffer();
-    let img;
-    const type = file.type.toLowerCase();
-    try {
-      if (type === "image/jpeg" || type === "image/jpg") {
-        img = await doc.embedJpg(arrayBuffer);
-      } else if (type === "image/png") {
-        img = await doc.embedPng(arrayBuffer);
-      } else {
-        throw new Error("Use canvas fallback");
-      }
-    } catch (e) { // eslint-disable-line no-unused-vars
-      const bitmap = await createImageBitmap(file);
-      const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(bitmap, 0, 0);
-      const pngBuf = await new Promise(res => {
-        canvas.toBlob(async b => res(await b.arrayBuffer()), "image/png");
-      });
-      img = await doc.embedPng(pngBuf);
-    }
-    const { width, height } = img.scale(1);
-    const page = doc.addPage([width, height]);
-    page.drawImage(img, { x: 0, y: 0, width, height });
-    return await doc.save();
-  }
 
   async function handleFile(e) {
     const input = e.target;
