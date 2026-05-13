@@ -10,6 +10,7 @@ import SignatureModal from "./SignatureModal";
 import EditorNotices from "./EditorNotices";
 import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
+import PageSidebar from "./PageSidebar";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
 import { CINZEL, CROSSHATCH, FELL, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE, tbBtn, tbIconBtn, tbSelect } from "../utils/constant";
