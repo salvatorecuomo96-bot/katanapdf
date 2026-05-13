@@ -1,4 +1,4 @@
-import { rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
 
 export function pickPdfLibFont(fonts, family, bold, italic) {
   const f = (family || "").toLowerCase();
@@ -29,4 +29,28 @@ export function hexToRgb(hex) {
     ((n >> 8) & 255) / 255,
     (n & 255) / 255
   );
+}
+
+export async function loadPdfForExport(pdfBytes) {
+  try {
+    return await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
+  } catch (loadErr) {
+    if (/encrypt/i.test(loadErr?.message || "")) {
+      try {
+        return await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      } catch (innerErr) {
+        console.warn(
+          "pdf-lib couldn't parse this encrypted PDF, falling back to canvas:",
+          innerErr.message
+        );
+        return null;
+      }
+    }
+
+    console.warn(
+      "pdf-lib couldn't parse this PDF, falling back to canvas:",
+      loadErr.message
+    );
+    return null;
+  }
 }

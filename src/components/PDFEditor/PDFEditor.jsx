@@ -12,7 +12,7 @@ import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
 import { GridIcon, RotateIcon } from "./PageSidebar";
 import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../utils/pdfLoadUtils";
-import { pickPdfLibFont, hexToRgb } from "../utils/pdfExportUtils";
+import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
 import { CINZEL, CROSSHATCH, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
@@ -736,18 +736,9 @@ export default function PDFEditor() {
       // error - and the user has already been warned via the banner that
       // loadPdfFromBytes set up. Other parse failures still go to the
       // canvas fallback as before.
-      let srcDoc;
-      try {
-        srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
-      } catch (loadErr) {
-        if (/encrypt/i.test(loadErr?.message || "")) {
-          try {
-            srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-          } catch (innerErr) {
-            console.warn("pdf-lib couldn't parse this encrypted PDF, falling back to canvas:", innerErr.message);
-            return await handleDownloadCanvasFallback();
-          }
-        } else {
+           const srcDoc = await loadPdfForExport(pdfBytes);
+      if (!srcDoc) return await handleDownloadCanvasFallback(); 
+      else {
           console.warn("pdf-lib couldn't parse this PDF, falling back to canvas:", loadErr.message);
           return await handleDownloadCanvasFallback();
         }
