@@ -12,17 +12,12 @@ import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
 import PageSidebar from "./PageSidebar";
 import GridView from "./GridView";
+import PageView from "./PageView";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
 import { CINZEL, CROSSHATCH, FELL, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE, tbBtn, tbIconBtn, tbSelect } from "../utils/constant";
 
 import "./PDFEditor.css";
-
-const RotateIcon = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-    <polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-  </svg>
-);
 
 let floatingIdCounter = 0;
 
