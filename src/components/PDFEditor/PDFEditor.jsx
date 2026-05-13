@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PDFDocument, degrees, rgb } from "pdf-lib";
+import { PDFDocument, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import Homepage from "../Homepage";
 import StaticPage from "../StaticPage";
@@ -12,6 +12,7 @@ import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
 import { GridIcon, RotateIcon } from "./PageSidebar";
 import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../utils/pdfLoadUtils";
+import { pickPdfLibFont, hexToRgb } from "../utils/pdfExportUtils";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
 import { CINZEL, CROSSHATCH, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
@@ -542,7 +543,7 @@ export default function PDFEditor() {
         ...textBlocks,
         ...appendedWords,
       };
-      
+
       // Stage 1: keep pdfBytes in sync with the visible page list so the
       // default export path includes appended pages with their original
       // vector content. Without this, handleDownload silently drops them
@@ -726,29 +727,6 @@ export default function PDFEditor() {
       window.removeEventListener("mouseup", onMouseUp);
     };
   }, [onMouseMove, onMouseUp]);
-
-  function pickPdfLibFont(fonts, family, bold, italic) {
-    const f = (family || "").toLowerCase();
-    // Noto Sans has full set; Noto Serif has regular + bold; Noto Sans Mono has
-    // regular only. Fall back to the closest variant we shipped.
-    if (f.includes("times") || f.includes("georgia") || f.includes("serif")) {
-      return bold ? fonts.timesB : fonts.times;
-    }
-    if (f.includes("courier") || f.includes("mono")) {
-      return fonts.courier;
-    }
-    if (bold && italic) return fonts.helvBI;
-    if (bold) return fonts.helvB;
-    if (italic) return fonts.helvI;
-    return fonts.helv;
-  }
-
-  function hexToRgb(hex) {
-    const m = (hex || "").match(/^#?([0-9a-f]{6})$/i);
-    if (!m) return rgb(0, 0, 0);
-    const n = parseInt(m[1], 16);
-    return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
-  }
 
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
