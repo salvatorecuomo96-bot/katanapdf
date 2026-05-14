@@ -21,4 +21,13 @@ export const tbSelect = { padding: "4px 8px", border: "1px solid rgba(196,150,58
 export const pageBtn = { padding: "7px 16px", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, background: "transparent", color: LACQUER, cursor: "pointer", userSelect: "none" };
 
 export const FB_SIZES = [6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120];
-
+export const FONT_FAMILIES = [
+  { label: "Arial", value: "Arial, sans-serif" },
+  { label: "Arial Unicode MS", value: '"Arial Unicode MS", Arial, sans-serif' },
+  { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
+  { label: "Courier", value: '"Courier New", Courier, monospace' },
+  { label: "Comic Sans MS", value: '"Comic Sans MS", "Comic Sans", cursive' },
+  { label: "Times New Roman", value: "Times New Roman, serif" },
+  { label: "Lohit Marathi", value: '"Lohit Marathi", "Noto Sans Devanagari", sans-serif' },
+  { label: "Lohit Devanagari", value: '"Lohit Devanagari", "Noto Sans Devanagari", sans-serif' },
+];

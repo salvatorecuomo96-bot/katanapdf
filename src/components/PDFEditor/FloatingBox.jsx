@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES } from "../utils/constant";
+import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES } from "../utils/constant";
 
 const RotateIcon = () => (
   <svg
@@ -210,12 +210,15 @@ export default function FloatingBox({
             border: "none",
             borderRadius: 2,
             padding: "1px 2px",
-            width: 78,
+            width: 132,
             height: 23,
           }}
         >
-          <option value="Arial, sans-serif">Arial</option>
-          <option value="Times New Roman, serif">Times</option>
+          {FONT_FAMILIES.map(font => (
+            <option key={font.value} value={font.value}>
+              {font.label}
+            </option>
+          ))}
         </select>
 
         <select

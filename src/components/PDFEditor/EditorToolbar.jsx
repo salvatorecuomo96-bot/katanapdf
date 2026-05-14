@@ -1,12 +1,7 @@
-import { CINZEL, PARCHMENT, INK, GOLD, LACQUER, tbSelect, tbIconBtn, tbBtn, hiddenFileInput } from "../utils/constant";
+import { CINZEL, PARCHMENT, INK, GOLD, LACQUER, tbIconBtn, tbBtn, hiddenFileInput } from "../utils/constant";
 
 export default function EditorToolbar({
   goHome,
-  fontFamily, setFontFamily,
-  fontSize, setFontSize,
-  isBold, setIsBold,
-  isItalic, setIsItalic,
-  setIsSignModalOpen,
   handleFile,
   handleAppendFile,
   undo,
@@ -20,20 +15,6 @@ export default function EditorToolbar({
         <span style={{ fontFamily: CINZEL, fontSize: 14, color: PARCHMENT, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>katanapdf</span>
       </a>
       <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
-      <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={tbSelect}>
-        <option value="Arial, sans-serif">Arial</option>
-        <option value="Times New Roman, serif">Times New Roman</option>
-        <option value="Courier New, monospace">Courier</option>
-        <option value="Georgia, serif">Georgia</option>
-      </select>
-      <select value={fontSize} onChange={e => setFontSize(parseInt(e.target.value))} style={{ ...tbSelect, width: 58, textAlign: "center" }}>
-        {[6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120].map(s => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
-      <button onClick={() => setIsBold(b => !b)} style={{ ...tbIconBtn, fontWeight: 900, background: isBold ? LACQUER : "transparent", color: isBold ? PARCHMENT : GOLD, borderColor: isBold ? GOLD : "rgba(196,150,58,0.4)" }}>B</button>
-      <button onClick={() => setIsItalic(i => !i)} style={{ ...tbIconBtn, fontStyle: "italic", background: isItalic ? LACQUER : "transparent", color: isItalic ? PARCHMENT : GOLD, borderColor: isItalic ? GOLD : "rgba(196,150,58,0.4)" }}>I</button>
-      <button onClick={() => setIsSignModalOpen(true)} style={{ ...tbBtn, padding: "5px 12px" }}>SIGN</button>
       <div style={{ width: 1, height: 24, background: "rgba(196,150,58,0.4)", margin: "0 4px" }} />
       <label style={tbBtn}>Open PDF/Image <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} /></label>
       <label style={tbBtn} title="Add a PDF or Image at the end">Merge PDF <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} /></label>
