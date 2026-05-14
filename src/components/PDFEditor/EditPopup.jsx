@@ -32,6 +32,8 @@ export default function EditPopup({
     fontFamily: block.fontFamily || "Arial, sans-serif",
     fontSize: Math.round((block.fontSize || 14) / SCALE),
     color: block.color || "#000000",
+    isBold: block.isBold || false,
+    isItalic: block.isItalic || false,
     bgColor: block.bgColor || "transparent",
     angle: block.angle || 0,
   });
@@ -186,7 +188,7 @@ export default function EditPopup({
   if (typeof document !== "undefined") {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    ctx.font = `${cssFontSize}px ${format.fontFamily}`;
+    ctx.font = `${format.isItalic ? "italic " : ""}${format.isBold ? "bold " : ""}${cssFontSize}px ${format.fontFamily}`;
     measuredTextW = lines.reduce(
       (max, line) => Math.max(max, ctx.measureText(line || " ").width),
       0
@@ -356,6 +358,85 @@ export default function EditPopup({
             ))}
           </select>
 
+          <button
+            type="button"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setFormat(prev => ({ ...prev, isBold: !prev.isBold }));
+              refocusText();
+            }}
+            onMouseDown={keepInsideEditor}
+            style={{
+              minWidth: 23,
+              height: 23,
+              borderRadius: 2,
+              border: `1px solid ${GOLD}`,
+              background: format.isBold ? LACQUER : "transparent",
+              color: PARCHMENT,
+              fontWeight: "bold",
+              fontSize: 11,
+              cursor: "pointer",
+              padding: "1px 5px",
+            }}
+            title="Bold"
+          >
+            B
+          </button>
+
+          <button
+            type="button"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setFormat(prev => ({ ...prev, isItalic: !prev.isItalic }));
+              refocusText();
+            }}
+            onMouseDown={keepInsideEditor}
+            style={{
+              minWidth: 23,
+              height: 23,
+              borderRadius: 2,
+              border: `1px solid ${GOLD}`,
+              background: format.isItalic ? LACQUER : "transparent",
+              color: PARCHMENT,
+              fontStyle: "italic",
+              fontWeight: "bold",
+              fontSize: 11,
+              cursor: "pointer",
+              padding: "1px 5px",
+            }}
+            title="Italic"
+          >
+            I
+          </button>
+
+          <button
+            type="button"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setFormat(prev => ({ ...prev, bgColor: "#fff59d" }));
+              refocusText();
+            }}
+            onMouseDown={keepInsideEditor}
+            style={{
+              minWidth: 26,
+              height: 23,
+              borderRadius: 2,
+              border: `1px solid ${GOLD}`,
+              background: format.bgColor === "#fff59d" ? "#fff59d" : "transparent",
+              color: format.bgColor === "#fff59d" ? INK : PARCHMENT,
+              fontWeight: "bold",
+              fontSize: 10,
+              cursor: "pointer",
+              padding: "1px 5px",
+            }}
+            title="Highlight"
+          >
+            HL
+          </button>
+
           <div
             title="Text colour"
             onPointerDown={keepInsideEditor}
@@ -506,6 +587,8 @@ export default function EditPopup({
             padding: "2px 4px",
             fontSize: cssFontSize,
             fontFamily: format.fontFamily,
+            fontWeight: format.isBold ? "700" : "400",
+            fontStyle: format.isItalic ? "italic" : "normal",
             color: format.color,
             resize: "none",
             overflow: "hidden",
