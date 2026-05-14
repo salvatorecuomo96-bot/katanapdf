@@ -913,8 +913,7 @@ export default function PDFEditor() {
     for (const i of finalPageOrder) {
       const pg = pages[i];
       if (!pg) continue;
-      const canvas = canvasRefs.current[pg.num];
-      if (!canvas) continue;
+      const canvas = document.createElement("canvas");
       canvas.width = pg.width;
       canvas.height = pg.height;
       const ctx = canvas.getContext("2d");

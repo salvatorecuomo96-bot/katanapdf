@@ -159,9 +159,16 @@ export function pageWordsToTextBlocks(pageWords) {
 
 export function redrawPage(canvas, dataUrl, edits) {
   if (!canvas) return;
+
+  const redrawSeq = (canvas.__katanapdfRedrawSeq || 0) + 1;
+  canvas.__katanapdfRedrawSeq = redrawSeq;
+
   const ctx = canvas.getContext("2d");
   const img = new Image();
+
   img.onload = () => {
+    if (canvas.__katanapdfRedrawSeq !== redrawSeq) return;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     for (const e of edits) {
