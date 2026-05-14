@@ -69,15 +69,28 @@ export default function FloatingBox({
 
   const text = fb.text || "";
   const lines = text.split(/\r?\n/);
-  const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
-
   const scaledFont = Math.max(8, fb.fontSize * zoom);
   const lineHeight = scaledFont * 1.28;
-  const charWidth = scaledFont * 0.58;
+
+  let measuredTextW = 0;
+
+  if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${scaledFont}px ${fb.fontFamily || "Arial, sans-serif"}`;
+
+    measuredTextW = lines.reduce(
+      (max, line) => Math.max(max, ctx.measureText(line || " ").width),
+      0
+    );
+  } else {
+    measuredTextW = Math.max(...lines.map(line => line.length)) * scaledFont * 0.6;
+  }
 
   const editorW = Math.max(
-    text ? 50 : 90,
-    Math.min(900, longestLine * charWidth + 14)
+    text.trim() ? 70 : 90,
+    Math.min(1100, measuredTextW + 18)
   );
 
   const editorH = Math.max(

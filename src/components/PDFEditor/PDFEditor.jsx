@@ -71,6 +71,7 @@ export default function PDFEditor() {
   const [isGridView, setIsGridView] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [signatureColor, setSignatureColor] = useState("#000000");
+  const [signatureTargetPageNum, setSignatureTargetPageNum] = useState(null);
   const [draggedPageNum, setDraggedPageNum] = useState(null);
   const [dragOverPageNum, setDragOverPageNum] = useState(null);
   const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
@@ -82,7 +83,7 @@ export default function PDFEditor() {
   const imgResizeOrigin = useRef(null);
   const fbResizeOrigin = useRef(null);
   const containerRef = useRef(null);
-  const canvasRefs = useRef({});
+  const addTextClickLock = useRef(false);
 
   async function handleFile(e) {
     const input = e.target;
@@ -429,6 +430,13 @@ export default function PDFEditor() {
   }, []);
 
   function addFloatingBox(pageNum) {
+    if (addTextClickLock.current) return;
+
+    addTextClickLock.current = true;
+    window.setTimeout(() => {
+      addTextClickLock.current = false;
+    }, 250);
+
     const pg = pages.find(p => p.num === pageNum);
     if (!pg) return;
     saveHistory();
@@ -485,7 +493,11 @@ export default function PDFEditor() {
     saveHistory();
     floatingIdCounter++;
     const id = `img-${floatingIdCounter}`;
-    let targetPageNum = pages.length ? pageOrder.map(pIdx => pages[pIdx]).filter(pg => pg && !deletedPages.has(pg.num))[0]?.num : null;
+    let targetPageNum = signatureTargetPageNum ?? (
+      pages.length
+        ? pageOrder.map(pIdx => pages[pIdx]).filter(pg => pg && !deletedPages.has(pg.num))[0]?.num
+        : null
+    );
     
     // Attempt to find the most visible page
     if (containerRef.current) {
@@ -515,6 +527,7 @@ export default function PDFEditor() {
       dataUrl,
     }]);
     setSelected(id);
+    setSignatureTargetPageNum(null);
     setIsSignModalOpen(false);
   }
 
@@ -983,7 +996,6 @@ export default function PDFEditor() {
             fontSize={fontSize} setFontSize={setFontSize}
             isBold={isBold} setIsBold={setIsBold}
             isItalic={isItalic} setIsItalic={setIsItalic}
-            setIsSignModalOpen={setIsSignModalOpen}
             handleFile={handleFile}
             handleAppendFile={handleAppendFile}
             undo={undo}
@@ -1217,7 +1229,24 @@ export default function PDFEditor() {
                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>X</button>
                       </div>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => addFloatingBox(pg.num)} style={pageBtn}>+ Add text</button>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            addFloatingBox(pg.num);
+                          }}
+                          style={pageBtn}
+                        >
+                          + Add text
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSignatureTargetPageNum(pg.num);
+                            setIsSignModalOpen(true);
+                          }}
+                          style={pageBtn}
+                        >
+                          + Sign
+                        </button>
                         <label style={pageBtn}>
                           + Add image
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
@@ -1321,7 +1350,10 @@ export default function PDFEditor() {
       )}
       {isSignModalOpen && (
         <SignatureModal
-          onClose={() => setIsSignModalOpen(false)}
+          onClose={() => {
+            setSignatureTargetPageNum(null);
+            setIsSignModalOpen(false);
+          }}
           onInsert={handleInsertSignature}
           color={signatureColor}
           setColor={setSignatureColor}
