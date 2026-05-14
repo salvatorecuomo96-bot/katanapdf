@@ -28,7 +28,7 @@ export default function EditPopup({
   const [text, setText] = useState(block.text || "");
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-    const [format, setFormat] = useState({
+  const [format, setFormat] = useState({
     fontFamily: block.fontFamily || "Arial, sans-serif",
     fontSize: Math.round((block.fontSize || 14) / SCALE),
     color: block.color || "#000000",
@@ -37,8 +37,8 @@ export default function EditPopup({
   });
 
   const dragOrigin = useRef(null);
-  const rotateOrigin = useRef(null);
   const taRef = useRef(null);
+  const boxRef = useRef(null);
 
   useEffect(() => {
     const el = taRef.current;
@@ -71,41 +71,6 @@ export default function EditPopup({
         y: dragOrigin.current.oy + localDy / zoom,
       });
     };
-
-      useEffect(() => {
-    const move = e => {
-      if (!rotateOrigin.current) return;
-
-      const currentAngle = Math.atan2(
-        e.clientY - rotateOrigin.current.cy,
-        e.clientX - rotateOrigin.current.cx
-      );
-
-      const delta = (currentAngle - rotateOrigin.current.startAngle) * 180 / Math.PI;
-
-      setFormat(prev => ({
-        ...prev,
-        angle: rotateOrigin.current.startBoxAngle + delta,
-      }));
-    };
-
-    const up = () => {
-      rotateOrigin.current = null;
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-
-    if (rotateOrigin.current) {
-      window.addEventListener("mousemove", move);
-      window.addEventListener("mouseup", up);
-    }
-
-    return () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-  }, [format.angle]);
-
 
     const up = () => setDragging(false);
 
@@ -140,6 +105,42 @@ export default function EditPopup({
     }
 
     onCommit(text, offset.x, offset.y, format);
+  };
+
+  const startRotate = e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const box = boxRef.current;
+    if (!box) return;
+
+    const rect = box.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const startMouseAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+    const startBoxAngle = format.angle || 0;
+
+    const move = moveEvent => {
+      const currentMouseAngle = Math.atan2(
+        moveEvent.clientY - cy,
+        moveEvent.clientX - cx
+      );
+
+      const delta = (currentMouseAngle - startMouseAngle) * 180 / Math.PI;
+
+      setFormat(prev => ({
+        ...prev,
+        angle: startBoxAngle + delta,
+      }));
+    };
+
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
   };
 
   const cssFontSize = Math.max(8, format.fontSize * SCALE * zoom);
@@ -183,6 +184,7 @@ export default function EditPopup({
       )}
 
       <div
+        ref={boxRef}
         data-edit-popup-box
         onPointerDown={keepInsideEditor}
         onMouseDown={keepInsideEditor}
@@ -203,7 +205,7 @@ export default function EditPopup({
           boxShadow: "none",
           boxSizing: "border-box",
           overflow: "visible",
-                    transform: `rotate(${format.angle || 0}deg)`,
+          transform: `rotate(${format.angle || 0}deg)`,
           transformOrigin: "center center",
         }}
       >
@@ -245,42 +247,10 @@ export default function EditPopup({
             boxSizing: "border-box",
           }}
           title="Drag toolbar to move"
-        >          <button
+        >
+          <button
             type="button"
-            onMouseDown={e => {
-              e.stopPropagation();
-
-              const box = e.currentTarget.closest("[data-edit-popup-box]");
-              if (!box) return;
-
-              const rect = box.getBoundingClientRect();
-              const cx = rect.left + rect.width / 2;
-              const cy = rect.top + rect.height / 2;
-              const startMouseAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
-              const startBoxAngle = format.angle || 0;
-
-              const move = moveEvent => {
-                const currentMouseAngle = Math.atan2(
-                  moveEvent.clientY - cy,
-                  moveEvent.clientX - cx
-                );
-
-                const delta = (currentMouseAngle - startMouseAngle) * 180 / Math.PI;
-
-                setFormat(prev => ({
-                  ...prev,
-                  angle: startBoxAngle + delta,
-                }));
-              };
-
-              const up = () => {
-                window.removeEventListener("mousemove", move);
-                window.removeEventListener("mouseup", up);
-              };
-
-              window.addEventListener("mousemove", move);
-              window.addEventListener("mouseup", up);
-            }}
+            onMouseDown={startRotate}
             title="Hold and drag to rotate"
             style={{
               width: 24,
@@ -299,6 +269,7 @@ export default function EditPopup({
           >
             <RotateIcon />
           </button>
+
           <select
             value={format.fontFamily}
             onPointerDown={keepInsideEditor}
