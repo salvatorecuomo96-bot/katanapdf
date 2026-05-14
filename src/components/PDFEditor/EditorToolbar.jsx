@@ -6,7 +6,6 @@ export default function EditorToolbar({
   handleAppendFile,
   undo,
   historyLength,
-  zoom, setZoom,
   handleDownload,
   drawMode, setDrawMode,
   sidebarOpen, toggleSidebar,
@@ -30,9 +29,6 @@ export default function EditorToolbar({
           <button onClick={() => setDrawMode(false)} style={{ ...tbBtn, fontSize: 10, padding: "4px 10px" }} title="Exit draw mode">&#10005; STOP</button>
         </>
       )}
-      <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={tbIconBtn}>+</button>
-      <span style={{ fontSize: 11, color: "#555", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
-      <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={tbIconBtn}>-</button>
       <div style={{ flex: 1 }} />
       <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
     </div>

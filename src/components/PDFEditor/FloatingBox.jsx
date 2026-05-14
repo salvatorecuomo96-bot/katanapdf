@@ -99,12 +99,34 @@ export default function FloatingBox({
   );
 
   if (!isSel) {
+    const handleMouseDown = e => {
+      e.stopPropagation();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      let dragged = false;
+
+      const onMove = mv => {
+        if (Math.hypot(mv.clientX - startX, mv.clientY - startY) > 4) {
+          dragged = true;
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+          onStartDrag({ clientX: startX, clientY: startY, preventDefault: () => {}, stopPropagation: () => {} });
+        }
+      };
+
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+        if (!dragged) onSelect();
+      };
+
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    };
+
     return (
       <div
-        onClick={e => {
-          e.stopPropagation();
-          onSelect();
-        }}
+        onMouseDown={handleMouseDown}
         onPointerDown={e => e.stopPropagation()}
         style={{
           position: "absolute",
@@ -114,7 +136,7 @@ export default function FloatingBox({
           transform: `translate(-50%, -50%) rotate(${angle}deg)`,
           transformOrigin: "center center",
           zIndex: fb.z || 50,
-          cursor: "pointer",
+          cursor: "grab",
           padding: `${2 * zoom}px ${4 * zoom}px`,
           fontSize: fb.fontSize * zoom,
           fontFamily: fb.fontFamily,
@@ -173,7 +195,7 @@ export default function FloatingBox({
           height: 30,
           width: "max-content",
           maxWidth: 520,
-          background: INK,
+          background: LACQUER,
           padding: "2px 4px",
           cursor: "grab",
           display: "flex",
@@ -181,7 +203,7 @@ export default function FloatingBox({
           gap: 6,
           borderRadius: 3,
           userSelect: "none",
-          border: `1px solid ${GOLD}`,
+          border: "1px solid rgba(255,255,255,0.12)",
           boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
           boxSizing: "border-box",
         }}
@@ -197,9 +219,9 @@ export default function FloatingBox({
             width: 24,
             height: 24,
             borderRadius: "50%",
-            border: `1px solid ${GOLD}`,
-            background: "transparent",
-            color: PARCHMENT,
+            border: "1px solid rgba(255,255,255,0.25)",
+            background: "rgba(255,255,255,0.08)",
+            color: "#fff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -270,9 +292,9 @@ export default function FloatingBox({
             minWidth: 23,
             height: 23,
             borderRadius: 2,
-            border: `1px solid ${GOLD}`,
-            background: fb.isBold ? LACQUER : "transparent",
-            color: PARCHMENT,
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: fb.isBold ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)",
+            color: "#fff",
             fontWeight: "bold",
             fontSize: 11,
             cursor: "pointer",
@@ -295,9 +317,9 @@ export default function FloatingBox({
             minWidth: 23,
             height: 23,
             borderRadius: 2,
-            border: `1px solid ${GOLD}`,
-            background: fb.isItalic ? LACQUER : "transparent",
-            color: PARCHMENT,
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: fb.isItalic ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)",
+            color: "#fff",
             fontStyle: "italic",
             fontWeight: "bold",
             fontSize: 11,
@@ -321,9 +343,9 @@ export default function FloatingBox({
             minWidth: 26,
             height: 23,
             borderRadius: 2,
-            border: `1px solid ${GOLD}`,
-            background: fb.bgColor === "#fff59d" ? "#fff59d" : "transparent",
-            color: fb.bgColor === "#fff59d" ? INK : PARCHMENT,
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: fb.bgColor === "#fff59d" ? "#fff59d" : "rgba(255,255,255,0.08)",
+            color: fb.bgColor === "#fff59d" ? INK : "#fff",
             fontWeight: "bold",
             fontSize: 10,
             cursor: "pointer",
@@ -411,9 +433,9 @@ export default function FloatingBox({
           }}
           style={{
             fontSize: 9,
-            background: "transparent",
-            color: PARCHMENT,
-            border: `1px solid ${GOLD}`,
+            background: "rgba(255,255,255,0.08)",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.2)",
             borderRadius: 2,
             padding: "1px 4px",
             cursor: "pointer",
@@ -428,9 +450,9 @@ export default function FloatingBox({
           type="button"
           onClick={closeOrDelete}
           style={{
-            background: LACQUER,
-            color: PARCHMENT,
-            border: `1px solid ${GOLD}`,
+            background: "rgba(255,255,255,0.18)",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.3)",
             borderRadius: 3,
             padding: "1px 6px",
             cursor: "pointer",
@@ -500,7 +522,7 @@ export default function FloatingBox({
           right: -6,
           width: 12,
           height: 12,
-          background: INK,
+          background: LACQUER,
           cursor: "nwse-resize",
           borderRadius: "50%",
           border: "2px solid #fff",

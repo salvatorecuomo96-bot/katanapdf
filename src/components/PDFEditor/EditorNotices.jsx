@@ -5,13 +5,13 @@ function NoticeBox({ title, children, onDismiss, ariaLabel }) {
     <div
       onClick={e => e.stopPropagation()}
       style={{
-        width: "100%",
         boxSizing: "border-box",
-        margin: "0",
+        margin: "12px 16px",
         padding: "12px 20px",
         background: PARCHMENT_2,
         borderLeft: `3px solid ${LACQUER}`,
-        borderBottom: `1px solid rgba(139,26,26,0.15)`,
+        borderRadius: 4,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
         fontFamily: FELL,
         fontSize: 13,
         lineHeight: 1.5,

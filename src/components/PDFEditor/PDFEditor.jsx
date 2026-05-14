@@ -83,6 +83,7 @@ export default function PDFEditor() {
   const [shapePanelPage, setShapePanelPage] = useState(null);
   const [shapePanelColor, setShapePanelColor] = useState('#8B1A1A');
   const [shapePanelFill, setShapePanelFill] = useState(false);
+  const [moveToPanelPage, setMoveToPanelPage] = useState(null);
   const [draggingShape, setDraggingShape] = useState(null);
   const [resizingShape, setResizingShape] = useState(null);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -196,7 +197,7 @@ export default function PDFEditor() {
       const pg = pages[0];
       if (!pg) return;
       const availW = Math.max(200, el.clientWidth - 80);
-      setZoom(Math.min(3, Math.max(0.3, +(availW / pg.width).toFixed(2))));
+      setZoom(Math.min(1.0, Math.max(0.3, +(availW / pg.width).toFixed(2))));
     });
     return () => cancelAnimationFrame(id);
   }, [pages]);
@@ -441,6 +442,7 @@ export default function PDFEditor() {
     setActivePopup(null);
     setSelected(null);
     setShapePanelPage(null);
+    setMoveToPanelPage(null);
   }
 
   function handleWheel(e) {
@@ -1264,8 +1266,6 @@ export default function PDFEditor() {
             handleAppendFile={handleAppendFile}
             undo={undo}
             historyLength={history.length}
-            zoom={zoom}
-            setZoom={setZoom}
             handleDownload={handleDownload}
             drawMode={drawMode}
             setDrawMode={setDrawMode}
@@ -1479,23 +1479,34 @@ export default function PDFEditor() {
                     <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: dispW, maxWidth: "100%", flexWrap: "wrap", gap: 8 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
-                        {/* Phase 6: reorder controls. Disabled at the ends; reorder mutates pageOrder, not the source PDF, until download. */}
-                        <div style={{ ...pageBtn, display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 600 }}>MOVE TO:</span>
-                          <select 
-                            value={displayIdx + 1}
-                            onChange={e => {
-                              const val = parseInt(e.target.value, 10);
-                              if (!isNaN(val) && val !== displayIdx + 1) movePageTo(pg.num, val - 1);
-                            }}
-                            style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, fontWeight: 600, background: "transparent", border: "none" }}
+                        {/* Phase 6: reorder controls — custom popup instead of native select */}
+                        <div style={{ position: "relative" }}>
+                          <button
+                            onClick={e => { e.stopPropagation(); setMoveToPanelPage(p => p === pg.num ? null : pg.num); }}
+                            style={{ ...pageBtn, display: "flex", alignItems: "center", gap: 4, padding: "4px 8px" }}
+                            title="Move page to position"
                           >
-                            {visiblePages.map((_, i) => (
-                              <option key={i} value={i + 1} style={{ background: PARCHMENT, color: INK }}>
-                                {i + 1}
-                              </option>
-                            ))}
-                          </select>
+                            <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 2, fontWeight: 600 }}>MOVE TO</span>
+                          </button>
+                          {moveToPanelPage === pg.num && (
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 3, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", maxHeight: 200, overflowY: "auto", minWidth: 64 }}>
+                              {visiblePages.map((_, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => { if (i !== displayIdx) movePageTo(pg.num, i); setMoveToPanelPage(null); }}
+                                  style={{ ...pageBtn, padding: "4px 12px", background: i === displayIdx ? "rgba(139,26,26,0.1)" : "transparent", fontWeight: i === displayIdx ? 700 : 400, borderRadius: 4 }}
+                                >
+                                  {i + 1}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {/* Per-page zoom controls */}
+                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "4px 7px", fontWeight: 700 }} title="Zoom out">−</button>
+                          <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, minWidth: 36, textAlign: "center", letterSpacing: 1 }}>{Math.round(zoom * 100)}%</span>
+                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "4px 7px", fontWeight: 700 }} title="Zoom in">+</button>
                         </div>
                         <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90deg" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <RotateIcon size={14} />
