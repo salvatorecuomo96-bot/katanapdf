@@ -43,6 +43,29 @@ export default function EditPopup({
   const taRef = useRef(null);
   const boxRef = useRef(null);
 
+  // Always-fresh commit function so the document listener below never stales
+  const commitRef = useRef(null);
+  commitRef.current = () => onCommit(text, offset.x, offset.y, format);
+
+  // Delay activation so the opening click doesn't immediately commit
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { mountedRef.current = true; }, 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Click-outside → commit (capture phase bypasses any stopPropagation in the tree)
+  useEffect(() => {
+    const onDocMouseDown = (e) => {
+      if (!mountedRef.current) return;
+      if (boxRef.current && !boxRef.current.contains(e.target)) {
+        commitRef.current();
+      }
+    };
+    document.addEventListener("mousedown", onDocMouseDown, true);
+    return () => document.removeEventListener("mousedown", onDocMouseDown, true);
+  }, []);
+
   useEffect(() => {
     onDraftChange?.(text, format);
   }, [text, format]);
@@ -291,25 +314,6 @@ export default function EditPopup({
           title="Drag toolbar to move"
         >
 
-
-          {/* Drag grip */}
-          <span
-            onMouseDown={e => {
-              e.stopPropagation();
-              const interactive = e.target.closest("button, select, input, textarea");
-              if (interactive) return;
-              dragOrigin.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
-              setDragging(true);
-            }}
-            title="Drag to move"
-            style={{ cursor: "grab", display: "flex", alignItems: "center", padding: "0 2px", opacity: 0.6, flexShrink: 0 }}
-          >
-            <svg width="10" height="14" viewBox="0 0 10 14" fill="#fff">
-              <circle cx="3" cy="2.5" r="1.3"/><circle cx="7" cy="2.5" r="1.3"/>
-              <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
-              <circle cx="3" cy="11.5" r="1.3"/><circle cx="7" cy="11.5" r="1.3"/>
-            </svg>
-          </span>
 
           <select
             value={format.fontFamily}

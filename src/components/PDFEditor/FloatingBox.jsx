@@ -203,7 +203,11 @@ export default function FloatingBox({
       }}
     >
       <div
-        onMouseDown={e => e.stopPropagation()}
+        onMouseDown={e => {
+          e.stopPropagation();
+          if (!e.target.closest("button, select, input, textarea")) onStartDrag(e);
+        }}
+        title="Drag toolbar to move"
         style={{
           position: "absolute",
           left: 0,
@@ -213,7 +217,7 @@ export default function FloatingBox({
           maxWidth: 520,
           background: LACQUER,
           padding: "2px 4px",
-          cursor: "default",
+          cursor: "grab",
           display: "flex",
           alignItems: "center",
           gap: 6,
@@ -224,18 +228,6 @@ export default function FloatingBox({
           boxSizing: "border-box",
         }}
       >
-        {/* Drag grip — only handle in selected/editing state */}
-        <span
-          onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
-          title="Drag to move"
-          style={{ cursor: "grab", display: "flex", alignItems: "center", padding: "0 2px", opacity: 0.6, flexShrink: 0 }}
-        >
-          <svg width="10" height="14" viewBox="0 0 10 14" fill="#fff">
-            <circle cx="3" cy="2.5" r="1.3"/><circle cx="7" cy="2.5" r="1.3"/>
-            <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
-            <circle cx="3" cy="11.5" r="1.3"/><circle cx="7" cy="11.5" r="1.3"/>
-          </svg>
-        </span>
 
         <button
           type="button"
