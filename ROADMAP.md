@@ -32,6 +32,21 @@ Pre-roadmap groundwork (already shipped):
 - Wordmark-in-toolbar returns to homepage ✅ (small fix between phases 3 and 4)
 - GitHub Actions CI (lint informational, build + test required) ✅
 
+Post-roadmap UX sessions (shipped 2026-05-14):
+- Responsive layout: auto-zoom on load, collapsible sidebar (mobile overlay, desktop shrink), mobile icon-only page buttons via CSS media queries ✅
+- Draw mode: freehand brush with colour + width controls; deactivates automatically when another tool is selected ✅
+- Shapes: circle/square with fill/outline toggle and colour picker ✅
+- Multi-tab: EditorHeader tab bar (dark INK background, gold underline on active tab) ✅
+- EditorNotices: centered card with shadow instead of full-width flush banner ✅
+- Per-page zoom controls: − % + grouped control replacing toolbar zoom, caps auto-zoom at 90% ✅
+- MOVE TO: custom popup replacing native `<select>` ✅
+- Draggable text boxes: unselected state shows grab cursor, drag moves, click enters edit ✅
+- Text box drag fixed: removed unwanted mode-switch during drag; drag grip added to editing toolbar ✅
+- All toolbars (FloatingBox, EditPopup) redesigned to LACQUER crimson style matching FloatingShape ✅
+- Removed Tab/Esc hint text from all toolbars and modals ✅
+- Sidebar height fixed: uses flex stretch instead of calc(100vh - N) hack ✅
+- Empty text boxes auto-deleted when clicking outside ✅
+
 ## Rules
 - **At session start**, run `git fetch && git status`. If behind `origin/main`, pull before any edits. The laptop pushes from a different machine, so the worktree is often stale at session start — discover that on turn 1, not turn 5.
 - **When picking the next phase**, read only this `ROADMAP.md` (status table + rules) and the one phase file you're about to execute. Don't read all 15 phase files.
