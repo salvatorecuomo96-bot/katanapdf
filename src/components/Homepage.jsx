@@ -1,9 +1,8 @@
 import { useState } from "react";
 import SectionDivider from "./ui/SectionDivider";
 import StampTag from "./ui/StampTag";
-import CornerBracket from "./ui/CornerBracket";
 import Footer from "./ui/Footer";
-import { CINZEL, CROSSHATCH, FELL, GOLD, hiddenFileInput, INK, LACQUER, PARCHMENT, PARCHMENT_2 } from "./utils/constant";
+import { CINZEL, CROSSHATCH, FELL, hiddenFileInput, INK, LACQUER, PARCHMENT, PARCHMENT_2 } from "./utils/constant";
 
 export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
   const [dragOver, setDragOver] = useState(false);
@@ -95,18 +94,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* WHAT YOU CAN DO */}
       <SectionDivider label="What you can do" />
-      <section style={{ maxWidth: 1600, margin: "0 auto", padding: "0 20px 8px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: 14 }}>
+      <section style={{ maxWidth: 900, margin: "0 auto", padding: "0 20px 8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: 12 }}>
           {[
-            { label: "Edit supported text", detail: "Click any text block to edit it in place." },
-            { label: "Add text", detail: "Place new text boxes anywhere on the page." },
-            { label: "Add images", detail: "Insert images, resize, and reposition freely." },
-            { label: "Sign PDF", detail: "Draw your signature and place it anywhere." },
-            { label: "Image to PDF", detail: "Convert any image into an editable PDF instantly." },
-            { label: "Merge PDFs", detail: "Append pages from a second PDF." },
-            { label: "Visual Reordering", detail: "Rearrange your document by dragging pages in the sidebar or grid view." },
+            { label: "Edit text", detail: "Click any text block to edit it in place." },
+            { label: "Add text & images", detail: "Place new text boxes or images anywhere on the page." },
+            { label: "Sign & draw", detail: "Draw your signature or annotate freehand." },
+            { label: "Merge & reorder", detail: "Combine PDFs, reorder and delete pages." },
           ].map((cap, i) => (
-            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.2)`, padding: "14px 18px" }}>
+            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.15)`, padding: "14px 18px" }}>
               <span style={{ display: "block", fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: LACQUER, fontWeight: 600, marginBottom: 5 }}>
                 {cap.label}
               </span>
@@ -118,57 +114,18 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
         </div>
       </section>
 
-      {/* PRIVACY / TRUST */}
-      <SectionDivider label="Your files stay private" />
-      <section style={{ maxWidth: 1300, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ background: PARCHMENT_2, borderLeft: `3px solid ${LACQUER}`, padding: "20px 24px", fontFamily: FELL, fontSize: 15, lineHeight: 1.6, color: INK }}>
-          <p style={{ margin: "0 0 14px" }}>
-            katanapdf runs in your browser. Your PDF is processed on your device instead of being uploaded to a server.
-          </p>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {['No file upload', 'No account required', 'No watermark', 'No hidden paywall'].map((b, i) => (
-              <li key={i} style={{ marginBottom: 5 }}>{b}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
       {/* HOW TO EDIT */}
-      <SectionDivider label="How to edit a PDF online" />
-      <section style={{ maxWidth: 1600, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <SectionDivider label="How it works" />
+      <section style={{ maxWidth: 900, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
-            "Open your PDF - click the button or drag a file onto this page.",
-            "Edit supported text, add new text boxes, or place images on any page.",
-            "Append pages from another PDF using the Add PDF button if needed.",
-            "Download the finished PDF.",
+            "Open your PDF — click the button above or drag a file onto this page.",
+            "Edit text, add text boxes, images, signatures, or shapes on any page.",
+            "Download the finished PDF. Your file never leaves your device.",
           ].map((s, i) => (
-            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.2)`, padding: "12px 18px", display: "flex", alignItems: "center", gap: 18 }}>
-              <span style={{ fontFamily: CINZEL, fontSize: 36, color: "rgba(139,26,26,0.22)", lineHeight: 1, fontWeight: 700, flexShrink: 0, minWidth: 36, textAlign: "center" }}>{i + 1}</span>
+            <div key={i} style={{ background: PARCHMENT_2, border: `1px solid rgba(139,26,26,0.15)`, padding: "12px 18px", display: "flex", alignItems: "center", gap: 18 }}>
+              <span style={{ fontFamily: CINZEL, fontSize: 32, color: "rgba(139,26,26,0.18)", lineHeight: 1, fontWeight: 700, flexShrink: 0, minWidth: 32, textAlign: "center" }}>{i + 1}</span>
               <span style={{ fontFamily: FELL, fontSize: 15, lineHeight: 1.5, color: INK }}>{s}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* WHY KATANAPDF - 6 cards. minmax(360) forces 3 cols at the 1280
-          container so the layout is a clean 3+3 instead of an asymmetric 4+2.
-          Below ~1116 px it falls to 2 cols (2+2+2), then 1 col on phones. */}
-      <SectionDivider label="Why katanapdf" />
-      <section style={{ maxWidth: 1600, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(400px, 100%), 1fr))", gap: 18 }}>
-          {[
-            { t: "100% Free", d: "No paid tier hiding the basic tools." },
-            { t: "No Upload Required", d: "Your PDF is processed locally in your browser." },
-            { t: "No Account Needed", d: "Open the file and start editing." },
-            { t: "No Watermark", d: "Download a clean PDF." },
-            { t: "Practical Edits", d: "Add text, images, and edit supported text directly." },
-            { t: "Fast by Design", d: "No waiting for server uploads or queues." },
-          ].map((x, i) => (
-            <div key={i} style={{ background: INK, padding: "20px 22px", position: "relative", border: `1px solid rgba(196,150,58,0.3)` }}>
-              <CornerBracket />
-              <h3 style={{ fontFamily: CINZEL, fontSize: 13, color: GOLD, letterSpacing: 3, textTransform: "uppercase", margin: 0, fontWeight: 600 }}>{x.t}</h3>
-              <p style={{ fontFamily: FELL, fontSize: 14, color: "rgba(245,237,214,0.72)", margin: "10px 0 0", lineHeight: 1.6 }}>{x.d}</p>
             </div>
           ))}
         </div>
