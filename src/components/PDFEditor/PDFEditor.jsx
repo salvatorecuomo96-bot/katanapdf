@@ -483,6 +483,37 @@ export default function PDFEditor() {
     reader.readAsDataURL(file);
   }
 
+  function handleAddEraser(pageNum) {
+    const pg = pages.find(p => p.num === pageNum);
+    if (!pg) return;
+
+    saveHistory();
+    floatingIdCounter++;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 1, 1);
+
+    const id = `eraser-${floatingIdCounter}`;
+
+    setFloatingImages(prev => [...prev, {
+      id,
+      page: pageNum,
+      z: 50 + floatingIdCounter,
+      x: pg.width / 2 - 110,
+      y: pg.height / 2 - 35,
+      w: 220,
+      h: 70,
+      dataUrl: canvas.toDataURL("image/png"),
+      isEraser: true,
+    }]);
+
+    setSelected(id);
+  }
   function handleInsertSignature(dataUrl) {
     saveHistory();
     floatingIdCounter++;
@@ -1035,8 +1066,13 @@ export default function PDFEditor() {
     triggerPdfDownload(bytes);
   }
 
-  const isNoFile = pages.length === 0;
-  const visiblePages = pageOrder.map(pIdx => pages[pIdx]).filter(pg => pg && !deletedPages.has(pg.num));
+  const pageActionBtn = {
+    ...pageBtn,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  };
 
   return (
     <div className={`editor-container ${isNoFile ? "editor-relative" : "editor-fixed"}`}
@@ -1294,23 +1330,40 @@ export default function PDFEditor() {
                         <button
                           onClick={e => {
                             e.stopPropagation();
-                            addFloatingBox(pg.num);
-                          }}
-                          style={pageBtn}
-                        >
-                          + Add text
-                        </button>
-                        <button
-                          onClick={() => {
                             setSignatureTargetPageNum(pg.num);
                             setIsSignModalOpen(true);
                           }}
-                          style={pageBtn}
+                          style={pageActionBtn}
                         >
-                          + Sign
+                          <span aria-hidden="true">✒</span>
+                          Sign
                         </button>
-                        <label style={pageBtn}>
-                          + Add image
+
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleAddEraser(pg.num);
+                          }}
+                          style={pageActionBtn}
+                        >
+                          <span aria-hidden="true">⌫</span>
+                          Eraser
+                        </button>
+
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            addFloatingBox(pg.num);
+                          }}
+                          style={pageActionBtn}
+                        >
+                          <span aria-hidden="true">T</span>
+                          Add text
+                        </button>
+
+                        <label style={pageActionBtn}>
+                          <span aria-hidden="true">▧</span>
+                          Add image
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
                         </label>
                       </div>
