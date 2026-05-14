@@ -44,10 +44,8 @@ export default function FloatingBox({
     }, 30);
 
     return () => clearTimeout(timer);
-  }, [isSel, fb.text]);
 
-  const stopAll = e => {
-    e.preventDefault();
+  }, [isSel]);  const stopAll = e => {
     e.stopPropagation();
   };
 
@@ -138,8 +136,8 @@ export default function FloatingBox({
         style={{
           position: "absolute",
           left: 0,
-          top: -29,
-          height: 24,
+  top: -36,
+          height: 30,
           width: "max-content",
           maxWidth: 520,
           background: INK,
@@ -147,7 +145,7 @@ export default function FloatingBox({
           cursor: "grab",
           display: "flex",
           alignItems: "center",
-          gap: 4,
+          gap: 6,
           borderRadius: 3,
           userSelect: "none",
           border: `1px solid ${GOLD}`,
@@ -164,8 +162,8 @@ export default function FloatingBox({
           }}
           title="Drag to rotate"
           style={{
-            width: 20,
-            height: 20,
+            width: 24,
+            height: 24,
             borderRadius: "50%",
             border: `1px solid ${GOLD}`,
             background: "transparent",
@@ -185,13 +183,13 @@ export default function FloatingBox({
           onChange={e => onUpdate({ fontFamily: e.target.value })}
           onMouseDown={stopAll}
           style={{
-            fontSize: 10,
+            fontSize: 11,
             background: "#fff",
             border: "none",
             borderRadius: 2,
             padding: "1px 2px",
-            width: 64,
-            height: 19,
+            width: 78,
+            height: 23,
           }}
         >
           <option value="Arial, sans-serif">Arial</option>
@@ -203,13 +201,13 @@ export default function FloatingBox({
           onChange={e => onUpdate({ fontSize: Number(e.target.value) })}
           onMouseDown={stopAll}
           style={{
-            fontSize: 10,
+            fontSize: 11,
             background: "#fff",
             border: "none",
             borderRadius: 2,
             padding: "1px 2px",
-            width: 38,
-            height: 19,
+            width: 48,
+            height: 23,
           }}
         >
           {FB_SIZES.map(s => (
@@ -297,7 +295,7 @@ export default function FloatingBox({
             borderRadius: 2,
             padding: "1px 4px",
             cursor: "pointer",
-            height: 19,
+            height: 23,
           }}
           title="No background"
         >
@@ -306,8 +304,7 @@ export default function FloatingBox({
 
         <button
           type="button"
-          onClick={closeOrDelete}
-          onMouseDown={e => e.stopPropagation()}
+          onMouseDown={closeOrDelete}
           style={{
             background: LACQUER,
             color: PARCHMENT,
@@ -316,8 +313,8 @@ export default function FloatingBox({
             padding: "1px 6px",
             cursor: "pointer",
             fontWeight: "bold",
-            fontSize: 10,
-            height: 19,
+            fontSize: 11,
+            height: 23,
           }}
           title="Close"
         >
