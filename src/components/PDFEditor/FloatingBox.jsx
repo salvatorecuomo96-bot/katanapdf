@@ -107,6 +107,8 @@ export default function FloatingBox({
           fontFamily: fb.fontFamily,
           color: fb.color || "#000",
           background: fb.bgColor || "transparent",
+          fontWeight: fb.isBold ? "700" : "400",
+          fontStyle: fb.isItalic ? "italic" : "normal",
           lineHeight: 1.28,
           whiteSpace: "pre-wrap",
           border: "1px dashed transparent",
@@ -239,6 +241,82 @@ export default function FloatingBox({
             </option>
           ))}
         </select>
+
+        <button
+          type="button"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            onUpdate({ isBold: !fb.isBold });
+            refocusText();
+          }}
+          style={{
+            minWidth: 23,
+            height: 23,
+            borderRadius: 2,
+            border: `1px solid ${GOLD}`,
+            background: fb.isBold ? LACQUER : "transparent",
+            color: PARCHMENT,
+            fontWeight: "bold",
+            fontSize: 11,
+            cursor: "pointer",
+            padding: "1px 5px",
+          }}
+          title="Bold"
+        >
+          B
+        </button>
+
+        <button
+          type="button"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            onUpdate({ isItalic: !fb.isItalic });
+            refocusText();
+          }}
+          style={{
+            minWidth: 23,
+            height: 23,
+            borderRadius: 2,
+            border: `1px solid ${GOLD}`,
+            background: fb.isItalic ? LACQUER : "transparent",
+            color: PARCHMENT,
+            fontStyle: "italic",
+            fontWeight: "bold",
+            fontSize: 11,
+            cursor: "pointer",
+            padding: "1px 5px",
+          }}
+          title="Italic"
+        >
+          I
+        </button>
+
+        <button
+          type="button"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            onUpdate({ bgColor: "#fff59d" });
+            refocusText();
+          }}
+          style={{
+            minWidth: 26,
+            height: 23,
+            borderRadius: 2,
+            border: `1px solid ${GOLD}`,
+            background: fb.bgColor === "#fff59d" ? "#fff59d" : "transparent",
+            color: fb.bgColor === "#fff59d" ? INK : PARCHMENT,
+            fontWeight: "bold",
+            fontSize: 10,
+            cursor: "pointer",
+            padding: "1px 5px",
+          }}
+          title="Highlight"
+        >
+          HL
+        </button>
 
         <div
           title="Text colour"
@@ -379,9 +457,11 @@ export default function FloatingBox({
             fb.bgColor === "transparent" || !fb.bgColor
               ? "transparent"
               : fb.bgColor,
-          padding: "2px 4px",
+      padding: "2px 4px",
           fontSize: scaledFont,
           fontFamily: fb.fontFamily,
+          fontWeight: fb.isBold ? "700" : "400",
+          fontStyle: fb.isItalic ? "italic" : "normal",
           color: fb.color || "#000",
           resize: "none",
           overflow: "hidden",
