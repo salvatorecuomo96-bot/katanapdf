@@ -34,6 +34,11 @@ export default function FloatingBox({
   const taRef = useRef(null);
   const [hovered, setHovered] = useState(false);
 
+  // Reset hover badge when leaving edit mode so it doesn't linger
+  useEffect(() => {
+    if (!isSel) setHovered(false);
+  }, [isSel]);
+
   useEffect(() => {
     if (!isSel || !taRef.current) return;
 
@@ -155,21 +160,29 @@ export default function FloatingBox({
         {hovered && (
           <div style={{
             position: "absolute",
-            top: -22,
-            left: "50%",
-            transform: "translateX(-50%)",
+            top: -28,
+            left: 0,
             background: LACQUER,
             color: "#fff",
             borderRadius: 2,
-            padding: "2px 7px",
-            fontSize: 9,
+            padding: "3px 8px",
+            fontSize: 10,
             fontFamily: CINZEL,
-            letterSpacing: 1,
+            letterSpacing: 2,
             whiteSpace: "nowrap",
             pointerEvents: "none",
-            zIndex: 10,
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            fontWeight: 700,
           }}>
-            drag · click to edit
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}>
+              <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+            DRAG
           </div>
         )}
         {fb.text || ""}
