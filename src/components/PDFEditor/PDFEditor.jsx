@@ -83,6 +83,7 @@ export default function PDFEditor() {
   const imgResizeOrigin = useRef(null);
   const fbResizeOrigin = useRef(null);
   const containerRef = useRef(null);
+  const canvasRefs = useRef({});
   const addTextClickLock = useRef(false);
 
   async function handleFile(e) {
