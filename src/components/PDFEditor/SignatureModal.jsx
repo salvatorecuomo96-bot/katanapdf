@@ -212,7 +212,6 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
               <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: "1px solid transparent", color: INK }}>Cancel</button>
               <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: PARCHMENT }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
             </div>
-            <span style={{ fontSize: 9, color: LACQUER, opacity: 0.55, fontFamily: CINZEL, letterSpacing: "1.5px", textTransform: "uppercase" }}>Tab to insert</span>
           </div>
         </div>
       </div>

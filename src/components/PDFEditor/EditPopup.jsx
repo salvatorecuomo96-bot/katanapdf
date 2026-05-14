@@ -551,10 +551,6 @@ export default function EditPopup({
               e.preventDefault();
               e.stopPropagation();
               onCancel();
-            } else if (e.key === "Tab") {
-              e.preventDefault();
-              e.stopPropagation();
-              commit(e);
             }
           }}
           rows={Math.max(1, lines.length)}
@@ -598,9 +594,6 @@ export default function EditPopup({
             zIndex: 20,
           }}
         />
-        <div style={{ position: "absolute", top: editorH + 6, left: 0, fontSize: 9, color: "rgba(139,26,26,0.5)", fontFamily: CINZEL, letterSpacing: "1.5px", textTransform: "uppercase", pointerEvents: "none", userSelect: "none", whiteSpace: "nowrap" }}>
-          Tab to confirm · Esc to cancel
-        </div>
       </div>
     </>
   );

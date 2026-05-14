@@ -67,7 +67,6 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
             }}
           >
             <span style={{ fontWeight: 700, letterSpacing: 2 }}>{shapeType === 'circle' ? 'CIRCLE' : 'SQUARE'}</span>
-            <span style={{ opacity: 0.6, fontSize: 8, letterSpacing: '1.5px', fontFamily: "'Cinzel', serif", textTransform: 'uppercase' }}>· Tab ↵</span>
             <input
               type="color"
               value={shapeColor}

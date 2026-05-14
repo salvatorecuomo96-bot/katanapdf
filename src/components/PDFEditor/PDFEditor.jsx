@@ -197,7 +197,7 @@ export default function PDFEditor() {
       const pg = pages[0];
       if (!pg) return;
       const availW = Math.max(200, el.clientWidth - 80);
-      setZoom(Math.min(1.0, Math.max(0.3, +(availW / pg.width).toFixed(2))));
+      setZoom(Math.min(0.9, Math.max(0.3, +(availW / pg.width).toFixed(2))));
     });
     return () => cancelAnimationFrame(id);
   }, [pages]);
@@ -1301,8 +1301,6 @@ export default function PDFEditor() {
         flexGrow: 0,
         flexShrink: 0,
         flexBasis: "clamp(220px, 22vw, 340px)",
-        height: "calc(100vh - 150px)",
-        maxHeight: "calc(100vh - 150px)",
         minHeight: 0,
         background: PARCHMENT_2,
         borderRight: `1px solid rgba(139,26,26,0.5)`,
@@ -1311,7 +1309,6 @@ export default function PDFEditor() {
         overflowX: "hidden",
         display: "flex",
         flexDirection: "column",
-        alignSelf: "flex-start",
       }}
     >              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
                 <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1503,10 +1500,10 @@ export default function PDFEditor() {
                           )}
                         </div>
                         {/* Per-page zoom controls */}
-                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "4px 7px", fontWeight: 700 }} title="Zoom out">−</button>
-                          <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, minWidth: 36, textAlign: "center", letterSpacing: 1 }}>{Math.round(zoom * 100)}%</span>
-                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "4px 7px", fontWeight: 700 }} title="Zoom in">+</button>
+                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", border: `1px solid ${GOLD}`, borderRadius: 3, overflow: "hidden" }}>
+                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderRight: `1px solid ${GOLD}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom out">−</button>
+                          <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, minWidth: 42, textAlign: "center", letterSpacing: 1, padding: "7px 4px", fontWeight: 600 }}>{Math.round(zoom * 100)}%</span>
+                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderLeft: `1px solid ${GOLD}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom in">+</button>
                         </div>
                         <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90deg" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <RotateIcon size={14} />

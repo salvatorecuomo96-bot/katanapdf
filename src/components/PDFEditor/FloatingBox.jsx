@@ -180,14 +180,7 @@ export default function FloatingBox({
       }}
     >
       <div
-        onMouseDown={e => {
-          e.stopPropagation();
-          const interactive = e.target.closest(
-            "button, select, input, textarea, option"
-          );
-          if (interactive) return;
-          onStartDrag(e);
-        }}
+        onMouseDown={e => e.stopPropagation()}
         style={{
           position: "absolute",
           left: 0,
@@ -197,7 +190,7 @@ export default function FloatingBox({
           maxWidth: 520,
           background: LACQUER,
           padding: "2px 4px",
-          cursor: "grab",
+          cursor: "default",
           display: "flex",
           alignItems: "center",
           gap: 6,
@@ -479,10 +472,6 @@ export default function FloatingBox({
             e.stopPropagation();
             if ((fb.text || "").trim() === "") onDelete();
             else onCommit();
-          } else if (e.key === "Tab") {
-            e.preventDefault();
-            e.stopPropagation();
-            onCommit();
           }
         }}
         rows={Math.max(1, lines.length)}
@@ -529,9 +518,6 @@ export default function FloatingBox({
           zIndex: 20,
         }}
       />
-      <div style={{ position: "absolute", top: editorH + 6, left: 0, fontSize: 9, color: "rgba(139,26,26,0.5)", fontFamily: CINZEL, letterSpacing: "1.5px", textTransform: "uppercase", pointerEvents: "none", userSelect: "none", whiteSpace: "nowrap" }}>
-        Tab to confirm · Esc to cancel
-      </div>
     </div>
   );
 }

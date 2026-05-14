@@ -14,7 +14,6 @@ export default function FloatingImage({ fi, isSel, zoom = 1, onSelect, onStartDr
       {isSel && !fi.isDrawStroke && <>
         <div onMouseDown={onStartDrag} style={{ position: "absolute", top: -24, left: 0, right: 0, background: "#8B1A1A", padding: "4px 8px", fontSize: 10, color: "#fff", cursor: "grab", display: "flex", alignItems: "center", gap: 6, borderRadius: "4px 4px 0 0" }}>
           <span style={{ fontWeight: 700 }}>{fi.isEraser ? "ERASER" : "DRAG"}</span>
-          <span style={{ opacity: 0.6, fontSize: 8, letterSpacing: "1.5px", fontFamily: "'Cinzel', serif", textTransform: "uppercase" }}>· Tab ↵</span>
           <span onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); onDelete(); }} style={{ marginLeft: "auto", cursor: "pointer", fontWeight: 700 }}>X</span>
         </div>
         <div onMouseDown={onStartResize} style={{ position: "absolute", bottom: -8, right: -8, width: 16, height: 16, background: "#8B1A1A", cursor: "nwse-resize", borderRadius: "50%", border: "2px solid #fff" }} />
