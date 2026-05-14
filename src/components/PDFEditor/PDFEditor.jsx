@@ -377,11 +377,14 @@ export default function PDFEditor() {
           edited: true, 
           fontFamily: ff, 
           fontSize: fs, 
-          isBold: fmt.isBold ?? isBold, 
-          isItalic: fmt.isItalic ?? isItalic, 
+          isBold: fmt.isBold ?? isBold,
+          isItalic: fmt.isItalic ?? isItalic,
+          color: fmt.color || w.color || "#000000",
+          bgColor: fmt.bgColor || w.bgColor || "transparent",
+          angle: fmt.angle ?? w.angle ?? 0,
           x: w.x + ox / zoom,
           y: w.y + oy / zoom,
-          lineBaselines: undefined 
+          lineBaselines: undefined
         };
       }),
     }));
@@ -1279,7 +1282,7 @@ export default function PDFEditor() {
       ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap
     )
   }
-  onCommit={newText => commitEdit(tb.id, tb.page, newText)}
+  onCommit={(newText, ox, oy, fmt) => commitEdit(tb.id, tb.page, newText, ox, oy, fmt)}
   onCancel={cancelEdit}
 />
                             )}

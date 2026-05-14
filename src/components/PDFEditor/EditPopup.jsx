@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, SCALE } from "../utils/constant";
 
+const RotateIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ display: "block" }}
+  >
+    <polyline points="23 4 23 10 17 10" />
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+  </svg>
+);
+
 export default function EditPopup({
   block,
   zoom,
@@ -11,14 +28,16 @@ export default function EditPopup({
   const [text, setText] = useState(block.text || "");
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-  const [format, setFormat] = useState({
+    const [format, setFormat] = useState({
     fontFamily: block.fontFamily || "Arial, sans-serif",
     fontSize: Math.round((block.fontSize || 14) / SCALE),
     color: block.color || "#000000",
     bgColor: block.bgColor || "transparent",
+    angle: block.angle || 0,
   });
 
   const dragOrigin = useRef(null);
+  const rotateOrigin = useRef(null);
   const taRef = useRef(null);
 
   useEffect(() => {
@@ -52,6 +71,41 @@ export default function EditPopup({
         y: dragOrigin.current.oy + localDy / zoom,
       });
     };
+
+      useEffect(() => {
+    const move = e => {
+      if (!rotateOrigin.current) return;
+
+      const currentAngle = Math.atan2(
+        e.clientY - rotateOrigin.current.cy,
+        e.clientX - rotateOrigin.current.cx
+      );
+
+      const delta = (currentAngle - rotateOrigin.current.startAngle) * 180 / Math.PI;
+
+      setFormat(prev => ({
+        ...prev,
+        angle: rotateOrigin.current.startBoxAngle + delta,
+      }));
+    };
+
+    const up = () => {
+      rotateOrigin.current = null;
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+
+    if (rotateOrigin.current) {
+      window.addEventListener("mousemove", move);
+      window.addEventListener("mouseup", up);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+  }, [format.angle]);
+
 
     const up = () => setDragging(false);
 
@@ -91,18 +145,30 @@ export default function EditPopup({
   const cssFontSize = Math.max(8, format.fontSize * SCALE * zoom);
   const lineHeight = cssFontSize * 1.28;
   const lines = (text || "").split(/\r?\n/);
-  const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
-  const charWidth = cssFontSize * 0.58;
+
+  let measuredTextW = 0;
+  if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.font = `${cssFontSize}px ${format.fontFamily}`;
+    measuredTextW = lines.reduce(
+      (max, line) => Math.max(max, ctx.measureText(line || " ").width),
+      0
+    );
+  } else {
+    measuredTextW = Math.max(...lines.map(line => line.length)) * cssFontSize * 0.5;
+  }
 
   const editorW = Math.max(
     text.trim() ? 70 : 90,
-    Math.min(900, longestLine * charWidth + 16)
+    Math.min(900, measuredTextW + 14)
   );
 
   const editorH = Math.max(
     lineHeight + 8,
     lines.length * lineHeight + 8
   );
+
   return (
     <>
       {dragging && (
@@ -117,6 +183,7 @@ export default function EditPopup({
       )}
 
       <div
+        data-edit-popup-box
         onPointerDown={keepInsideEditor}
         onMouseDown={keepInsideEditor}
         onClick={keepInsideEditor}
@@ -136,6 +203,8 @@ export default function EditPopup({
           boxShadow: "none",
           boxSizing: "border-box",
           overflow: "visible",
+                    transform: `rotate(${format.angle || 0}deg)`,
+          transformOrigin: "center center",
         }}
       >
         <div
@@ -176,7 +245,60 @@ export default function EditPopup({
             boxSizing: "border-box",
           }}
           title="Drag toolbar to move"
-        >
+        >          <button
+            type="button"
+            onMouseDown={e => {
+              e.stopPropagation();
+
+              const box = e.currentTarget.closest("[data-edit-popup-box]");
+              if (!box) return;
+
+              const rect = box.getBoundingClientRect();
+              const cx = rect.left + rect.width / 2;
+              const cy = rect.top + rect.height / 2;
+              const startMouseAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+              const startBoxAngle = format.angle || 0;
+
+              const move = moveEvent => {
+                const currentMouseAngle = Math.atan2(
+                  moveEvent.clientY - cy,
+                  moveEvent.clientX - cx
+                );
+
+                const delta = (currentMouseAngle - startMouseAngle) * 180 / Math.PI;
+
+                setFormat(prev => ({
+                  ...prev,
+                  angle: startBoxAngle + delta,
+                }));
+              };
+
+              const up = () => {
+                window.removeEventListener("mousemove", move);
+                window.removeEventListener("mouseup", up);
+              };
+
+              window.addEventListener("mousemove", move);
+              window.addEventListener("mouseup", up);
+            }}
+            title="Hold and drag to rotate"
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: "50%",
+              border: `1px solid ${GOLD}`,
+              background: "transparent",
+              color: PARCHMENT,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "crosshair",
+              padding: 0,
+              flex: "0 0 auto",
+            }}
+          >
+            <RotateIcon />
+          </button>
           <select
             value={format.fontFamily}
             onPointerDown={keepInsideEditor}

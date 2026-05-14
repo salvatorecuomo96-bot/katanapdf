@@ -118,10 +118,9 @@ export default function FloatingBox({
   }
 
   return (
-    <div
+      <div
       onPointerDown={keepInsideEditor}
       onMouseDown={keepInsideEditor}
-      onMouseUp={keepInsideEditor}
       onClick={keepInsideEditor}
       style={{
         position: "absolute",
