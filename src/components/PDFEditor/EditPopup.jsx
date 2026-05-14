@@ -285,27 +285,7 @@ export default function EditPopup({
           }}
           title="Drag toolbar to move"
         >
-          <button
-            type="button"
-            onMouseDown={startRotate}
-            title="Hold and drag to rotate"
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: "50%",
-              border: `1px solid ${GOLD}`,
-              background: "transparent",
-              color: PARCHMENT,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "crosshair",
-              padding: 0,
-              flex: "0 0 auto",
-            }}
-          >
-            <RotateIcon />
-          </button>
+
 
           <select
             value={format.fontFamily}

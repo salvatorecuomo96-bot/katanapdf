@@ -74,10 +74,6 @@ export default function PDFEditor() {
   const [signatureTargetPageNum, setSignatureTargetPageNum] = useState(null);
   const [draggedPageNum, setDraggedPageNum] = useState(null);
   const [dragOverPageNum, setDragOverPageNum] = useState(null);
-  const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
-  const [fontSize, setFontSize] = useState(14);
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const imgDragOrigin = useRef(null);
   const imgResizeOrigin = useRef(null);
@@ -371,16 +367,16 @@ export default function PDFEditor() {
       ...prev,
       [pageNum]: prev[pageNum].map(w => {
         if (w.id !== blockId) return w;
-        const ff = fmt.fontFamily || fontFamily;
-        const fs = (fmt.fontSize || fontSize) * SCALE;
+        const ff = fmt.fontFamily || w.fontFamily || "Arial, sans-serif";
+        const fs = (fmt.fontSize || Math.round((w.fontSize || 14) / SCALE)) * SCALE;
         return { 
           ...w, 
           text: newText, 
           edited: true, 
           fontFamily: ff, 
           fontSize: fs, 
-          isBold: fmt.isBold ?? isBold,
-          isItalic: fmt.isItalic ?? isItalic,
+          isBold: fmt.isBold ?? w.isBold ?? false,
+          isItalic: fmt.isItalic ?? w.isItalic ?? false,
           color: fmt.color || w.color || "#000000",
           bgColor: fmt.bgColor || w.bgColor || "transparent",
           angle: fmt.angle ?? w.angle ?? 0,
@@ -404,10 +400,6 @@ export default function PDFEditor() {
     if (activePopup?.blockId === tb.id) return;
     saveHistory();
     setSelected(tb.id);
-    setFontFamily(tb.fontFamily);
-    setFontSize(Math.round(tb.fontSize / SCALE));
-    setIsBold(tb.isBold);
-    setIsItalic(tb.isItalic);
     setActivePopup({ blockId: tb.id, pageNum: tb.page, offsetX: 0, offsetY: 0 });
   }
 
@@ -850,7 +842,13 @@ export default function PDFEditor() {
                 : (e.baselineY + i * lhCanvas);
               const yPdf = pdfH - baselineCanvas * sy;
               try {
-                pdfPage.drawText(ln, { x: e.x * sx, y: yPdf, size: fs, font, color: rgb(0, 0, 0) });
+                pdfPage.drawText(ln, {
+                  x: e.x * sx,
+                  y: yPdf,
+                  size: fs,
+                  font,
+                  color: hexToRgb(e.color || "#000000"),
+                });
               } catch { /* ignore */ }
             });
           }
@@ -986,7 +984,7 @@ export default function PDFEditor() {
         ctx.fillStyle =
           e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
         ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
-        ctx.fillStyle = "#000";
+        ctx.fillStyle = e.color || "#000";
         ctx.textBaseline = "alphabetic";
         if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
         else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
@@ -1364,10 +1362,6 @@ export default function PDFEditor() {
   block={tb}
   zoom={scale}
   rotation={rotation}
-  fontSize={fontSize}
-  fontFamily={fontFamily}
-  isBold={isBold}
-  isItalic={isItalic}
   offsetX={activePopup.offsetX ?? 0}
   offsetY={activePopup.offsetY ?? 0}
   onOffsetChange={(ox, oy) =>
