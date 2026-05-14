@@ -44,15 +44,23 @@ export default function FloatingBox({
     }, 30);
 
     return () => clearTimeout(timer);
+  }, [isSel]);
 
-  }, [isSel]);  const stopAll = e => {
+  const keepInsideEditor = e => {
     e.stopPropagation();
   };
 
-  const closeOrDelete = e => {
-    e.preventDefault();
-    e.stopPropagation();
+  const refocusText = () => {
+    setTimeout(() => {
+      const el = taRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }, 0);
+  };
 
+  const closeOrDelete = e => {
+    e.stopPropagation();
     if ((fb.text || "").trim() === "") onDelete();
     else onCommit();
   };
@@ -84,6 +92,7 @@ export default function FloatingBox({
           e.stopPropagation();
           onSelect();
         }}
+        onPointerDown={e => e.stopPropagation()}
         style={{
           position: "absolute",
           left: fb.x * zoom,
@@ -110,7 +119,10 @@ export default function FloatingBox({
 
   return (
     <div
-      onClick={e => e.stopPropagation()}
+      onPointerDown={keepInsideEditor}
+      onMouseDown={keepInsideEditor}
+      onMouseUp={keepInsideEditor}
+      onClick={keepInsideEditor}
       style={{
         position: "absolute",
         left: fb.x * zoom,
@@ -132,11 +144,18 @@ export default function FloatingBox({
       }}
     >
       <div
-        onMouseDown={onStartDrag}
+        onMouseDown={e => {
+          e.stopPropagation();
+          const interactive = e.target.closest(
+            "button, select, input, textarea, option"
+          );
+          if (interactive) return;
+          onStartDrag(e);
+        }}
         style={{
           position: "absolute",
           left: 0,
-  top: -36,
+          top: -36,
           height: 30,
           width: "max-content",
           maxWidth: 520,
@@ -156,11 +175,10 @@ export default function FloatingBox({
         <button
           type="button"
           onMouseDown={e => {
-            e.preventDefault();
             e.stopPropagation();
             onStartRotate(e);
           }}
-          title="Drag to rotate"
+          title="Hold and drag to rotate"
           style={{
             width: 24,
             height: 24,
@@ -180,8 +198,11 @@ export default function FloatingBox({
 
         <select
           value={fb.fontFamily}
-          onChange={e => onUpdate({ fontFamily: e.target.value })}
-          onMouseDown={stopAll}
+          onChange={e => {
+            e.stopPropagation();
+            onUpdate({ fontFamily: e.target.value });
+            refocusText();
+          }}
           style={{
             fontSize: 11,
             background: "#fff",
@@ -198,8 +219,11 @@ export default function FloatingBox({
 
         <select
           value={FB_SIZES.includes(fb.fontSize) ? fb.fontSize : 14}
-          onChange={e => onUpdate({ fontSize: Number(e.target.value) })}
-          onMouseDown={stopAll}
+          onChange={e => {
+            e.stopPropagation();
+            onUpdate({ fontSize: Number(e.target.value) });
+            refocusText();
+          }}
           style={{
             fontSize: 11,
             background: "#fff",
@@ -219,7 +243,6 @@ export default function FloatingBox({
 
         <div
           title="Text colour"
-          onMouseDown={e => e.stopPropagation()}
           style={{
             width: 16,
             height: 16,
@@ -233,7 +256,11 @@ export default function FloatingBox({
           <input
             type="color"
             value={fb.color || "#000000"}
-            onChange={e => onUpdate({ color: e.target.value })}
+            onChange={e => {
+              e.stopPropagation();
+              onUpdate({ color: e.target.value });
+              refocusText();
+            }}
             style={{
               position: "absolute",
               top: -10,
@@ -248,7 +275,6 @@ export default function FloatingBox({
 
         <div
           title="Background colour"
-          onMouseDown={e => e.stopPropagation()}
           style={{
             width: 16,
             height: 16,
@@ -266,7 +292,11 @@ export default function FloatingBox({
                 ? "#ffffff"
                 : fb.bgColor || "#ffffff"
             }
-            onChange={e => onUpdate({ bgColor: e.target.value })}
+            onChange={e => {
+              e.stopPropagation();
+              onUpdate({ bgColor: e.target.value });
+              refocusText();
+            }}
             style={{
               position: "absolute",
               top: -10,
@@ -282,11 +312,10 @@ export default function FloatingBox({
         <button
           type="button"
           onClick={e => {
-            e.preventDefault();
             e.stopPropagation();
             onUpdate({ bgColor: "transparent" });
+            refocusText();
           }}
-          onMouseDown={e => e.stopPropagation()}
           style={{
             fontSize: 9,
             background: "transparent",
@@ -304,7 +333,7 @@ export default function FloatingBox({
 
         <button
           type="button"
-          onMouseDown={closeOrDelete}
+          onClick={closeOrDelete}
           style={{
             background: LACQUER,
             color: PARCHMENT,
@@ -316,7 +345,7 @@ export default function FloatingBox({
             fontSize: 11,
             height: 23,
           }}
-          title="Close"
+          title="Close and keep text"
         >
           X
         </button>
@@ -325,13 +354,15 @@ export default function FloatingBox({
       <textarea
         ref={taRef}
         value={fb.text}
-        onChange={e => onUpdate({ text: e.target.value })}
-        onMouseDown={e => e.stopPropagation()}
+        onChange={e => {
+          e.stopPropagation();
+          onUpdate({ text: e.target.value });
+        }}
         onKeyDown={e => {
           if (e.key === "Escape") {
             e.preventDefault();
             e.stopPropagation();
-            if (fb.text === "") onDelete();
+            if ((fb.text || "").trim() === "") onDelete();
             else onCommit();
           } else if (e.key === "Tab") {
             e.preventDefault();
@@ -363,7 +394,11 @@ export default function FloatingBox({
       />
 
       <div
-        onMouseDown={onStartResize}
+        onMouseDown={e => {
+          e.stopPropagation();
+          onStartResize(e);
+        }}
+        title="Hold and drag to resize text"
         style={{
           position: "absolute",
           bottom: -6,
