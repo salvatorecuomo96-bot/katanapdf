@@ -439,6 +439,8 @@ export default function PDFEditor() {
   }
 
   function handleBgClick() {
+    // Auto-delete any selected floating box that was left empty
+    setFloatingBoxes(prev => prev.filter(fb => fb.id !== selected || (fb.text || "").trim() !== ""));
     setActivePopup(null);
     setSelected(null);
     setShapePanelPage(null);
@@ -766,12 +768,11 @@ export default function PDFEditor() {
     e.preventDefault();
     e.stopPropagation();
     saveHistory();
-    setSelected(fb.id);
-    setDragging({ 
-      id: fb.id, 
-      startX: e.clientX, 
-      startY: e.clientY, 
-      origX: fb.x, 
+    setDragging({
+      id: fb.id,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: fb.x,
       origY: fb.y,
       rotation: rotatedPages[fb.page] || 0
     });
