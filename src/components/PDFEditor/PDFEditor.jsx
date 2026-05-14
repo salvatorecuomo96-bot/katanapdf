@@ -78,6 +78,7 @@ export default function PDFEditor() {
   const [drawMode, setDrawMode] = useState(false);
   const [drawColor, setDrawColor] = useState('#e53e3e');
   const [drawWidth, setDrawWidth] = useState(4);
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window === 'undefined' ? true : window.innerWidth >= 768);
   const [floatingShapes, setFloatingShapes] = useState([]);
   const [shapePanelPage, setShapePanelPage] = useState(null);
   const [shapePanelColor, setShapePanelColor] = useState('#8B1A1A');
@@ -96,6 +97,7 @@ export default function PDFEditor() {
   const isDrawingRef = useRef(false);
   const currentStrokeRef = useRef(null);
   const addTextClickLock = useRef(false);
+  const autoZoomPendingRef = useRef(false);
 
   async function handleFile(e) {
     const input = e.target;
@@ -151,6 +153,7 @@ export default function PDFEditor() {
       pageWordsToTextBlocks,
     });
 
+    autoZoomPendingRef.current = true;
     setPages(pageData);
     setPageOrder(pageData.map((_, i) => i));
     setRotatedPages({});
@@ -181,6 +184,20 @@ export default function PDFEditor() {
       redrawPage(canvas, pg.dataUrl, edits);
     }
   }, [textBlocks, pages, activePopup]);
+
+  useEffect(() => {
+    if (!pages.length || !autoZoomPendingRef.current) return;
+    autoZoomPendingRef.current = false;
+    const id = requestAnimationFrame(() => {
+      const el = containerRef.current;
+      if (!el) return;
+      const pg = pages[0];
+      if (!pg) return;
+      const availW = Math.max(200, el.clientWidth - 80);
+      setZoom(Math.min(3, Math.max(0.3, +(availW / pg.width).toFixed(2))));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [pages]);
 
   // Mirror live state into a ref so snapshotCurrent always reads fresh values
   useEffect(() => {
@@ -1250,6 +1267,8 @@ export default function PDFEditor() {
             handleDownload={handleDownload}
             drawMode={drawMode}
             setDrawMode={setDrawMode}
+            sidebarOpen={sidebarOpen}
+            toggleSidebar={() => setSidebarOpen(v => !v)}
           />
 
           <EditorHeader
@@ -1270,11 +1289,14 @@ export default function PDFEditor() {
               position: "relative",
               overflow: "hidden",
             }}
-          >            {/* Left Sidebar */}
+          >
+            {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+            {/* Left Sidebar */}
 <aside
+      className={`editor-sidebar${sidebarOpen ? '' : ' editor-sidebar-hidden'}`}
       style={{
-        width: "340px",
-        flex: "0 0 340px",
+        width: "clamp(220px, 22vw, 340px)",
+        flex: "0 0 clamp(220px, 22vw, 340px)",
         height: "calc(100vh - 150px)",
         maxHeight: "calc(100vh - 150px)",
         minHeight: 0,
@@ -1404,7 +1426,7 @@ export default function PDFEditor() {
                 setEncryptionNoticeDismissed={setEncryptionNoticeDismissed}
               />
 
-              <div ref={containerRef} style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: PARCHMENT, backgroundImage: CROSSHATCH, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
+              <div ref={containerRef} className="main-scroll-area" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: PARCHMENT, backgroundImage: CROSSHATCH, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
               {visiblePages.map((pg, displayIdx) => {
                 if (!pg) return null;
                 const rotation = rotatedPages[pg.num] || 0;
@@ -1450,7 +1472,7 @@ export default function PDFEditor() {
                          boxSizing: "border-box"
                        }}>
                   {!isGridView && (
-                    <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: dispW, maxWidth: "100%" }}>
+                    <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: dispW, maxWidth: "100%", flexWrap: "wrap", gap: 8 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
                         {/* Phase 6: reorder controls. Disabled at the ends; reorder mutates pageOrder, not the source PDF, until download. */}
@@ -1479,7 +1501,7 @@ export default function PDFEditor() {
                       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                         {/* Sign */}
                         <button
-                          onClick={e => { e.stopPropagation(); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
+                          onClick={e => { e.stopPropagation(); setDrawMode(false); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
                           style={pageActionBtn} title="Sign"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c2-2 4-4 6-3s3 3 5 1 3-5 5-6"/><path d="M3 17c1-1 2-2 3-1"/><path d="M20 5 L18 3 L6 15 L5 19 L9 18 Z"/></svg>
@@ -1508,7 +1530,7 @@ export default function PDFEditor() {
                         {/* Shapes */}
                         <div style={{ position: "relative" }}>
                           <button
-                            onClick={e => { e.stopPropagation(); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
+                            onClick={e => { e.stopPropagation(); setDrawMode(false); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
                             style={{ ...pageActionBtn, background: shapePanelPage === pg.num ? 'rgba(139,26,26,0.12)' : 'transparent', outline: shapePanelPage === pg.num ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
                             title="Add shape"
                           >
@@ -1541,7 +1563,7 @@ export default function PDFEditor() {
 
                         {/* Add Text */}
                         <button
-                          onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }}
+                          onClick={e => { e.stopPropagation(); setDrawMode(false); addFloatingBox(pg.num); }}
                           style={pageActionBtn} title="Add text box"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
@@ -1549,7 +1571,7 @@ export default function PDFEditor() {
                         </button>
 
                         {/* Add Image */}
-                        <label style={pageActionBtn} title="Add image">
+                        <label style={pageActionBtn} title="Add image" onClick={() => setDrawMode(false)}>
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                           Add image
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
@@ -1652,6 +1674,7 @@ export default function PDFEditor() {
                       {!isGridView && floatingShapes.filter(s => s.page === pg.num).map(shape => (
                         <FloatingShape key={shape.id} shape={shape} isSel={selected === shape.id} zoom={scale}
                           onSelect={() => setSelected(shape.id)}
+                          onDeselect={() => setSelected(null)}
                           onStartDrag={e => startDragShape(e, shape)}
                           onStartResize={e => startResizeShape(e, shape)}
                           onDelete={() => deleteFloatingShape(shape.id)}

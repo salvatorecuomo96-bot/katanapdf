@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES } from "../utils/constant";
+import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES, CINZEL } from "../utils/constant";
 
 const RotateIcon = () => (
   <svg
@@ -507,6 +507,9 @@ export default function FloatingBox({
           zIndex: 20,
         }}
       />
+      <div style={{ position: "absolute", top: editorH + 6, left: 0, fontSize: 9, color: "rgba(139,26,26,0.5)", fontFamily: CINZEL, letterSpacing: "1.5px", textTransform: "uppercase", pointerEvents: "none", userSelect: "none", whiteSpace: "nowrap" }}>
+        Tab to confirm · Esc to cancel
+      </div>
     </div>
   );
 }

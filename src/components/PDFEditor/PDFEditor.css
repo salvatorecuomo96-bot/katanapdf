@@ -46,3 +46,47 @@ body {
   overflow: visible;
   height: auto;
 }
+
+/* ── Sidebar ─────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .editor-sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    z-index: 5000;
+    box-shadow: 4px 0 32px rgba(0,0,0,0.45);
+    width: min(80vw, 320px) !important;
+    flex: none !important;
+  }
+  .editor-sidebar-hidden {
+    display: none !important;
+  }
+  .main-scroll-area {
+    padding: 20px 16px 60px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .editor-sidebar-hidden {
+    width: 0 !important;
+    flex: 0 0 0px !important;
+    overflow: hidden !important;
+    border: none !important;
+  }
+}
+
+/* Mobile backdrop shown behind open sidebar */
+.sidebar-backdrop {
+  display: none;
+}
+@media (max-width: 767px) {
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 4999;
+  }
+}

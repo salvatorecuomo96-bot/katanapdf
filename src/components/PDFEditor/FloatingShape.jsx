@@ -1,5 +1,19 @@
-export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStartDrag, onStartResize, onDelete, onUpdate }) {
+import { useEffect } from "react";
+
+export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStartDrag, onStartResize, onDelete, onUpdate, onDeselect }) {
   const { x, y, w, h, shapeType, shapeColor, shapeFill, z } = shape;
+
+  useEffect(() => {
+    if (!isSel) return;
+    const handler = (e) => {
+      if (e.key === "Tab" || e.key === "Escape") {
+        e.preventDefault();
+        onDeselect();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isSel, onDeselect]);
 
   return (
     <div
@@ -46,13 +60,14 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
           <div
             onMouseDown={onStartDrag}
             style={{
-              position: 'absolute', top: -26, left: 0, right: 0,
+              position: 'absolute', top: -28, left: 0, right: 0,
               background: '#8B1A1A', padding: '4px 8px', fontSize: 10,
               color: '#fff', cursor: 'grab', display: 'flex',
               alignItems: 'center', gap: 6, borderRadius: '4px 4px 0 0',
             }}
           >
             <span style={{ fontWeight: 700, letterSpacing: 2 }}>{shapeType === 'circle' ? 'CIRCLE' : 'SQUARE'}</span>
+            <span style={{ opacity: 0.6, fontSize: 8, letterSpacing: '1.5px', fontFamily: "'Cinzel', serif", textTransform: 'uppercase' }}>· Tab ↵</span>
             <input
               type="color"
               value={shapeColor}

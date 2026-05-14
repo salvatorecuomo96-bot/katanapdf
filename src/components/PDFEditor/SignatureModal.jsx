@@ -104,6 +104,20 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
     }
   };
 
+  const handleInsertRef = useRef(null);
+  handleInsertRef.current = handleInsert;
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        handleInsertRef.current();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -193,9 +207,12 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
               <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 32, height: 32, borderRadius: "4px", border: `2px solid ${GOLD}`, background: "transparent", cursor: "pointer", padding: 0 }} aria-label="Signature Color" title="Signature Color" />
             </div>
           </div>
-          <div style={{ display: "flex", gap: 12 }}>
-            <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: "1px solid transparent", color: INK }}>Cancel</button>
-            <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: PARCHMENT }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: "1px solid transparent", color: INK }}>Cancel</button>
+              <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: PARCHMENT }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
+            </div>
+            <span style={{ fontSize: 9, color: LACQUER, opacity: 0.55, fontFamily: CINZEL, letterSpacing: "1.5px", textTransform: "uppercase" }}>Tab to insert</span>
           </div>
         </div>
       </div>
