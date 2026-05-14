@@ -2,10 +2,20 @@ import { useState } from "react";
 import SectionDivider from "./ui/SectionDivider";
 import StampTag from "./ui/StampTag";
 import Footer from "./ui/Footer";
-import { CINZEL, CROSSHATCH, FELL, hiddenFileInput, INK, LACQUER, PARCHMENT, PARCHMENT_2 } from "./utils/constant";
+import { CINZEL, CROSSHATCH, FELL, GOLD, hiddenFileInput, INK, LACQUER, PARCHMENT, PARCHMENT_2 } from "./utils/constant";
+
+// Detect 4K screens (physical pixel width ≥ 2560) for homepage zoom
+function use4KZoom() {
+  if (typeof window === "undefined") return 1;
+  const screenW = window.screen?.width || window.innerWidth;
+  const dpr = window.devicePixelRatio || 1;
+  const physicalW = screenW * dpr;
+  return physicalW >= 2560 ? 1.3 : 1;
+}
 
 export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
   const [dragOver, setDragOver] = useState(false);
+  const zoom4k = use4KZoom();
 
   const onDragOver = (e) => { e.preventDefault(); if (!dragOver) setDragOver(true); };
   const onDragLeave = (e) => {
@@ -20,7 +30,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
   return (
     <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
-         style={{ minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, color: INK, position: "relative", fontFamily: FELL }}>
+         style={{ minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, color: INK, position: "relative", fontFamily: FELL, zoom: zoom4k }}>
       {dragOver && (
         <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(139,26,26,0.18)",
                       border: `4px dashed ${LACQUER}`, display: "flex", alignItems: "center", justifyContent: "center",
