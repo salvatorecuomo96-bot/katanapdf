@@ -1,61 +1,392 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, SCALE } from "../utils/constant";
 
-export default function EditPopup({ block, zoom, rotation = 0, onCommit, onCancel }) {
+export default function EditPopup({
+  block,
+  zoom,
+  rotation = 0,
+  onCommit,
+  onCancel,
+}) {
   const [text, setText] = useState(block.text || "");
-  const [offset, setOffset] = useState({ x: 0, y: 0 }); 
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const [format, setFormat] = useState({
     fontFamily: block.fontFamily || "Arial, sans-serif",
-    fontSize: Math.round((block.fontSize || 14) / SCALE), 
+    fontSize: Math.round((block.fontSize || 14) / SCALE),
     color: block.color || "#000000",
-    bgColor: block.bgColor || "transparent"
+    bgColor: block.bgColor || "transparent",
   });
-  
+
   const dragOrigin = useRef(null);
   const taRef = useRef(null);
 
-  useEffect(() => { if (taRef.current) { taRef.current.focus(); taRef.current.select(); } }, []);
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+
+    const timer = setTimeout(() => {
+      el.focus();
+      el.select();
+    }, 30);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    const move = (e) => { 
-      if (!dragging || !dragOrigin.current) return; 
+    const move = e => {
+      if (!dragging || !dragOrigin.current) return;
+
       const dx = e.clientX - dragOrigin.current.mx;
       const dy = e.clientY - dragOrigin.current.my;
-      
+
       const rad = -(rotation || 0) * Math.PI / 180;
       const cos = Math.cos(rad);
       const sin = Math.sin(rad);
+
       const localDx = dx * cos - dy * sin;
       const localDy = dx * sin + dy * cos;
-      
-      setOffset({ x: dragOrigin.current.ox + localDx / zoom, y: dragOrigin.current.oy + localDy / zoom }); 
+
+      setOffset({
+        x: dragOrigin.current.ox + localDx / zoom,
+        y: dragOrigin.current.oy + localDy / zoom,
+      });
     };
+
     const up = () => setDragging(false);
-    if (dragging) { window.addEventListener("mousemove", move); window.addEventListener("mouseup", up); }
-    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+
+    if (dragging) {
+      window.addEventListener("mousemove", move);
+      window.addEventListener("mouseup", up);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
   }, [dragging, rotation, zoom]);
 
-  const cssFontSize = (format.fontSize * SCALE) * zoom;
-  const boxW = Math.max(block.width * zoom + 20, 260);
+  const keepInsideEditor = e => {
+    e.stopPropagation();
+  };
 
+  const refocusText = () => {
+    setTimeout(() => {
+      const el = taRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }, 0);
+  };
+
+  const commit = e => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    onCommit(text, offset.x, offset.y, format);
+  };
+
+  const cssFontSize = Math.max(8, format.fontSize * SCALE * zoom);
+  const lineHeight = cssFontSize * 1.28;
+  const lines = (text || "").split(/\r?\n/);
+  const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
+  const charWidth = cssFontSize * 0.58;
+
+  const editorW = Math.max(
+    text.trim() ? 70 : 90,
+    Math.min(900, longestLine * charWidth + 16)
+  );
+
+  const editorH = Math.max(
+    lineHeight + 8,
+    lines.length * lineHeight + 8
+  );
   return (
     <>
-      {dragging && <div style={{ position: "fixed", inset: 0, zIndex: 9999, cursor: "grabbing" }} />}
-      <div onClick={e => e.stopPropagation()} style={{ position: "absolute", left: offset.x * zoom, top: offset.y * zoom, zIndex: 2000, border: `1px solid ${GOLD}`, background: "#fff", boxShadow: "0 10px 30px rgba(0,0,0,0.3)", width: boxW, borderRadius: 4, boxSizing: "border-box" }}>
-        <div onMouseDown={(e) => { e.preventDefault(); dragOrigin.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y }; setDragging(true); }} style={{ background: INK, padding: "6px 8px", cursor: "grab", display: "flex", alignItems: "center", gap: 8, borderRadius: "3px 3px 0 0", userSelect: "none" }} title="Drag to move">
-          <select value={format.fontFamily} onChange={e => setFormat({...format, fontFamily: e.target.value})} onMouseDown={e=>e.stopPropagation()} style={{ fontSize: 11, background: "#fff", border: "none", borderRadius: 2, padding: "2px", width: 70 }}>
-            <option value="Arial, sans-serif">Arial</option><option value="Times New Roman, serif">Times</option>
+      {dragging && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            cursor: "grabbing",
+          }}
+        />
+      )}
+
+      <div
+        onPointerDown={keepInsideEditor}
+        onMouseDown={keepInsideEditor}
+        onClick={keepInsideEditor}
+        style={{
+          position: "absolute",
+          left: offset.x * zoom,
+          top: offset.y * zoom,
+          width: editorW,
+          height: editorH,
+          zIndex: 3000,
+          border: `1px dashed ${GOLD}`,
+          borderRadius: 3,
+          background:
+            format.bgColor && format.bgColor !== "transparent"
+              ? format.bgColor
+              : "transparent",
+          boxShadow: "none",
+          boxSizing: "border-box",
+          overflow: "visible",
+        }}
+      >
+        <div
+          onMouseDown={e => {
+            e.stopPropagation();
+
+            const interactive = e.target.closest(
+              "button, select, input, textarea, option"
+            );
+
+            if (interactive) return;
+
+            dragOrigin.current = {
+              mx: e.clientX,
+              my: e.clientY,
+              ox: offset.x,
+              oy: offset.y,
+            };
+            setDragging(true);
+          }}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: -36,
+            height: 30,
+            width: "max-content",
+            maxWidth: 520,
+            background: INK,
+            padding: "2px 4px",
+            cursor: "grab",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            borderRadius: 3,
+            userSelect: "none",
+            border: `1px solid ${GOLD}`,
+            boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
+            boxSizing: "border-box",
+          }}
+          title="Drag toolbar to move"
+        >
+          <select
+            value={format.fontFamily}
+            onPointerDown={keepInsideEditor}
+            onMouseDown={keepInsideEditor}
+            onClick={keepInsideEditor}
+            onChange={e => {
+              e.stopPropagation();
+              setFormat(prev => ({ ...prev, fontFamily: e.target.value }));
+              refocusText();
+            }}
+            style={{
+              fontSize: 11,
+              background: "#fff",
+              border: "none",
+              borderRadius: 2,
+              padding: "1px 2px",
+              width: 78,
+              height: 23,
+            }}
+          >
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Times New Roman, serif">Times</option>
           </select>
-          <select value={FB_SIZES.includes(format.fontSize) ? format.fontSize : 14} onChange={e => setFormat({...format, fontSize: Number(e.target.value)})} onMouseDown={e=>e.stopPropagation()} style={{ fontSize: 11, background: "#fff", border: "none", borderRadius: 2, padding: "2px", width: 45 }}>
-            {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+
+          <select
+            value={FB_SIZES.includes(format.fontSize) ? format.fontSize : 14}
+            onPointerDown={keepInsideEditor}
+            onMouseDown={keepInsideEditor}
+            onClick={keepInsideEditor}
+            onChange={e => {
+              e.stopPropagation();
+              setFormat(prev => ({ ...prev, fontSize: Number(e.target.value) }));
+              refocusText();
+            }}
+            style={{
+              fontSize: 11,
+              background: "#fff",
+              border: "none",
+              borderRadius: 2,
+              padding: "1px 2px",
+              width: 48,
+              height: 23,
+            }}
+          >
+            {FB_SIZES.map(s => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
-          <div title="Text Color" style={{ width: 16, height: 16, borderRadius: "50%", overflow: "hidden", border: "1px solid #ddd", position: "relative" }}><input type="color" value={format.color} onChange={e => setFormat({...format, color: e.target.value})} onMouseDown={e=>e.stopPropagation()} style={{ position: "absolute", top: -10, left: -10, width: 40, height: 40, cursor: "pointer", border: "none" }} /></div>
-          <div title="Background Color" style={{ width: 16, height: 16, borderRadius: "50%", overflow: "hidden", border: "1px dashed #aaa", position: "relative" }}><input type="color" value={format.bgColor === "transparent" ? "#ffffff" : format.bgColor} onChange={e => setFormat({...format, bgColor: e.target.value})} onMouseDown={e=>e.stopPropagation()} style={{ position: "absolute", top: -10, left: -10, width: 40, height: 40, cursor: "pointer", border: "none" }} /></div>
-          <button onClick={() => setFormat({...format, bgColor: "transparent"})} onMouseDown={e=>e.stopPropagation()} style={{ fontSize: 9, background: "transparent", color: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 2, padding: "2px 4px", cursor: "pointer" }} title="No background">No BG</button>
-          <button onClick={() => onCommit(text, offset.x, offset.y, format)} onMouseDown={e=>e.stopPropagation()} style={{ marginLeft: "auto", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 3, padding: "3px 10px", cursor: "pointer", fontSize: 11, fontWeight: "bold" }}>Save</button>
+
+          <div
+            title="Text colour"
+            onPointerDown={keepInsideEditor}
+            onMouseDown={keepInsideEditor}
+            onClick={keepInsideEditor}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: "50%",
+              overflow: "hidden",
+              border: "1px solid #ddd",
+              position: "relative",
+              flex: "0 0 auto",
+            }}
+          >
+            <input
+              type="color"
+              value={format.color}
+              onChange={e => {
+                setFormat(prev => ({ ...prev, color: e.target.value }));
+                refocusText();
+              }}
+              style={{
+                position: "absolute",
+                top: -10,
+                left: -10,
+                width: 40,
+                height: 40,
+                cursor: "pointer",
+                border: "none",
+              }}
+            />
+          </div>
+
+          <div
+            title="Background colour"
+            onPointerDown={keepInsideEditor}
+            onMouseDown={keepInsideEditor}
+            onClick={keepInsideEditor}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: "50%",
+              overflow: "hidden",
+              border: "1px dashed #aaa",
+              position: "relative",
+              flex: "0 0 auto",
+            }}
+          >
+            <input
+              type="color"
+              value={
+                format.bgColor === "transparent"
+                  ? "#ffffff"
+                  : format.bgColor || "#ffffff"
+              }
+              onChange={e => {
+                setFormat(prev => ({ ...prev, bgColor: e.target.value }));
+                refocusText();
+              }}
+              style={{
+                position: "absolute",
+                top: -10,
+                left: -10,
+                width: 40,
+                height: 40,
+                cursor: "pointer",
+                border: "none",
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setFormat(prev => ({ ...prev, bgColor: "transparent" }));
+              refocusText();
+            }}
+            onMouseDown={keepInsideEditor}
+            style={{
+              fontSize: 9,
+              background: "transparent",
+              color: PARCHMENT,
+              border: `1px solid ${GOLD}`,
+              borderRadius: 2,
+              padding: "1px 4px",
+              cursor: "pointer",
+              height: 23,
+            }}
+            title="No background"
+          >
+            No BG
+          </button>
+
+          <button
+            type="button"
+            onClick={commit}
+            onMouseDown={keepInsideEditor}
+            style={{
+              background: LACQUER,
+              color: PARCHMENT,
+              border: `1px solid ${GOLD}`,
+              borderRadius: 3,
+              padding: "1px 6px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: 11,
+              height: 23,
+            }}
+            title="Close and keep text"
+          >
+            X
+          </button>
         </div>
-        <textarea ref={taRef} value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onCancel(); } if (e.key === "Tab") { e.preventDefault(); e.stopPropagation(); onCommit(text, offset.x, offset.y, format); } }} style={{ width: "100%", border: "none", outline: "none", background: format.bgColor === "transparent" ? "transparent" : format.bgColor, padding: "8px", fontSize: cssFontSize, fontFamily: format.fontFamily, color: format.color, resize: "none", overflow: "visible", minHeight: Math.max(block.height * zoom, cssFontSize * 1.5), boxSizing: "border-box", borderRadius: "0 0 3px 3px" }} />
+
+        <textarea
+          ref={taRef}
+          value={text}
+          onChange={e => {
+            e.stopPropagation();
+            setText(e.target.value);
+          }}
+          onMouseDown={keepInsideEditor}
+          onClick={keepInsideEditor}
+          onKeyDown={e => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              onCancel();
+            } else if (e.key === "Tab") {
+              e.preventDefault();
+              e.stopPropagation();
+              commit(e);
+            }
+          }}
+          rows={Math.max(1, lines.length)}
+          style={{
+            width: editorW,
+            height: editorH,
+            border: "none",
+            outline: "none",
+            background:
+              format.bgColor === "transparent" || !format.bgColor
+                ? "transparent"
+                : format.bgColor,
+            padding: "2px 4px",
+            fontSize: cssFontSize,
+            fontFamily: format.fontFamily,
+            color: format.color,
+            resize: "none",
+            overflow: "hidden",
+            display: "block",
+            boxSizing: "border-box",
+            lineHeight: `${lineHeight}px`,
+            borderRadius: 3,
+          }}
+        />
       </div>
     </>
   );
