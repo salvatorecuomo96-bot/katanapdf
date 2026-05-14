@@ -28,7 +28,23 @@ export default function PageSidebar({
   setDragOverPageNum
 }) {
   return (
-    <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+    <aside
+      style={{
+        width: "340px",
+        flex: "0 0 340px",
+         height: "100%",
+        maxHeight: "100%",
+        minHeight: 0,
+        background: PARCHMENT_2,
+        borderRight: `1px solid rgba(139,26,26,0.5)`,
+        borderTop: `1px solid rgba(139,26,26,0.2)`,
+        overflowY: "auto",
+        overflowX: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        alignSelf: "stretch",
+      }}
+    >
       <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
         <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <GridIcon />
@@ -39,8 +55,15 @@ export default function PageSidebar({
         </label>
       </div>
       
-      <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {visiblePages.map((pg, i) => {
+      <div
+        style={{
+          padding: "16px 16px 16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          minHeight: 0,
+        }}
+      >      {visiblePages.map((pg, i) => {
         const rotation = rotatedPages[pg.num] || 0;
         const swap = rotation === 90 || rotation === 270;
         return (

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PDFDocument, degrees } from "pdf-lib";
+import { PDFDocument, degrees, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import Homepage from "../Homepage";
 import StaticPage from "../StaticPage";
@@ -731,20 +731,14 @@ export default function PDFEditor() {
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
     try {
-      // Phase 3: don\'t silently strip encryption. Try strict first; only
+ // Phase 3: don't silently strip encryption. Try strict first; only
       // fall back to ignoreEncryption: true if we hit an actual encryption
-      // error - and the user has already been warned via the banner that
-      // loadPdfFromBytes set up. Other parse failures still go to the
-      // canvas fallback as before.
-           const srcDoc = await loadPdfForExport(pdfBytes);
-      if (!srcDoc) return await handleDownloadCanvasFallback(); 
-      else {
-          console.warn("pdf-lib couldn't parse this PDF, falling back to canvas:", loadErr.message);
-          return await handleDownloadCanvasFallback();
-        }
-      }
+      // error. Other parse failures still go to the canvas fallback.
+      const srcDoc = await loadPdfForExport(pdfBytes);
+      if (!srcDoc) return await handleDownloadCanvasFallback();
 
-      const srcPages = srcDoc.getPages();
+    const srcPages = srcDoc.getPages();
+
       // Stage 1 guard: if pdfBytes has fewer pages than the editor state
       // (e.g. an Add-PDF merge failed earlier), the loop below would silently
       // skip the missing pages. Fall through to the canvas fallback so every
@@ -1004,21 +998,34 @@ export default function PDFEditor() {
             handleFile={handleFile}
           />
 
-          <EditorNotices
-            pages={pages}
-            hasTextLayer={hasTextLayer}
-            textLayerNoticeDismissed={textLayerNoticeDismissed}
-            setTextLayerNoticeDismissed={setTextLayerNoticeDismissed}
-            isEncrypted={isEncrypted}
-            encryptionNoticeDismissed={encryptionNoticeDismissed}
-            setEncryptionNoticeDismissed={setEncryptionNoticeDismissed}
-          />
 
-
-          <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
-            {/* Left Sidebar */}
-            <aside style={{ width: '340px', height: '100%', background: PARCHMENT_2, borderRight: `1px solid rgba(139,26,26,0.5)`, overflowY: 'auto', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
+<div
+            style={{
+              display: "flex",
+              flex: 1,
+              minHeight: 0,
+              width: "100%",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >            {/* Left Sidebar */}
+<aside
+      style={{
+        width: "340px",
+        flex: "0 0 340px",
+        height: "calc(100vh - 150px)",
+        maxHeight: "calc(100vh - 150px)",
+        minHeight: 0,
+        background: PARCHMENT_2,
+        borderRight: `1px solid rgba(139,26,26,0.5)`,
+        borderTop: `1px solid rgba(139,26,26,0.2)`,
+        overflowY: "auto",
+        overflowX: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        alignSelf: "flex-start",
+      }}
+    >              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: PARCHMENT_2, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
                 <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <GridIcon />
                 </button>
@@ -1116,7 +1123,26 @@ export default function PDFEditor() {
             </aside>
 
             {/* Right Main Area */}
-            <div ref={containerRef} style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: PARCHMENT, backgroundImage: CROSSHATCH, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <EditorNotices
+                pages={pages}
+                hasTextLayer={hasTextLayer}
+                textLayerNoticeDismissed={textLayerNoticeDismissed}
+                setTextLayerNoticeDismissed={setTextLayerNoticeDismissed}
+                isEncrypted={isEncrypted}
+                encryptionNoticeDismissed={encryptionNoticeDismissed}
+                setEncryptionNoticeDismissed={setEncryptionNoticeDismissed}
+              />
+
+              <div ref={containerRef} style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: PARCHMENT, backgroundImage: CROSSHATCH, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
               {visiblePages.map((pg, displayIdx) => {
                 if (!pg) return null;
                 const rotation = rotatedPages[pg.num] || 0;
@@ -1273,6 +1299,7 @@ export default function PDFEditor() {
                 </div>
               );
             })}
+              </div>
             </div>
           </div>
         </>
