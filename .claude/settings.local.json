@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"c:\\\\Users\\\\jayfr\\\\Desktop\\\\katanapdf\" && git show 4cc3bbb:src/components/PDFEditor/EditorToolbar.jsx > src/components/PDFEditor/EditorToolbar.jsx)",
+      "Bash(npx vite *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\jayfr\\Desktop\\katanapdf\\src\\components\\PDFEditor"
+    ]
+  }
+}

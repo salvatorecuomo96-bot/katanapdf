@@ -10,6 +10,7 @@ import SignatureModal from "./SignatureModal";
 import EditorNotices from "./EditorNotices";
 import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
+import FloatingShape from "./FloatingShape";
 import { GridIcon, RotateIcon } from "./PageSidebar";
 import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../utils/pdfLoadUtils";
 import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
@@ -74,12 +75,26 @@ export default function PDFEditor() {
   const [signatureTargetPageNum, setSignatureTargetPageNum] = useState(null);
   const [draggedPageNum, setDraggedPageNum] = useState(null);
   const [dragOverPageNum, setDragOverPageNum] = useState(null);
+  const [drawMode, setDrawMode] = useState(false);
+  const [drawColor, setDrawColor] = useState('#e53e3e');
+  const [drawWidth, setDrawWidth] = useState(4);
+  const [floatingShapes, setFloatingShapes] = useState([]);
+  const [shapePanelPage, setShapePanelPage] = useState(null);
+  const [shapePanelColor, setShapePanelColor] = useState('#8B1A1A');
+  const [shapePanelFill, setShapePanelFill] = useState(false);
+  const [draggingShape, setDraggingShape] = useState(null);
+  const [resizingShape, setResizingShape] = useState(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const imgDragOrigin = useRef(null);
   const imgResizeOrigin = useRef(null);
   const fbResizeOrigin = useRef(null);
+  const shapeDragOrigin = useRef(null);
+  const shapeResizeOrigin = useRef(null);
   const containerRef = useRef(null);
   const canvasRefs = useRef({});
+  const drawCanvasRefs = useRef({});
+  const isDrawingRef = useRef(false);
+  const currentStrokeRef = useRef(null);
   const addTextClickLock = useRef(false);
 
   async function handleFile(e) {
@@ -342,7 +357,7 @@ export default function PDFEditor() {
       textBlocks: JSON.parse(JSON.stringify(textBlocks)),
       floatingBoxes: JSON.parse(JSON.stringify(floatingBoxes)),
       floatingImages: JSON.parse(JSON.stringify(floatingImages)),
-      // Phase 7 history
+      floatingShapes: JSON.parse(JSON.stringify(floatingShapes)),
       rotatedPages: { ...rotatedPages },
       deletedPages: new Set(deletedPages),
     }]);
@@ -354,7 +369,7 @@ export default function PDFEditor() {
     setTextBlocks(snap.textBlocks);
     setFloatingBoxes(snap.floatingBoxes);
     setFloatingImages(snap.floatingImages || []);
-    // Phase 7 history
+    setFloatingShapes(snap.floatingShapes || []);
     if (snap.rotatedPages) setRotatedPages(snap.rotatedPages);
     if (snap.deletedPages) setDeletedPages(snap.deletedPages);
     setHistory(h => h.slice(0, -1));
@@ -406,6 +421,7 @@ export default function PDFEditor() {
   function handleBgClick() {
     setActivePopup(null);
     setSelected(null);
+    setShapePanelPage(null);
   }
 
   function handleWheel(e) {
@@ -483,37 +499,115 @@ export default function PDFEditor() {
     reader.readAsDataURL(file);
   }
 
-  function handleAddEraser(pageNum) {
+  function handleAddShape(pageNum, shapeType) {
     const pg = pages.find(p => p.num === pageNum);
     if (!pg) return;
-
     saveHistory();
     floatingIdCounter++;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 1;
-    canvas.height = 1;
-
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, 1, 1);
-
-    const id = `eraser-${floatingIdCounter}`;
-
-    setFloatingImages(prev => [...prev, {
+    const id = `shape-${floatingIdCounter}`;
+    const size = Math.min(pg.width, pg.height) * 0.25;
+    setFloatingShapes(prev => [...prev, {
       id,
       page: pageNum,
       z: 50 + floatingIdCounter,
-      x: pg.width / 2 - 110,
-      y: pg.height / 2 - 35,
-      w: 220,
-      h: 70,
-      dataUrl: canvas.toDataURL("image/png"),
-      isEraser: true,
+      x: pg.width / 2 - size / 2,
+      y: pg.height / 2 - size / 2,
+      w: size,
+      h: size,
+      shapeType,
+      shapeColor: shapePanelColor,
+      shapeFill: shapePanelFill,
     }]);
-
     setSelected(id);
+    setShapePanelPage(null);
   }
+
+  function updateFloatingShape(id, updates) {
+    setFloatingShapes(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  }
+
+  function deleteFloatingShape(id) {
+    saveHistory();
+    setFloatingShapes(prev => prev.filter(s => s.id !== id));
+  }
+
+  function startDragShape(e, shape) {
+    e.preventDefault();
+    e.stopPropagation();
+    saveHistory();
+    setSelected(shape.id);
+    shapeDragOrigin.current = { mx: e.clientX, my: e.clientY, x: shape.x, y: shape.y };
+    setDraggingShape({ id: shape.id });
+  }
+
+  function startResizeShape(e, shape) {
+    e.preventDefault();
+    e.stopPropagation();
+    shapeResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: shape.w, h: shape.h };
+    setResizingShape({ id: shape.id });
+  }
+  function handleDrawStart(e, pgNum, scale) {
+    if (!drawMode) return;
+    e.preventDefault();
+    isDrawingRef.current = true;
+    const canvas = drawCanvasRefs.current[pgNum];
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = drawWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    currentStrokeRef.current = { pgNum, ctx, canvas, color: drawColor, width: drawWidth, startX: x, startY: y, hasMoved: false };
+  }
+
+  function handleDrawMove(e, pgNum, scale) {
+    if (!isDrawingRef.current || !currentStrokeRef.current || currentStrokeRef.current.pgNum !== pgNum) return;
+    e.preventDefault();
+    const { ctx, canvas } = currentStrokeRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    currentStrokeRef.current.hasMoved = true;
+  }
+
+  function handleDrawEnd(pgNum, pg) {
+    if (!isDrawingRef.current || !currentStrokeRef.current) return;
+    isDrawingRef.current = false;
+    const stroke = currentStrokeRef.current;
+    currentStrokeRef.current = null;
+    const { canvas, ctx, hasMoved, startX, startY, color, width } = stroke;
+    if (!hasMoved) {
+      ctx.beginPath();
+      ctx.arc(startX, startY, width / 2, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+    saveHistory();
+    const dataUrl = canvas.toDataURL('image/png');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    floatingIdCounter++;
+    const id = `draw-${floatingIdCounter}`;
+    setFloatingImages(prev => [...prev, {
+      id,
+      page: pgNum,
+      z: 50 + floatingIdCounter,
+      x: 0,
+      y: 0,
+      w: pg.width,
+      h: pg.height,
+      dataUrl,
+      isDrawStroke: true,
+    }]);
+  }
+
   function handleInsertSignature(dataUrl) {
     saveHistory();
     floatingIdCounter++;
@@ -750,13 +844,31 @@ export default function PDFEditor() {
         : fb
       ));
     }
-  }, [dragging, rotating, draggingImg, resizingImg, resizingFb, zoom]);
+    if (draggingShape) {
+      const o = shapeDragOrigin.current;
+      if (!o) return;
+      setFloatingShapes(prev => prev.map(s => s.id === draggingShape.id
+        ? { ...s, x: Math.max(0, o.x + (e.clientX - o.mx) / zoom), y: Math.max(0, o.y + (e.clientY - o.my) / zoom) }
+        : s
+      ));
+    }
+    if (resizingShape) {
+      const o = shapeResizeOrigin.current;
+      if (!o) return;
+      setFloatingShapes(prev => prev.map(s => s.id === resizingShape.id
+        ? { ...s, w: Math.max(40, o.w + (e.clientX - o.mx) / zoom), h: Math.max(40, o.h + (e.clientY - o.my) / zoom) }
+        : s
+      ));
+    }
+  }, [dragging, rotating, draggingImg, resizingImg, resizingFb, draggingShape, resizingShape, zoom]);
   const onMouseUp = useCallback(() => {
     setDragging(null);
     setRotating(null);
     setDraggingImg(null);
     setResizingImg(null);
     setResizingFb(null);
+    setDraggingShape(null);
+    setResizingShape(null);
   }, []);
 
   useEffect(() => {
@@ -952,6 +1064,28 @@ export default function PDFEditor() {
           const yPdf = pdfH - (fi.y + fi.h) * sy;
           pdfPage.drawImage(img, { x: x, y: yPdf, width: w, height: h, rotate: degrees(fi.angle || 0) });
         }
+
+        // 4. Shapes
+        for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
+          const sc = hexToRgb(shape.shapeColor);
+          if (shape.shapeType === 'circle') {
+            pdfPage.drawEllipse({
+              x: (shape.x + shape.w / 2) * sx,
+              y: pdfH - (shape.y + shape.h / 2) * sy,
+              xScale: (shape.w / 2) * sx,
+              yScale: (shape.h / 2) * sy,
+              ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }),
+            });
+          } else {
+            pdfPage.drawRectangle({
+              x: shape.x * sx,
+              y: pdfH - (shape.y + shape.h) * sy,
+              width: shape.w * sx,
+              height: shape.h * sy,
+              ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }),
+            });
+          }
+        }
       }
 
       const bytes = await doc.save();
@@ -1055,6 +1189,18 @@ export default function PDFEditor() {
           img.src = fi.dataUrl;
         });
       }
+      for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
+        ctx.beginPath();
+        ctx.strokeStyle = shape.shapeColor;
+        ctx.fillStyle = shape.shapeColor;
+        ctx.lineWidth = 3;
+        if (shape.shapeType === 'circle') {
+          ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
+        } else {
+          ctx.rect(shape.x, shape.y, shape.w, shape.h);
+        }
+        if (shape.shapeFill) ctx.fill(); else ctx.stroke();
+      }
 
       const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
       const pngImg = await doc.embedPng(pngBytes);
@@ -1070,7 +1216,6 @@ export default function PDFEditor() {
   const visiblePages = pageOrder
     .map(pIdx => pages[pIdx])
     .filter(pg => pg && !deletedPages.has(pg.num));
-
 
   const pageActionBtn = {
     ...pageBtn,
@@ -1103,6 +1248,8 @@ export default function PDFEditor() {
             zoom={zoom}
             setZoom={setZoom}
             handleDownload={handleDownload}
+            drawMode={drawMode}
+            setDrawMode={setDrawMode}
           />
 
           <EditorHeader
@@ -1329,43 +1476,81 @@ export default function PDFEditor() {
                         </button>
                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>X</button>
                       </div>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        {/* Sign */}
                         <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            setSignatureTargetPageNum(pg.num);
-                            setIsSignModalOpen(true);
-                          }}
-                          style={pageActionBtn}
+                          onClick={e => { e.stopPropagation(); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
+                          style={pageActionBtn} title="Sign"
                         >
-                          <span aria-hidden="true">✒</span>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c2-2 4-4 6-3s3 3 5 1 3-5 5-6"/><path d="M3 17c1-1 2-2 3-1"/><path d="M20 5 L18 3 L6 15 L5 19 L9 18 Z"/></svg>
                           Sign
                         </button>
 
+                        {/* Draw */}
                         <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleAddEraser(pg.num);
-                          }}
-                          style={pageActionBtn}
+                          onClick={e => { e.stopPropagation(); setDrawMode(d => !d); }}
+                          style={{ ...pageActionBtn, background: drawMode ? 'rgba(139,26,26,0.12)' : 'transparent', outline: drawMode ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
+                          title="Freehand draw"
                         >
-                          <span aria-hidden="true">⌫</span>
-                          Eraser
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
+                          Draw
                         </button>
 
+                        {/* Draw controls inline when active */}
+                        {drawMode && (
+                          <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(139,26,26,0.08)", border: "1px solid rgba(139,26,26,0.3)", borderRadius: 4, padding: "3px 8px" }}>
+                            <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ width: 22, height: 22, cursor: "pointer", border: "none", background: "none", padding: 0 }} title="Pen color" />
+                            <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ width: 60, accentColor: LACQUER }} title="Pen width" />
+                            <span style={{ fontSize: 10, color: LACQUER, minWidth: 22 }}>{drawWidth}px</span>
+                          </div>
+                        )}
+
+                        {/* Shapes */}
+                        <div style={{ position: "relative" }}>
+                          <button
+                            onClick={e => { e.stopPropagation(); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
+                            style={{ ...pageActionBtn, background: shapePanelPage === pg.num ? 'rgba(139,26,26,0.12)' : 'transparent', outline: shapePanelPage === pg.num ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
+                            title="Add shape"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="5"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+                            Shapes
+                          </button>
+                          {shapePanelPage === pg.num && (
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", minWidth: 160 }}>
+                              <div style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, letterSpacing: 3, fontWeight: 700 }}>SHAPE COLOR</div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <input type="color" value={shapePanelColor} onChange={e => setShapePanelColor(e.target.value)} style={{ width: 28, height: 28, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 4, padding: 2 }} />
+                                <label style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: CINZEL, fontSize: 10, color: LACQUER, cursor: "pointer", letterSpacing: 2 }}>
+                                  <input type="checkbox" checked={shapePanelFill} onChange={e => setShapePanelFill(e.target.checked)} style={{ accentColor: LACQUER }} />
+                                  FILLED
+                                </label>
+                              </div>
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <button onClick={() => handleAddShape(pg.num, 'circle')} style={{ ...pageActionBtn, flex: 1, flexDirection: "column", gap: 4, padding: "10px 8px" }} title="Add circle">
+                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/></svg>
+                                  <span style={{ fontSize: 9, letterSpacing: 2 }}>CIRCLE</span>
+                                </button>
+                                <button onClick={() => handleAddShape(pg.num, 'square')} style={{ ...pageActionBtn, flex: 1, flexDirection: "column", gap: 4, padding: "10px 8px" }} title="Add square">
+                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/></svg>
+                                  <span style={{ fontSize: 9, letterSpacing: 2 }}>SQUARE</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Add Text */}
                         <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            addFloatingBox(pg.num);
-                          }}
-                          style={pageActionBtn}
+                          onClick={e => { e.stopPropagation(); addFloatingBox(pg.num); }}
+                          style={pageActionBtn} title="Add text box"
                         >
-                          <span aria-hidden="true">T</span>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
                           Add text
                         </button>
 
-                        <label style={pageActionBtn}>
-                          <span aria-hidden="true">▧</span>
+                        {/* Add Image */}
+                        <label style={pageActionBtn} title="Add image">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                           Add image
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
                         </label>
@@ -1402,6 +1587,18 @@ export default function PDFEditor() {
                       transformOrigin: "center center"
                     }}>
                       <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: pg.width * scale, height: pg.height * scale }} />
+                      {!isGridView && (
+                        <canvas
+                          ref={el => { if (el) drawCanvasRefs.current[pg.num] = el; else delete drawCanvasRefs.current[pg.num]; }}
+                          width={pg.width}
+                          height={pg.height}
+                          style={{ position: 'absolute', left: 0, top: 0, width: pg.width * scale, height: pg.height * scale, zIndex: 2000, cursor: drawMode ? 'crosshair' : 'default', pointerEvents: drawMode && !isGridView ? 'all' : 'none' }}
+                          onMouseDown={e => handleDrawStart(e, pg.num, scale)}
+                          onMouseMove={e => handleDrawMove(e, pg.num, scale)}
+                          onMouseUp={() => handleDrawEnd(pg.num, pg)}
+                          onMouseLeave={() => handleDrawEnd(pg.num, pg)}
+                        />
+                      )}
                       {!isGridView && (textBlocks[pg.num] || []).map(tb => {
                         const isOpen = activePopup?.blockId === tb.id;
                         return (
@@ -1451,6 +1648,14 @@ export default function PDFEditor() {
                           onStartDrag={e => startDragImg(e, fi)}
                           onStartResize={e => startResizeImg(e, fi)}
                           onDelete={() => deleteFloatingImage(fi.id)} />
+                      ))}
+                      {!isGridView && floatingShapes.filter(s => s.page === pg.num).map(shape => (
+                        <FloatingShape key={shape.id} shape={shape} isSel={selected === shape.id} zoom={scale}
+                          onSelect={() => setSelected(shape.id)}
+                          onStartDrag={e => startDragShape(e, shape)}
+                          onStartResize={e => startResizeShape(e, shape)}
+                          onDelete={() => deleteFloatingShape(shape.id)}
+                          onUpdate={u => updateFloatingShape(shape.id, u)} />
                       ))}
                     </div>
                   </div>
