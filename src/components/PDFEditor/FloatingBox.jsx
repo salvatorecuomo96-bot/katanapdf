@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES, CINZEL } from "../utils/constant";
 
 const RotateIcon = () => (
@@ -32,6 +32,7 @@ export default function FloatingBox({
   onDelete,
 }) {
   const taRef = useRef(null);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     if (!isSel || !taRef.current) return;
@@ -128,6 +129,8 @@ export default function FloatingBox({
       <div
         onMouseDown={handleMouseDown}
         onPointerDown={e => e.stopPropagation()}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           position: "absolute",
           left: fb.x * zoom,
@@ -146,9 +149,29 @@ export default function FloatingBox({
           fontStyle: fb.isItalic ? "italic" : "normal",
           lineHeight: 1.28,
           whiteSpace: "pre-wrap",
-          border: "1px dashed transparent",
+          border: hovered ? `1px dashed ${LACQUER}` : "1px dashed transparent",
         }}
       >
+        {hovered && (
+          <div style={{
+            position: "absolute",
+            top: -22,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: LACQUER,
+            color: "#fff",
+            borderRadius: 2,
+            padding: "2px 7px",
+            fontSize: 9,
+            fontFamily: CINZEL,
+            letterSpacing: 1,
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}>
+            drag · click to edit
+          </div>
+        )}
         {fb.text || ""}
       </div>
     );

@@ -24,6 +24,7 @@ export default function EditPopup({
   rotation = 0,
   onCommit,
   onCancel,
+  onDraftChange,
 }) {
   const [text, setText] = useState(block.text || "");
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -41,6 +42,10 @@ export default function EditPopup({
   const dragOrigin = useRef(null);
   const taRef = useRef(null);
   const boxRef = useRef(null);
+
+  useEffect(() => {
+    onDraftChange?.(text, format);
+  }, [text, format]);
 
   useEffect(() => {
     const el = taRef.current;
@@ -286,6 +291,25 @@ export default function EditPopup({
           title="Drag toolbar to move"
         >
 
+
+          {/* Drag grip */}
+          <span
+            onMouseDown={e => {
+              e.stopPropagation();
+              const interactive = e.target.closest("button, select, input, textarea");
+              if (interactive) return;
+              dragOrigin.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
+              setDragging(true);
+            }}
+            title="Drag to move"
+            style={{ cursor: "grab", display: "flex", alignItems: "center", padding: "0 2px", opacity: 0.6, flexShrink: 0 }}
+          >
+            <svg width="10" height="14" viewBox="0 0 10 14" fill="#fff">
+              <circle cx="3" cy="2.5" r="1.3"/><circle cx="7" cy="2.5" r="1.3"/>
+              <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
+              <circle cx="3" cy="11.5" r="1.3"/><circle cx="7" cy="11.5" r="1.3"/>
+            </svg>
+          </span>
 
           <select
             value={format.fontFamily}

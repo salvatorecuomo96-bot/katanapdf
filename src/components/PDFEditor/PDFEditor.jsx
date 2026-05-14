@@ -86,6 +86,7 @@ export default function PDFEditor() {
   const [moveToPanelPage, setMoveToPanelPage] = useState(null);
   const [draggingShape, setDraggingShape] = useState(null);
   const [resizingShape, setResizingShape] = useState(null);
+  const pendingEditRef = useRef(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const imgDragOrigin = useRef(null);
   const imgResizeOrigin = useRef(null);
@@ -441,8 +442,15 @@ export default function PDFEditor() {
   function handleBgClick() {
     // Auto-delete any selected floating box that was left empty
     setFloatingBoxes(prev => prev.filter(fb => fb.id !== selected || (fb.text || "").trim() !== ""));
-    setActivePopup(null);
-    setSelected(null);
+    // If an EditPopup is open, commit whatever was typed instead of discarding
+    if (activePopup && pendingEditRef.current) {
+      const { text, fmt } = pendingEditRef.current;
+      pendingEditRef.current = null;
+      commitEdit(activePopup.blockId, activePopup.pageNum, text, activePopup.offsetX ?? 0, activePopup.offsetY ?? 0, fmt);
+    } else {
+      setActivePopup(null);
+      setSelected(null);
+    }
     setShapePanelPage(null);
     setMoveToPanelPage(null);
   }
@@ -1659,6 +1667,7 @@ export default function PDFEditor() {
   }
   onCommit={(newText, ox, oy, fmt) => commitEdit(tb.id, tb.page, newText, ox, oy, fmt)}
   onCancel={cancelEdit}
+  onDraftChange={(text, fmt) => { pendingEditRef.current = { text, fmt }; }}
 />
                             )}
                           </div>
