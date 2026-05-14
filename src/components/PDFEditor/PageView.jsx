@@ -114,12 +114,25 @@ export default function PageView({
                 height: Math.max(tb.height * scale, tb.fontSize * scale * 0.9),
                 zIndex: isOpen ? 3000 : 10, cursor: "text",
               }} onClick={e => clickTextBlock(tb, e)}>
-                {isOpen && (
-                  <EditPopup block={tb} zoom={scale} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
-                    offsetX={activePopup.offsetX ?? 0} offsetY={activePopup.offsetY ?? 0}
-                    onOffsetChange={(ox, oy) => setActivePopup(ap => (ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap))}
-                    onCommit={newText => commitEdit(tb.id, tb.page, newText)}
-                    onCancel={cancelEdit} />
+                {is
+              
+              <EditPopup
+  block={tb}
+  zoom={scale}
+  rotation={rotation}
+  offsetX={activePopup.offsetX ?? 0}
+  offsetY={activePopup.offsetY ?? 0}
+  onOffsetChange={(ox, oy) =>
+    setActivePopup(ap =>
+      ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap
+    )
+  }
+  onCommit={(newText, ox, oy, fmt) =>
+    commitEdit(tb.id, tb.page, newText, ox, oy, fmt)
+  }
+  onCancel={cancelEdit}
+/>Open && (
+             
                 )}
               </div>
             );
