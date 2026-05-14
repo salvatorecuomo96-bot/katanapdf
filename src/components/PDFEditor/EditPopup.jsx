@@ -111,41 +111,8 @@ export default function EditPopup({
     e.preventDefault();
     e.stopPropagation();
 
-    const startResizeText = e => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startFontSize = format.fontSize;
-
-    const move = moveEvent => {
-      const dx = moveEvent.clientX - startX;
-      const dy = moveEvent.clientY - startY;
-      const delta = (dx + dy) / 2;
-
-      const nextFontSize = Math.max(
-        6,
-        Math.min(200, Math.round(startFontSize + delta * 0.18))
-      );
-
-      setFormat(prev => ({
-        ...prev,
-        fontSize: nextFontSize,
-      }));
-    };
-
-    const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-      refocusText();
-    };
-
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
-
     const box = boxRef.current;
+
     if (!box) return;
 
     const rect = box.getBoundingClientRect();
@@ -171,6 +138,40 @@ export default function EditPopup({
     const up = () => {
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseup", up);
+    };
+
+ window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  const startResizeText = e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startFontSize = format.fontSize;
+
+    const move = moveEvent => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+      const delta = (dx + dy) / 2;
+
+      const nextFontSize = Math.max(
+        6,
+        Math.min(200, Math.round(startFontSize + delta * 0.05))
+      );
+
+      setFormat(prev => ({
+        ...prev,
+        fontSize: nextFontSize,
+      }));
+    };
+
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+      refocusText();
     };
 
     window.addEventListener("mousemove", move);
@@ -513,7 +514,6 @@ export default function EditPopup({
             lineHeight: `${lineHeight}px`,
             borderRadius: 3,
           }}
-
  />
 
         <div
