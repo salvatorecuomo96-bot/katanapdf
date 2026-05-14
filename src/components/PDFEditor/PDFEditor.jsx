@@ -405,12 +405,17 @@ export default function PDFEditor() {
         if (w.id !== blockId) return w;
         const ff = fmt.fontFamily || w.fontFamily || "Arial, sans-serif";
         const fs = (fmt.fontSize || Math.round((w.fontSize || 14) / SCALE)) * SCALE;
-        return { 
-          ...w, 
-          text: newText, 
-          edited: true, 
-          fontFamily: ff, 
-          fontSize: fs, 
+        const newLines = newText.split(/\r?\n/);
+        const approxW = Math.max(w.width, newLines.reduce((m, l) => Math.max(m, l.length * fs * 0.55), 0) + 12);
+        const approxH = Math.max(w.height, newLines.length * fs * 1.28 + 10);
+        return {
+          ...w,
+          text: newText,
+          edited: true,
+          width: approxW,
+          height: approxH,
+          fontFamily: ff,
+          fontSize: fs,
           isBold: fmt.isBold ?? w.isBold ?? false,
           isItalic: fmt.isItalic ?? w.isItalic ?? false,
           color: fmt.color || w.color || "#000000",
@@ -1519,7 +1524,8 @@ export default function PDFEditor() {
                         </button>
                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>X</button>
                       </div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         {/* Sign */}
                         <button
                           onClick={e => { e.stopPropagation(); setDrawMode(false); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
@@ -1538,15 +1544,6 @@ export default function PDFEditor() {
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
                           <span className="page-action-label">Draw</span>
                         </button>
-
-                        {/* Draw controls inline when active */}
-                        {drawMode && (
-                          <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(139,26,26,0.08)", border: "1px solid rgba(139,26,26,0.3)", borderRadius: 4, padding: "3px 8px" }}>
-                            <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ width: 22, height: 22, cursor: "pointer", border: "none", background: "none", padding: 0 }} title="Pen color" />
-                            <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ width: 60, accentColor: LACQUER }} title="Pen width" />
-                            <span style={{ fontSize: 10, color: LACQUER, minWidth: 22 }}>{drawWidth}px</span>
-                          </div>
-                        )}
 
                         {/* Shapes */}
                         <div style={{ position: "relative" }}>
@@ -1597,6 +1594,15 @@ export default function PDFEditor() {
                           <span className="page-action-label">Add image</span>
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
                         </label>
+                      </div>
+                      {/* Draw controls on second row when active */}
+                      {drawMode && (
+                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(139,26,26,0.08)", border: "1px solid rgba(139,26,26,0.3)", borderRadius: 4, padding: "3px 8px" }}>
+                          <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ width: 22, height: 22, cursor: "pointer", border: "none", background: "none", padding: 0 }} title="Pen color" />
+                          <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ width: 60, accentColor: LACQUER }} title="Pen width" />
+                          <span style={{ fontSize: 10, color: LACQUER, minWidth: 22 }}>{drawWidth}px</span>
+                        </div>
+                      )}
                       </div>
                     </div>
                   )}
