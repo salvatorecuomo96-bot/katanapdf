@@ -111,6 +111,40 @@ export default function EditPopup({
     e.preventDefault();
     e.stopPropagation();
 
+    const startResizeText = e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startFontSize = format.fontSize;
+
+    const move = moveEvent => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+      const delta = (dx + dy) / 2;
+
+      const nextFontSize = Math.max(
+        6,
+        Math.min(200, Math.round(startFontSize + delta * 0.18))
+      );
+
+      setFormat(prev => ({
+        ...prev,
+        fontSize: nextFontSize,
+      }));
+    };
+
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+      refocusText();
+    };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
     const box = boxRef.current;
     if (!box) return;
 
@@ -478,6 +512,24 @@ export default function EditPopup({
             boxSizing: "border-box",
             lineHeight: `${lineHeight}px`,
             borderRadius: 3,
+          }}
+
+ />
+
+        <div
+          onMouseDown={startResizeText}
+          title="Hold and drag to resize text"
+          style={{
+            position: "absolute",
+            bottom: -6,
+            right: -6,
+            width: 12,
+            height: 12,
+            background: INK,
+            cursor: "nwse-resize",
+            borderRadius: "50%",
+            border: "2px solid #fff",
+            zIndex: 20,
           }}
         />
       </div>
