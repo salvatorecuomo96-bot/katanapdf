@@ -162,13 +162,15 @@ export default function FloatingBox({
             position: "absolute",
             top: -28,
             left: 0,
-            background: LACQUER,
-            color: "#fff",
+            background: INK,
+            color: GOLD,
+            border: "1px solid rgba(196,150,58,0.4)",
             borderRadius: 2,
             padding: "3px 8px",
-            fontSize: 10,
+            fontSize: 11,
             fontFamily: CINZEL,
             letterSpacing: 2,
+            textTransform: "uppercase",
             whiteSpace: "nowrap",
             pointerEvents: "none",
             zIndex: 100,
@@ -177,7 +179,7 @@ export default function FloatingBox({
             gap: 5,
             fontWeight: 700,
           }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}>
               <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
               <line x1="12" y1="2" x2="12" y2="22"/>
