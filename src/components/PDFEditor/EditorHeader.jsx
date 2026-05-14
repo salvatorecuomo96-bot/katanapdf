@@ -1,48 +1,92 @@
-import { GOLD, INK, CINZEL, LACQUER, hiddenFileInput } from "../utils/constant";
+import { GOLD, INK, CINZEL, hiddenFileInput } from "../utils/constant";
 
-export default function EditorHeader({
-  tabsList = [],
-  activeTabId,
-  switchTab,
-  closeTab,
-  handleFile
-}) {
+export default function EditorHeader({ tabsList = [], activeTabId, switchTab, closeTab, handleFile }) {
   if (tabsList.length === 0) return null;
 
   return (
-    <div onClick={e => e.stopPropagation()} style={{
-      background: "transparent", borderBottom: `1px solid rgba(139,26,26,0.25)`,
-      padding: "8px 16px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
-    }}>
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        background: INK,
+        borderBottom: `1px solid rgba(196,150,58,0.3)`,
+        display: "flex",
+        alignItems: "stretch",
+        overflowX: "auto",
+        overflowY: "hidden",
+        flexShrink: 0,
+        height: 36,
+        scrollbarWidth: "none",
+      }}
+    >
       {tabsList.map(t => {
         const isActive = t.id === activeTabId;
         return (
-          <div key={t.id} onClick={() => switchTab(t.id)} style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "5px 10px 5px 14px",
-            border: `1px solid ${isActive ? GOLD : "rgba(139,26,26,0.3)"}`,
-            background: isActive ? INK : "rgba(255,255,255,0.5)",
-            color: isActive ? GOLD : INK,
-            fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase",
-            cursor: "pointer", maxWidth: 220,
-          }}>
+          <div
+            key={t.id}
+            onClick={() => switchTab(t.id)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "0 10px 0 14px",
+              cursor: "pointer",
+              userSelect: "none",
+              fontFamily: CINZEL,
+              fontSize: 10,
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              color: isActive ? GOLD : "rgba(196,150,58,0.4)",
+              borderRight: "1px solid rgba(196,150,58,0.12)",
+              borderBottom: isActive ? `2px solid ${GOLD}` : "2px solid transparent",
+              background: isActive ? "rgba(196,150,58,0.08)" : "transparent",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              maxWidth: 240,
+            }}
+          >
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {t.fileName.replace(/\.pdf$/i, "")}
             </span>
-            <span onClick={e => { e.stopPropagation(); closeTab(t.id); }}
-              title="Close" style={{
-                cursor: "pointer", padding: "0 4px", fontWeight: 700,
-                opacity: 0.7,
-              }}>X</span>
+            <span
+              onClick={e => { e.stopPropagation(); closeTab(t.id); }}
+              title="Close"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 14,
+                height: 14,
+                fontSize: 9,
+                fontWeight: 700,
+                borderRadius: "50%",
+                cursor: "pointer",
+                color: isActive ? GOLD : "rgba(196,150,58,0.35)",
+                flexShrink: 0,
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </span>
           </div>
         );
       })}
-      <label style={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center",
-        width: 30, height: 26,
-        border: `1px solid ${LACQUER}`, color: LACQUER, background: "rgba(255,255,255,0.5)",
-        fontFamily: CINZEL, fontSize: 16, fontWeight: 600, cursor: "pointer",
-      }} title="Open another PDF or Image in a new tab">
+
+      <label
+        title="Open another PDF or Image"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 36,
+          height: "100%",
+          cursor: "pointer",
+          color: "rgba(196,150,58,0.4)",
+          fontSize: 18,
+          fontWeight: 300,
+          borderRight: "1px solid rgba(196,150,58,0.12)",
+          flexShrink: 0,
+        }}
+      >
         +
         <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} />
       </label>

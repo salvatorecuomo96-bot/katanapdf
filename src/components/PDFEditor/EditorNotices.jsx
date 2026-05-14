@@ -5,22 +5,23 @@ function NoticeBox({ title, children, onDismiss, ariaLabel }) {
     <div
       onClick={e => e.stopPropagation()}
       style={{
-        width: "min(100%, 1280px)",
+        width: "100%",
         boxSizing: "border-box",
-        margin: "16px auto 0",
-        padding: "14px 20px",
+        margin: "0",
+        padding: "12px 20px",
         background: PARCHMENT_2,
         borderLeft: `3px solid ${LACQUER}`,
+        borderBottom: `1px solid rgba(139,26,26,0.15)`,
         fontFamily: FELL,
-        fontSize: 14,
+        fontSize: 13,
         lineHeight: 1.5,
         color: INK,
         display: "flex",
         alignItems: "flex-start",
         gap: 12,
         pointerEvents: "auto",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
         overflow: "hidden",
+        flexShrink: 0,
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -83,12 +84,8 @@ export default function EditorNotices({
       style={{
         position: "relative",
         zIndex: 500,
-        background: "transparent",
-        padding: "0 24px 16px",
-        boxSizing: "border-box",
         width: "100%",
-        maxWidth: "100%",
-        overflow: "hidden",
+        flexShrink: 0,
       }}
     >
       {isEncrypted && !encryptionNoticeDismissed && (

@@ -78,7 +78,7 @@ export default function PDFEditor() {
   const [drawMode, setDrawMode] = useState(false);
   const [drawColor, setDrawColor] = useState('#e53e3e');
   const [drawWidth, setDrawWidth] = useState(4);
-  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window === 'undefined' ? true : window.innerWidth >= 768);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [floatingShapes, setFloatingShapes] = useState([]);
   const [shapePanelPage, setShapePanelPage] = useState(null);
   const [shapePanelColor, setShapePanelColor] = useState('#8B1A1A');
@@ -98,6 +98,8 @@ export default function PDFEditor() {
   const currentStrokeRef = useRef(null);
   const addTextClickLock = useRef(false);
   const autoZoomPendingRef = useRef(false);
+  // Close sidebar by default only on actual phone screens
+  useEffect(() => { if (window.innerWidth < 480) setSidebarOpen(false); }, []);
 
   async function handleFile(e) {
     const input = e.target;
@@ -1296,7 +1298,9 @@ export default function PDFEditor() {
       className={`editor-sidebar${sidebarOpen ? '' : ' editor-sidebar-hidden'}`}
       style={{
         width: "clamp(220px, 22vw, 340px)",
-        flex: "0 0 clamp(220px, 22vw, 340px)",
+        flexGrow: 0,
+        flexShrink: 0,
+        flexBasis: "clamp(220px, 22vw, 340px)",
         height: "calc(100vh - 150px)",
         maxHeight: "calc(100vh - 150px)",
         minHeight: 0,
@@ -1505,7 +1509,7 @@ export default function PDFEditor() {
                           style={pageActionBtn} title="Sign"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c2-2 4-4 6-3s3 3 5 1 3-5 5-6"/><path d="M3 17c1-1 2-2 3-1"/><path d="M20 5 L18 3 L6 15 L5 19 L9 18 Z"/></svg>
-                          Sign
+                          <span className="page-action-label">Sign</span>
                         </button>
 
                         {/* Draw */}
@@ -1515,7 +1519,7 @@ export default function PDFEditor() {
                           title="Freehand draw"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
-                          Draw
+                          <span className="page-action-label">Draw</span>
                         </button>
 
                         {/* Draw controls inline when active */}
@@ -1535,7 +1539,7 @@ export default function PDFEditor() {
                             title="Add shape"
                           >
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="5"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
-                            Shapes
+                            <span className="page-action-label">Shapes</span>
                           </button>
                           {shapePanelPage === pg.num && (
                             <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", minWidth: 160 }}>
@@ -1567,13 +1571,13 @@ export default function PDFEditor() {
                           style={pageActionBtn} title="Add text box"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
-                          Add text
+                          <span className="page-action-label">Add text</span>
                         </button>
 
                         {/* Add Image */}
                         <label style={pageActionBtn} title="Add image" onClick={() => setDrawMode(false)}>
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                          Add image
+                          <span className="page-action-label">Add image</span>
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
                         </label>
                       </div>

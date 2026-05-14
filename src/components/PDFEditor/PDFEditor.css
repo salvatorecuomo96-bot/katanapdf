@@ -90,3 +90,9 @@ body {
     z-index: 4999;
   }
 }
+
+/* On phones, hide text labels in per-page action buttons — icons only */
+@media (max-width: 479px) {
+  .page-action-label { display: none; }
+  .main-scroll-area { padding: 16px 12px 60px !important; }
+}
