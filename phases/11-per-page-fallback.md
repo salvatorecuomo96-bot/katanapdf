@@ -1,4 +1,4 @@
-# Phase 9 — Per-page fallback + IndexedDB recovery (audit Stage 3)
+# Phase 11 — Per-page fallback + IndexedDB recovery (audit Stage 3)
 
 **Goal:** stop one corrupt page from wiping vector quality on the whole document.
 **Effort:** ~30 min

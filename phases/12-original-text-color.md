@@ -1,4 +1,4 @@
-# Phase 10 — Original text color (audit Stage 5)
+# Phase 12 — Original text color (audit Stage 5)
 
 **Goal:** small honesty fix — editing red text shouldn't silently turn it black.
 **Effort:** ~15 min

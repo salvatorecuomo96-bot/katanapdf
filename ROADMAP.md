@@ -20,8 +20,8 @@ Update this table at the end of every session so any device can see where we are
 | 10 | Text highlighting | ✅ Done | 2026-05-14 | [10](phases/10-text-highlighting.md) |
 | 11 | Per-page fallback + IndexedDB recovery | ⏳ Next | — | [11](phases/11-per-page-fallback.md) |
 | 12 | Original text color | Pending | — | [12](phases/12-original-text-color.md) |
-| 13 | SEO basics + per-tool routes | Pending | — | [13](phases/13-seo-basics.md) |
-| 14 | Mobile-friendly pass (whole site) | Pending | — | [14](phases/14-mobile-friendly.md) |
+| 13 | SEO basics + per-tool routes | 🟡 Partial | 2026-05-15 | [13](phases/13-seo-basics.md) |
+| 14 | Mobile-friendly pass (whole site) | 🟡 Partial | 2026-05-15 | [14](phases/14-mobile-friendly.md) |
 | 15 | Pre-launch QA + ship | Pending | — | [15](phases/15-prelaunch-qa.md) |
 
 Pre-roadmap groundwork (already shipped):
@@ -56,6 +56,8 @@ Post-roadmap bug fixes + features (2026-05-15):
 - Shapes default to black (was burgundy, hard to see) ✅
 - Shapes scroll to center of shape after adding (matched existing Add Text scroll behaviour) ✅
 - Save as PNG: new button in top toolbar exports each page as a PNG file ✅
+- **Phase 13 partial**: `index.html` has full SEO meta (title, description, keywords, OG, Twitter cards, canonical, robots); `public/sitemap.xml` + `public/robots.txt` exist. Remaining: per-tool hash routes + dynamic `document.title` per route.
+- **Phase 14 partial**: viewport meta, auto-zoom, collapsible sidebar, mobile icon-only page buttons, toolbar nowrap all shipped. Remaining: EditPopup/FloatingBox viewport clamping, Format dropdown for <720px, per-page controls collapse on narrow viewports, `viewport-fit=cover`.
 
 ## Rules
 - **At session start**, run `git fetch && git status`. If behind `origin/main`, pull before any edits. The laptop pushes from a different machine, so the worktree is often stale at session start — discover that on turn 1, not turn 5.
