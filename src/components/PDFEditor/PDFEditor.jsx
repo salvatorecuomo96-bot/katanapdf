@@ -452,6 +452,7 @@ export default function PDFEditor() {
       x: pg.width / 2, y: pg.height / 2, text: "",
       fontSize: 14, fontFamily: "Arial, sans-serif",
       isBold: false, isItalic: false, color: "#000000",
+      bgColor: "#ffffff",
       angle: 0, // 0 means horizontal on screen (FloatingBox.jsx handles counter-rotation)
     }]);
     setSelected(id); // auto-select so the textarea focuses immediately
@@ -828,7 +829,16 @@ export default function PDFEditor() {
           const whiteX = (e.x - padX) * sx;
           const yTopCanvas = e.y - 4;
           const yBottomPdf = pdfH - (yTopCanvas + whiteHCanvas) * sy;
-          pdfPage.drawRectangle({ x: whiteX, y: yBottomPdf, width: whiteW, height: whiteH, color: rgb(1, 1, 1) });
+          pdfPage.drawRectangle({
+            x: whiteX,
+            y: yBottomPdf,
+            width: whiteW,
+            height: whiteH,
+            color:
+              e.bgColor && e.bgColor !== "transparent"
+                ? hexToRgb(e.bgColor)
+                : rgb(1, 1, 1),
+          });
 
           if (lines.some(l => l.length > 0)) {
             const font = pickPdfLibFont(fonts, e.fontFamily, e.isBold, e.isItalic);
@@ -855,6 +865,37 @@ export default function PDFEditor() {
           const lhCanvas = fb.fontSize * 1.5;
           const lines = text.split(/\r?\n/);
           const color = hexToRgb(fb.color || "#000000");
+
+          if (fb.bgColor && fb.bgColor !== "transparent") {
+            let maxLineW = 0;
+
+            for (const ln of lines) {
+              try {
+                maxLineW = Math.max(
+                  maxLineW,
+                  font.widthOfTextAtSize(ln || " ", fs)
+                );
+              } catch {
+                maxLineW = Math.max(maxLineW, (ln || " ").length * fs * 0.6);
+              }
+            }
+
+            const padX = 4 * sx;
+            const padY = 3 * sy;
+            const bgW = maxLineW + padX * 2;
+            const bgH = lines.length * lhCanvas * sy + padY * 2;
+            const bgX = fb.x * sx - padX;
+            const bgY = pdfH - (fb.y + lines.length * lhCanvas) * sy - padY;
+
+            pdfPage.drawRectangle({
+              x: bgX,
+              y: bgY,
+              width: bgW,
+              height: bgH,
+              color: hexToRgb(fb.bgColor),
+            });
+          }
+
           lines.forEach((ln, i) => {
             if (!ln) return;
             // baseline ~ y_top + fontSize (alphabetic)
@@ -862,7 +903,8 @@ export default function PDFEditor() {
             const yPdf = pdfH - baselineCanvas * sy;
             try {
               pdfPage.drawText(ln, { x: fb.x * sx, y: yPdf, size: fs, font, color });
-            } catch { /* ignore */ }          });
+            } catch { /* ignore */ }
+          });
         }
 
         // 3. Floating images
@@ -941,7 +983,8 @@ export default function PDFEditor() {
         } else {
           whiteH = Math.max(e.height + 12, lineCount * lh + 14);
         }
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle =
+          e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
         ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
         ctx.fillStyle = "#000";
         ctx.textBaseline = "alphabetic";
@@ -951,8 +994,29 @@ export default function PDFEditor() {
       for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
         const lines = fb.text.split(/\r?\n/);
         ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
-        ctx.fillStyle = fb.color || "#000";
         ctx.textBaseline = "top";
+
+        if (fb.bgColor && fb.bgColor !== "transparent") {
+          let maxLineW = 0;
+
+          for (const ln of lines) {
+            maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
+          }
+
+          const padX = 4;
+          const padY = 3;
+          const lineH = fb.fontSize * 1.5;
+
+          ctx.fillStyle = fb.bgColor;
+          ctx.fillRect(
+            fb.x - padX,
+            fb.y - padY,
+            maxLineW + padX * 2,
+            lines.length * lineH + padY * 2
+          );
+        }
+
+        ctx.fillStyle = fb.color || "#000";
         lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
       }
       for (const fi of floatingImages.filter(f => f.page === pg.num)) {

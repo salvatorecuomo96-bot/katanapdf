@@ -34,7 +34,7 @@ export default function EditPopup({
     color: block.color || "#000000",
     isBold: block.isBold || false,
     isItalic: block.isItalic || false,
-    bgColor: block.bgColor || "transparent",
+    bgColor: block.bgColor || "#ffffff",
     angle: block.angle || 0,
   });
 
@@ -333,7 +333,7 @@ export default function EditPopup({
               </option>
             ))}
           </select>
-          
+
           <select
             value={FB_SIZES.includes(format.fontSize) ? format.fontSize : 14}
             onPointerDown={keepInsideEditor}
