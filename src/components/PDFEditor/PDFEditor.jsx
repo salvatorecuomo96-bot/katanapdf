@@ -81,7 +81,7 @@ export default function PDFEditor() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [floatingShapes, setFloatingShapes] = useState([]);
   const [shapePanelPage, setShapePanelPage] = useState(null);
-  const [shapePanelColor, setShapePanelColor] = useState('#8B1A1A');
+  const [shapePanelColor, setShapePanelColor] = useState('#000000');
   const [shapePanelFill, setShapePanelFill] = useState(false);
   const [moveToPanelPage, setMoveToPanelPage] = useState(null);
   const [draggingShape, setDraggingShape] = useState(null);
@@ -421,8 +421,9 @@ export default function PDFEditor() {
           color: fmt.color || w.color || "#000000",
           bgColor: fmt.bgColor || w.bgColor || "transparent",
           angle: fmt.angle ?? w.angle ?? 0,
-          x: w.x + ox / zoom,
-          y: w.y + oy / zoom,
+          x: w.x + ox,
+          y: w.y + oy,
+          baselineY: w.baselineY !== undefined ? w.baselineY + oy : undefined,
           lineBaselines: undefined
         };
       }),
@@ -556,6 +557,14 @@ export default function PDFEditor() {
     }]);
     setSelected(id);
     setShapePanelPage(null);
+    setTimeout(() => {
+      const el = containerRef.current?.querySelector(`[data-pgwrap="${pageNum}"]`);
+      if (el && containerRef.current) {
+        const shapeCenterY = (pg.height / 2) * zoom;
+        const target = el.offsetTop + shapeCenterY - containerRef.current.clientHeight / 2;
+        containerRef.current.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+      }
+    }, 50);
   }
 
   function updateFloatingShape(id, updates) {
@@ -1132,6 +1141,70 @@ export default function PDFEditor() {
     }
   }
 
+  async function handleDownloadImages() {
+    if (!pages.length) { alert("No PDF loaded."); return; }
+    const baseName = (fileName || "document").replace(/\.pdf$/i, "");
+    const finalPageOrder = pageOrder.filter(pIdx => !deletedPages.has(pages[pIdx].num));
+    for (let displayIdx = 0; displayIdx < finalPageOrder.length; displayIdx++) {
+      const pg = pages[finalPageOrder[displayIdx]];
+      if (!pg) continue;
+      const rotation = rotatedPages[pg.num] || 0;
+      const canvas = document.createElement("canvas");
+      canvas.width = pg.width;
+      canvas.height = pg.height;
+      const ctx = canvas.getContext("2d");
+      await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); }; img.src = pg.dataUrl; });
+      const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
+      for (const e of edits) {
+        const lines = e.text.split(/\r?\n/);
+        const lh = e.fontSize * 1.22;
+        const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
+        ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
+        let maxLineW = e.width;
+        for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
+        const whiteH = useBaselines && lines.length > 1 ? Math.max(e.height + 12, Math.max(...e.lineBaselines) - Math.min(...e.lineBaselines) + lh + 16) : Math.max(e.height + 12, lines.length * lh + 14);
+        ctx.fillStyle = e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
+        ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
+        ctx.fillStyle = e.color || "#000";
+        ctx.textBaseline = "alphabetic";
+        if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
+        else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
+      }
+      for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
+        const lines = fb.text.split(/\r?\n/);
+        ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
+        ctx.textBaseline = "top";
+        if (fb.bgColor && fb.bgColor !== "transparent") {
+          let maxW = 0;
+          for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
+          ctx.fillStyle = fb.bgColor;
+          ctx.fillRect(fb.x - 4, fb.y - 3, maxW + 8, lines.length * fb.fontSize * 1.5 + 6);
+        }
+        ctx.fillStyle = fb.color || "#000";
+        lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
+      }
+      for (const fi of floatingImages.filter(f => f.page === pg.num)) {
+        await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); }; img.src = fi.dataUrl; });
+      }
+      for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
+        ctx.beginPath();
+        ctx.strokeStyle = shape.shapeColor;
+        ctx.fillStyle = shape.shapeColor;
+        ctx.lineWidth = 3;
+        if (shape.shapeType === 'circle') ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
+        else ctx.rect(shape.x, shape.y, shape.w, shape.h);
+        if (shape.shapeFill) ctx.fill(); else ctx.stroke();
+      }
+      if (displayIdx > 0) await new Promise(r => setTimeout(r, 80));
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = finalPageOrder.length === 1 ? `${baseName}.png` : `${baseName}_page_${displayIdx + 1}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+
   function triggerPdfDownload(bytes) {
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
@@ -1281,6 +1354,7 @@ export default function PDFEditor() {
             undo={undo}
             historyLength={history.length}
             handleDownload={handleDownload}
+            handleDownloadImages={handleDownloadImages}
             drawMode={drawMode}
             setDrawMode={setDrawMode}
             sidebarOpen={sidebarOpen}
@@ -1524,7 +1598,6 @@ export default function PDFEditor() {
                         </button>
                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>X</button>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         {/* Sign */}
                         <button
@@ -1535,15 +1608,24 @@ export default function PDFEditor() {
                           <span className="page-action-label">Sign</span>
                         </button>
 
-                        {/* Draw */}
-                        <button
-                          onClick={e => { e.stopPropagation(); setDrawMode(d => !d); }}
-                          style={{ ...pageActionBtn, background: drawMode ? 'rgba(139,26,26,0.12)' : 'transparent', outline: drawMode ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
-                          title="Freehand draw"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
-                          <span className="page-action-label">Draw</span>
-                        </button>
+                        {/* Draw + controls dropdown */}
+                        <div style={{ position: "relative" }}>
+                          <button
+                            onClick={e => { e.stopPropagation(); setDrawMode(d => !d); }}
+                            style={{ ...pageActionBtn, background: drawMode ? 'rgba(139,26,26,0.12)' : 'transparent', outline: drawMode ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
+                            title="Freehand draw"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
+                            <span className="page-action-label">Draw</span>
+                          </button>
+                          {drawMode && (
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", alignItems: "center", gap: 6, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: "4px 8px", zIndex: 9999, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                              <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ width: 22, height: 22, cursor: "pointer", border: "none", background: "none", padding: 0 }} title="Pen color" />
+                              <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ width: 60, accentColor: LACQUER }} title="Pen width" />
+                              <span style={{ fontSize: 10, color: LACQUER, minWidth: 22, fontFamily: CINZEL }}>{drawWidth}px</span>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Shapes */}
                         <div style={{ position: "relative" }}>
@@ -1594,15 +1676,6 @@ export default function PDFEditor() {
                           <span className="page-action-label">Add image</span>
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
                         </label>
-                      </div>
-                      {/* Draw controls on second row when active */}
-                      {drawMode && (
-                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(139,26,26,0.08)", border: "1px solid rgba(139,26,26,0.3)", borderRadius: 4, padding: "3px 8px" }}>
-                          <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ width: 22, height: 22, cursor: "pointer", border: "none", background: "none", padding: 0 }} title="Pen color" />
-                          <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ width: 60, accentColor: LACQUER }} title="Pen width" />
-                          <span style={{ fontSize: 10, color: LACQUER, minWidth: 22 }}>{drawWidth}px</span>
-                        </div>
-                      )}
                       </div>
                     </div>
                   )}

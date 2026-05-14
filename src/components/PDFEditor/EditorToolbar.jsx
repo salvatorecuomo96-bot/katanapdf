@@ -7,6 +7,7 @@ export default function EditorToolbar({
   undo,
   historyLength,
   handleDownload,
+  handleDownloadImages,
   drawMode, setDrawMode,
   sidebarOpen, toggleSidebar,
 }) {
@@ -30,6 +31,7 @@ export default function EditorToolbar({
         </>
       )}
       <div style={{ flex: 1 }} />
+      <button onClick={handleDownloadImages} style={{ padding: "8px 16px", background: "transparent", color: GOLD, border: `1px solid rgba(196,150,58,0.4)`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600 }}>Save as PNG</button>
       <button onClick={handleDownload} style={{ padding: "8px 20px", background: LACQUER, color: PARCHMENT, border: `1px solid ${GOLD}`, cursor: "pointer", fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, outline: `1px solid ${LACQUER}`, outlineOffset: 2 }}>Download PDF</button>
     </div>
   );

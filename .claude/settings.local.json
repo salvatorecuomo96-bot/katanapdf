@@ -2,7 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(cd \"c:\\\\Users\\\\jayfr\\\\Desktop\\\\katanapdf\" && git show 4cc3bbb:src/components/PDFEditor/EditorToolbar.jsx > src/components/PDFEditor/EditorToolbar.jsx)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(git fetch *)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "PowerShell(gh auth status)",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" auth status)",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" api repos/salvatorecuomo96-bot/katanapdf/commits?per_page=10 --jq '.[].commit.message')",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" api \"search/code?q=highlight+repo:salvatorecuomo96-bot/katanapdf\" --jq '.items[] | .path')",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" api \"search/code?q=Highlight+repo:salvatorecuomo96-bot/katanapdf\" --jq '.items[] | \"\\\\\\(.path\\) - \\\\\\(.name\\)\"')",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" api \"search/code?q=highlight+repo:salvatorecuomo96-bot/katanapdf&per_page=20\" --jq '.total_count, \\(.items[] | .path\\)')",
+      "Read(//mnt/c/Users/User/OneDrive/Desktop/**)",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git config *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\jayfr\\Desktop\\katanapdf\\src\\components\\PDFEditor"

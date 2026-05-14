@@ -33,6 +33,7 @@ export default function FloatingBox({
 }) {
   const taRef = useRef(null);
   const [hovered, setHovered] = useState(false);
+  const draggingRef = useRef(false);
 
   // Reset hover badge when leaving edit mode so it doesn't linger
   useEffect(() => {
@@ -114,8 +115,11 @@ export default function FloatingBox({
       const onMove = mv => {
         if (Math.hypot(mv.clientX - startX, mv.clientY - startY) > 4) {
           dragged = true;
+          draggingRef.current = true;
           window.removeEventListener("mousemove", onMove);
           window.removeEventListener("mouseup", onUp);
+          const endDrag = () => { draggingRef.current = false; setHovered(false); window.removeEventListener("mouseup", endDrag); };
+          window.addEventListener("mouseup", endDrag);
           onStartDrag({ clientX: startX, clientY: startY, preventDefault: () => {}, stopPropagation: () => {} });
         }
       };
@@ -135,7 +139,7 @@ export default function FloatingBox({
         onMouseDown={handleMouseDown}
         onPointerDown={e => e.stopPropagation()}
         onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseLeave={() => { if (!draggingRef.current) setHovered(false); }}
         style={{
           position: "absolute",
           left: fb.x * zoom,
@@ -218,34 +222,6 @@ export default function FloatingBox({
       }}
     >
       <div
-        onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
-        style={{
-          position: "absolute",
-          top: -62,
-          left: 0,
-          background: INK,
-          color: GOLD,
-          border: "1px solid rgba(196,150,58,0.4)",
-          borderRadius: 2,
-          padding: "3px 8px",
-          fontSize: 11,
-          fontFamily: CINZEL,
-          letterSpacing: 2,
-          textTransform: "uppercase",
-          whiteSpace: "nowrap",
-          cursor: "grab",
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-          fontWeight: 700,
-          userSelect: "none",
-          zIndex: 100,
-        }}
-      >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-        DRAG
-      </div>
-      <div
         onMouseDown={e => e.stopPropagation()}
         style={{
           position: "absolute",
@@ -253,7 +229,7 @@ export default function FloatingBox({
           top: -36,
           height: 30,
           width: "max-content",
-          maxWidth: 520,
+          maxWidth: 560,
           background: LACQUER,
           padding: "2px 4px",
           cursor: "default",
@@ -267,6 +243,29 @@ export default function FloatingBox({
           boxSizing: "border-box",
         }}
       >
+
+        <button
+          type="button"
+          onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
+          title="Drag to move"
+          style={{
+            minWidth: 26,
+            height: 23,
+            borderRadius: 2,
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: "rgba(255,255,255,0.08)",
+            color: "#fff",
+            fontSize: 10,
+            cursor: "grab",
+            padding: "1px 5px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 3,
+            userSelect: "none",
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+        </button>
 
         <button
           type="button"

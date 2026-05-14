@@ -59,13 +59,6 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
       {isSel && (
         <>
           <div
-            onMouseDown={onStartDrag}
-            style={{ position: 'absolute', top: -54, left: 0, background: INK, color: GOLD, border: '1px solid rgba(196,150,58,0.4)', borderRadius: 2, padding: '3px 8px', fontSize: 11, fontFamily: CINZEL, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'grab', display: 'flex', alignItems: 'center', gap: 5, fontWeight: 700, userSelect: 'none', zIndex: 100 }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:'block'}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-            DRAG
-          </div>
-          <div
             onMouseDown={e => e.stopPropagation()}
             style={{
               position: 'absolute', top: -28, left: 0, right: 0,
@@ -74,6 +67,14 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
               alignItems: 'center', gap: 6, borderRadius: '4px 4px 0 0',
             }}
           >
+            <button
+              type="button"
+              onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
+              title="Drag to move"
+              style={{ height: 18, border: '1px solid rgba(255,255,255,0.2)', borderRadius: 2, background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 9, cursor: 'grab', padding: '1px 4px', display: 'inline-flex', alignItems: 'center', gap: 2, userSelect: 'none', flexShrink: 0 }}
+            >
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:'block'}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+            </button>
             <span style={{ fontWeight: 700, letterSpacing: 2 }}>{shapeType === 'circle' ? 'CIRCLE' : 'SQUARE'}</span>
             <input
               type="color"

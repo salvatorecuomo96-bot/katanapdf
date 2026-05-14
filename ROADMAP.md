@@ -17,8 +17,8 @@ Update this table at the end of every session so any device can see where we are
 | 7 | Delete + rotate pages | ✅ Done | 2026-05-09 | [07](phases/07-delete-rotate-pages.md) |
 | 8 | Image to PDF | ✅ Done | 2026-05-09 | [08](phases/08-image-to-pdf.md) |
 | 9 | Signature pad | ✅ Done | 2026-05-10 | [09](phases/09-signature-pad.md) |
-| 10 | Text highlighting | ⏳ Next | — | [10](phases/10-text-highlighting.md) |
-| 11 | Per-page fallback + IndexedDB recovery | Pending | — | [11](phases/11-per-page-fallback.md) |
+| 10 | Text highlighting | ✅ Done | 2026-05-14 | [10](phases/10-text-highlighting.md) |
+| 11 | Per-page fallback + IndexedDB recovery | ⏳ Next | — | [11](phases/11-per-page-fallback.md) |
 | 12 | Original text color | Pending | — | [12](phases/12-original-text-color.md) |
 | 13 | SEO basics + per-tool routes | Pending | — | [13](phases/13-seo-basics.md) |
 | 14 | Mobile-friendly pass (whole site) | Pending | — | [14](phases/14-mobile-friendly.md) |
@@ -46,6 +46,16 @@ Post-roadmap UX sessions (shipped 2026-05-14):
 - Removed Tab/Esc hint text from all toolbars and modals ✅
 - Sidebar height fixed: uses flex stretch instead of calc(100vh - N) hack ✅
 - Empty text boxes auto-deleted when clicking outside ✅
+
+Post-roadmap bug fixes + features (2026-05-15):
+- Text highlighting (HL button) confirmed shipped in EditPopup + FloatingBox toolbars ✅
+- Draw mode toolbar split fixed: controls now appear as a dropdown below the DRAW button, toolbar height unchanged ✅
+- DRAG button moved inside all toolbars (FloatingBox, FloatingShape, FloatingImage, EditPopup) styled like B/I/HL ✅
+- Hover DRAG badge flicker fixed: local draggingRef prevents badge disappearing mid-drag ✅
+- Text re-edit after move fixed: commitEdit now updates baselineY + x/y so canvas draw and click area stay in sync ✅
+- Shapes default to black (was burgundy, hard to see) ✅
+- Shapes scroll to center of shape after adding (matched existing Add Text scroll behaviour) ✅
+- Save as PNG: new button in top toolbar exports each page as a PNG file ✅
 
 ## Rules
 - **At session start**, run `git fetch && git status`. If behind `origin/main`, pull before any edits. The laptop pushes from a different machine, so the worktree is often stale at session start — discover that on turn 1, not turn 5.
