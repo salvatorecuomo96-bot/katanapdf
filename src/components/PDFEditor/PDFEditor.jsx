@@ -1066,6 +1066,12 @@ export default function PDFEditor() {
     triggerPdfDownload(bytes);
   }
 
+  const isNoFile = pages.length === 0;
+  const visiblePages = pageOrder
+    .map(pIdx => pages[pIdx])
+    .filter(pg => pg && !deletedPages.has(pg.num));
+
+
   const pageActionBtn = {
     ...pageBtn,
     display: "inline-flex",
@@ -1090,15 +1096,12 @@ export default function PDFEditor() {
         <>
           <EditorToolbar
             goHome={goHome}
-            fontFamily={fontFamily} setFontFamily={setFontFamily}
-            fontSize={fontSize} setFontSize={setFontSize}
-            isBold={isBold} setIsBold={setIsBold}
-            isItalic={isItalic} setIsItalic={setIsItalic}
             handleFile={handleFile}
             handleAppendFile={handleAppendFile}
             undo={undo}
             historyLength={history.length}
-            zoom={zoom} setZoom={setZoom}
+            zoom={zoom}
+            setZoom={setZoom}
             handleDownload={handleDownload}
           />
 
