@@ -1265,11 +1265,24 @@ export default function PDFEditor() {
                             zIndex: isOpen ? 3000 : 10, cursor: "text",
                           }} onClick={e => clickTextBlock(tb, e)}>
                             {isOpen && (
-                              <EditPopup block={tb} zoom={scale} fontSize={fontSize} fontFamily={fontFamily} isBold={isBold} isItalic={isItalic}
-                                offsetX={activePopup.offsetX ?? 0} offsetY={activePopup.offsetY ?? 0}
-                                onOffsetChange={(ox, oy) => setActivePopup(ap => (ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap))}
-                                onCommit={newText => commitEdit(tb.id, tb.page, newText)}
-                                onCancel={cancelEdit} />
+                              <EditPopup
+  block={tb}
+  zoom={scale}
+  rotation={rotation}
+  fontSize={fontSize}
+  fontFamily={fontFamily}
+  isBold={isBold}
+  isItalic={isItalic}
+  offsetX={activePopup.offsetX ?? 0}
+  offsetY={activePopup.offsetY ?? 0}
+  onOffsetChange={(ox, oy) =>
+    setActivePopup(ap =>
+      ap && ap.blockId === tb.id ? { ...ap, offsetX: ox, offsetY: oy } : ap
+    )
+  }
+  onCommit={newText => commitEdit(tb.id, tb.page, newText)}
+  onCancel={cancelEdit}
+/>
                             )}
                           </div>
                         );
