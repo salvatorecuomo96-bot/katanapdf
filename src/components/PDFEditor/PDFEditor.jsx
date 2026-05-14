@@ -709,8 +709,7 @@ export default function PDFEditor() {
         : fb
       ));
     }
-  }, [dragging, draggingImg, resizingImg, resizingFb, zoom]);
-
+  }, [dragging, rotating, draggingImg, resizingImg, resizingFb, zoom]);
   const onMouseUp = useCallback(() => {
     setDragging(null);
     setRotating(null);
