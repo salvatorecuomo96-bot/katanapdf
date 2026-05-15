@@ -1,4 +1,4 @@
-import { C, LACQUER, CINZEL, FELL } from "../utils/constant";
+import { PARCHMENT_2, LACQUER, INK, CINZEL, FELL } from "../utils/constant";
 
 function NoticeBox({ title, children, onDismiss, ariaLabel }) {
   return (
@@ -8,14 +8,14 @@ function NoticeBox({ title, children, onDismiss, ariaLabel }) {
         boxSizing: "border-box",
         margin: "12px 16px",
         padding: "12px 20px",
-        background: C.card,
+        background: PARCHMENT_2,
         borderLeft: `3px solid ${LACQUER}`,
         borderRadius: 4,
         boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
         fontFamily: FELL,
         fontSize: 13,
         lineHeight: 1.5,
-        color: C.text,
+        color: INK,
         display: "flex",
         alignItems: "flex-start",
         gap: 12,

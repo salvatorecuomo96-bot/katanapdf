@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Whisper&family=Great+Vibes&family=Dancing+Script&display=swap');
 
 .dragon-scroll::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 .dragon-scroll::-webkit-scrollbar-track {
   background: transparent;
@@ -10,14 +10,19 @@
   background: repeating-linear-gradient(45deg, #8B1A1A 0, #8B1A1A 8px, #C4963A 8px, #C4963A 10px);
 }
 
-/* Base scrollbar styles for the app */
+/* Base scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
+  background: rgba(139,26,26,0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
   background: #8B1A1A;
 }
 
@@ -30,7 +35,7 @@ body {
   display: flex;
   flex-direction: column;
   font-family: 'IM Fell English', serif;
-  background: var(--bg);
+  background-color: #f0ece3;
 }
 
 .editor-fixed {
@@ -55,8 +60,8 @@ body {
     height: 100dvh !important;
     max-height: 100dvh !important;
     z-index: 5000;
-    box-shadow: 4px 0 32px rgba(0,0,0,0.45);
-    width: min(80vw, 320px) !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.35);
+    width: min(80vw, 300px) !important;
     flex: none !important;
   }
   .editor-sidebar-hidden {
@@ -85,7 +90,7 @@ body {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.35);
     z-index: 4999;
   }
 }
@@ -93,5 +98,37 @@ body {
 /* On phones, hide text labels in per-page action buttons — icons only */
 @media (max-width: 479px) {
   .page-action-label { display: none; }
-  .main-scroll-area { padding: 16px 12px 60px !important; }
+  .main-scroll-area { padding: 16px 10px 60px !important; }
+}
+
+/* Mobile desktop hint */
+.mobile-editor-hint {
+  display: none;
+}
+@media (max-width: 599px) {
+  .mobile-editor-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 16px;
+    background: rgba(139,26,26,0.06);
+    border-bottom: 1px solid rgba(139,26,26,0.12);
+    font-size: 11px;
+    font-family: "Cinzel", "Times New Roman", serif;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #8B1A1A;
+    text-align: center;
+    flex-shrink: 0;
+  }
+}
+
+/* Tabs header: allow horizontal scroll on narrow screens */
+@media (max-width: 599px) {
+  [data-edit-toolbar] {
+    gap: 4px !important;
+    padding: 0 8px !important;
+    height: 44px !important;
+  }
 }

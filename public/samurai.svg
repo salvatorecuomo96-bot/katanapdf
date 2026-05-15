@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560">
+  <defs>
+    <linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fafaf5"/>
+      <stop offset="100%" stop-color="#f0eadc"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="560" height="560" fill="url(#bgG)"/>
+
+  <!-- Far mountains -->
+  <path d="M0,310 L70,245 L140,280 L210,225 L280,265 L350,215 L420,252 L490,200 L560,235 L560,560 L0,560Z" fill="#1a1208" opacity="0.05"/>
+  <!-- Mid mountains -->
+  <path d="M0,370 L80,328 L155,350 L230,318 L310,340 L390,308 L470,332 L560,315 L560,560 L0,560Z" fill="#1a1208" opacity="0.08"/>
+
+  <!-- Bamboo left -->
+  <path d="M28,560 L30,215" stroke="#1a1208" stroke-width="5.5" opacity="0.38" stroke-linecap="round"/>
+  <line x1="23" y1="265" x2="36" y2="265" stroke="#1a1208" stroke-width="2" opacity="0.45"/>
+  <line x1="23" y1="315" x2="36" y2="315" stroke="#1a1208" stroke-width="2" opacity="0.45"/>
+  <line x1="23" y1="368" x2="36" y2="368" stroke="#1a1208" stroke-width="2" opacity="0.45"/>
+  <line x1="23" y1="425" x2="36" y2="425" stroke="#1a1208" stroke-width="2" opacity="0.45"/>
+  <line x1="23" y1="490" x2="36" y2="490" stroke="#1a1208" stroke-width="2" opacity="0.45"/>
+  <path d="M30,240 Q56,218 64,228 Q44,244 30,240Z" fill="#1a1208" opacity="0.33"/>
+  <path d="M30,268 Q4,248 -2,258 Q18,272 30,268Z" fill="#1a1208" opacity="0.27"/>
+  <path d="M30,295 Q54,276 60,287 Q42,300 30,295Z" fill="#1a1208" opacity="0.28"/>
+  <path d="M30,338 Q6,320 0,331 Q20,344 30,338Z" fill="#1a1208" opacity="0.23"/>
+  <path d="M58,560 L60,290" stroke="#1a1208" stroke-width="3.5" opacity="0.24" stroke-linecap="round"/>
+  <line x1="53" y1="336" x2="66" y2="336" stroke="#1a1208" stroke-width="1.5" opacity="0.32"/>
+  <line x1="53" y1="396" x2="66" y2="396" stroke="#1a1208" stroke-width="1.5" opacity="0.32"/>
+  <line x1="53" y1="462" x2="66" y2="462" stroke="#1a1208" stroke-width="1.5" opacity="0.32"/>
+  <path d="M60,312 Q82,296 86,306 Q68,318 60,312Z" fill="#1a1208" opacity="0.20"/>
+
+  <!-- Pine tree right -->
+  <path d="M510,360 L538,402 L524,398 L544,432 L526,428 L548,462 L472,462 L494,428 L476,432 L496,398 L482,402Z" fill="#1a1208" opacity="0.10"/>
+  <rect x="505" y="462" width="10" height="36" fill="#1a1208" opacity="0.12"/>
+
+  <!-- ===== PDF SCROLL ===== -->
+  <!-- Top rod -->
+  <rect x="102" y="62" width="196" height="15" rx="7.5" fill="#1a1208" opacity="0.72"/>
+  <!-- Hanging strings -->
+  <line x1="118" y1="62" x2="118" y2="50" stroke="#1a1208" stroke-width="1.5" opacity="0.6"/>
+  <line x1="282" y1="62" x2="282" y2="50" stroke="#1a1208" stroke-width="1.5" opacity="0.6"/>
+  <!-- Scroll body -->
+  <rect x="110" y="77" width="180" height="268" fill="#fafaf5"/>
+  <rect x="110" y="77" width="180" height="268" fill="none" stroke="#1a1208" stroke-width="1.5" opacity="0.65"/>
+  <!-- "PDF" badge -->
+  <rect x="133" y="89" width="52" height="27" rx="2" fill="#cc1818"/>
+  <text x="159" y="107" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="white" text-anchor="middle">PDF</text>
+  <!-- Document lines -->
+  <line x1="133" y1="134" x2="271" y2="134" stroke="#1a1208" stroke-width="1.2" opacity="0.22"/>
+  <line x1="133" y1="150" x2="271" y2="150" stroke="#1a1208" stroke-width="1.2" opacity="0.22"/>
+  <line x1="133" y1="166" x2="234" y2="166" stroke="#1a1208" stroke-width="1.2" opacity="0.20"/>
+  <line x1="133" y1="182" x2="271" y2="182" stroke="#1a1208" stroke-width="1.2" opacity="0.20"/>
+  <line x1="133" y1="198" x2="271" y2="198" stroke="#1a1208" stroke-width="1.2" opacity="0.18"/>
+  <line x1="133" y1="214" x2="248" y2="214" stroke="#1a1208" stroke-width="1.2" opacity="0.18"/>
+  <line x1="133" y1="230" x2="271" y2="230" stroke="#1a1208" stroke-width="1.2" opacity="0.16"/>
+  <line x1="133" y1="246" x2="271" y2="246" stroke="#1a1208" stroke-width="1.2" opacity="0.16"/>
+  <line x1="133" y1="262" x2="240" y2="262" stroke="#1a1208" stroke-width="1.2" opacity="0.15"/>
+  <line x1="133" y1="278" x2="271" y2="278" stroke="#1a1208" stroke-width="1.2" opacity="0.15"/>
+  <!-- Red seal -->
+  <rect x="161" y="298" width="78" height="28" rx="2" fill="none" stroke="#cc1818" stroke-width="1.5" opacity="0.55"/>
+  <rect x="163" y="300" width="74" height="24" rx="1" fill="#cc1818" opacity="0.13"/>
+  <!-- Scroll curl bottom -->
+  <path d="M110,345 Q110,362 120,366 L280,366 Q290,362 290,345" fill="none" stroke="#1a1208" stroke-width="1.5" opacity="0.48"/>
+  <!-- Bottom rod -->
+  <rect x="104" y="362" width="192" height="15" rx="7.5" fill="#1a1208" opacity="0.62"/>
+
+  <!-- ===== ARMORED SAMURAI ===== -->
+  <!-- Ground shadow -->
+  <ellipse cx="415" cy="548" rx="68" ry="9" fill="#1a1208" opacity="0.08"/>
+
+  <!-- Sandals -->
+  <path d="M378,518 L374,538 L362,540 L360,546 L388,546 L390,538 L390,518Z" fill="#1a1208" opacity="0.92"/>
+  <path d="M448,510 L454,530 L464,532 L466,538 L442,538 L438,530 L440,510Z" fill="#1a1208" opacity="0.92"/>
+
+  <!-- Legs -->
+  <path d="M370,420 Q368,464 378,518 L390,518 Q394,464 398,420Z" fill="#1a1208" opacity="0.9"/>
+  <path d="M434,420 Q440,462 448,510 L440,510 Q432,462 428,420Z" fill="#1a1208" opacity="0.9"/>
+  <!-- Shin guards left -->
+  <rect x="370" y="460" width="24" height="54" rx="3" fill="#2a1a0a" opacity="0.44"/>
+  <line x1="372" y1="474" x2="392" y2="474" stroke="#c8a040" stroke-width="0.8" opacity="0.38"/>
+  <line x1="372" y1="488" x2="392" y2="488" stroke="#c8a040" stroke-width="0.8" opacity="0.38"/>
+  <line x1="372" y1="502" x2="392" y2="502" stroke="#c8a040" stroke-width="0.8" opacity="0.38"/>
+  <!-- Shin guards right -->
+  <rect x="430" y="450" width="24" height="56" rx="3" fill="#2a1a0a" opacity="0.44"/>
+  <line x1="432" y1="464" x2="452" y2="464" stroke="#c8a040" stroke-width="0.8" opacity="0.38"/>
+  <line x1="432" y1="478" x2="452" y2="478" stroke="#c8a040" stroke-width="0.8" opacity="0.38"/>
+  <line x1="432" y1="492" x2="452" y2="492" stroke="#c8a040" stroke-width="0.8" opacity="0.38"/>
+
+  <!-- Hakama -->
+  <path d="M360,335 Q365,372 370,420 L400,420 Q404,372 410,335Z" fill="#1a1208" opacity="0.93"/>
+  <path d="M428,335 Q432,372 434,420 L448,420 Q455,375 462,335Z" fill="#1a1208" opacity="0.93"/>
+  <line x1="372" y1="340" x2="368" y2="420" stroke="#fafaf5" stroke-width="0.8" opacity="0.26"/>
+  <line x1="384" y1="340" x2="386" y2="420" stroke="#fafaf5" stroke-width="0.8" opacity="0.26"/>
+  <line x1="396" y1="340" x2="400" y2="420" stroke="#fafaf5" stroke-width="0.8" opacity="0.26"/>
+  <line x1="440" y1="340" x2="438" y2="420" stroke="#fafaf5" stroke-width="0.8" opacity="0.26"/>
+  <line x1="452" y1="340" x2="454" y2="420" stroke="#fafaf5" stroke-width="0.8" opacity="0.26"/>
+
+  <!-- Tassets (hip armor) -->
+  <path d="M355,305 Q360,320 360,335 L410,335 Q408,320 412,305Z" fill="#2a1a0a" opacity="0.68"/>
+  <path d="M422,305 Q424,320 428,335 L462,335 Q460,320 464,305Z" fill="#2a1a0a" opacity="0.68"/>
+  <line x1="358" y1="314" x2="408" y2="314" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+  <line x1="357" y1="323" x2="410" y2="323" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+
+  <!-- Chest armor (do) -->
+  <path d="M360,195 Q355,242 358,298 L472,298 Q472,242 468,195Z" fill="#1a1208" opacity="0.93"/>
+  <line x1="362" y1="212" x2="470" y2="212" stroke="#fafaf5" stroke-width="1" opacity="0.20"/>
+  <line x1="361" y1="228" x2="471" y2="228" stroke="#fafaf5" stroke-width="1" opacity="0.20"/>
+  <line x1="360" y1="244" x2="472" y2="244" stroke="#fafaf5" stroke-width="1" opacity="0.20"/>
+  <line x1="360" y1="260" x2="472" y2="260" stroke="#fafaf5" stroke-width="1" opacity="0.20"/>
+  <line x1="360" y1="276" x2="472" y2="276" stroke="#fafaf5" stroke-width="1" opacity="0.20"/>
+
+  <!-- Red obi -->
+  <path d="M358,295 L472,295 L472,310 Q415,318 358,310Z" fill="#8B1A1A" opacity="0.93"/>
+
+  <!-- Left shoulder plate -->
+  <path d="M358,198 Q326,190 316,202 Q310,218 318,228 L348,232 Q356,222 360,208Z" fill="#2a1a0a" opacity="0.82"/>
+  <line x1="316" y1="208" x2="358" y2="204" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+  <line x1="314" y1="218" x2="355" y2="215" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+  <line x1="316" y1="226" x2="350" y2="225" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+
+  <!-- Right shoulder plate -->
+  <path d="M470,198 Q500,190 510,202 Q516,218 508,228 L480,232 Q472,222 470,208Z" fill="#2a1a0a" opacity="0.82"/>
+  <line x1="508" y1="208" x2="470" y2="204" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+  <line x1="510" y1="218" x2="472" y2="215" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+  <line x1="508" y1="226" x2="474" y2="225" stroke="#c8a040" stroke-width="0.8" opacity="0.36"/>
+
+  <!-- Left arm -->
+  <path d="M356,210 Q328,224 312,238 Q300,248 304,260 Q310,264 318,258 Q332,248 348,234Z" fill="#1a1208" opacity="0.9"/>
+  <!-- Right arm (holding katana) -->
+  <path d="M470,210 Q498,224 518,234 Q534,242 532,256 Q526,262 516,256 Q498,248 476,232Z" fill="#1a1208" opacity="0.9"/>
+  <ellipse cx="527" cy="256" rx="13" ry="11" fill="#c8a070" opacity="0.68"/>
+
+  <!-- Neck -->
+  <rect x="398" y="180" width="38" height="18" rx="4" fill="#2a1a0a" opacity="0.78"/>
+  <!-- Face -->
+  <ellipse cx="417" cy="169" rx="27" ry="23" fill="#c8a070" opacity="0.76"/>
+  <path d="M391,174 Q395,195 417,198 Q439,195 443,174" fill="#2a1a0a" opacity="0.68"/>
+
+  <!-- ===== KABUTO ===== -->
+  <!-- Dome -->
+  <path d="M388,163 Q390,124 417,114 Q444,124 446,163 Q432,156 417,154 Q402,156 388,163Z" fill="#2a1a0a" opacity="0.92"/>
+  <!-- Front peak -->
+  <path d="M388,164 L380,165 Q370,166 372,174 L383,178 Q394,173 417,170 Q440,173 451,178 L462,174 Q464,166 454,165 L446,164Z" fill="#1a1208" opacity="0.86"/>
+  <!-- Shikoro layer 1 -->
+  <path d="M386,164 Q376,170 372,180 L380,184 Q392,176 417,174 Q442,176 454,184 L462,180 Q458,170 448,164Z" fill="#1a1208" opacity="0.74"/>
+  <!-- Shikoro layer 2 -->
+  <path d="M380,182 Q370,188 366,200 L376,204 Q390,196 417,193 Q444,196 458,204 L468,200 Q464,188 454,182Z" fill="#1a1208" opacity="0.62"/>
+  <!-- Kuwagata left horn -->
+  <path d="M393,163 Q384,142 388,120 Q394,112 398,116 Q398,134 395,156 Q394,160 393,163Z" fill="#2a1a0a" opacity="0.85"/>
+  <!-- Kuwagata right horn -->
+  <path d="M441,163 Q450,142 446,120 Q440,112 436,116 Q436,134 439,156 Q440,160 441,163Z" fill="#2a1a0a" opacity="0.85"/>
+  <!-- Center crest (red) -->
+  <path d="M411,163 Q413,148 417,140 Q421,148 423,163Z" fill="#cc1818" opacity="0.80"/>
+
+  <!-- ===== KATANA ===== -->
+  <!-- Tsuka (grip) -->
+  <rect x="518" y="244" width="13" height="36" rx="4" fill="#1a1208" opacity="0.92"
+        transform="rotate(30,524,262)"/>
+  <line x1="516" y1="250" x2="532" y2="257" stroke="#c8a040" stroke-width="1" opacity="0.5"/>
+  <line x1="514" y1="258" x2="530" y2="265" stroke="#c8a040" stroke-width="1" opacity="0.5"/>
+  <!-- Tsuba -->
+  <ellipse cx="514" cy="272" rx="13" ry="7.5" fill="#C4963A" opacity="0.9"
+        transform="rotate(30,514,272)"/>
+  <!-- Blade toward scroll -->
+  <path d="M508,278 Q330,220 116,152" stroke="#c8c8b8" stroke-width="3.5" opacity="0.75" fill="none"/>
+  <path d="M509,279 Q331,221 117,153" stroke="#1a1208" stroke-width="0.7" opacity="0.50"/>
+  <path d="M508,276 Q330,218 116,150" stroke="#eeeedc" stroke-width="1.2" opacity="0.45" fill="none"/>
+  <path d="M117,152 L108,144 L112,155Z" fill="#c8c8b8" opacity="0.72"/>
+
+  <!-- Ground mist -->
+  <path d="M0,510 Q140,494 280,500 Q420,494 560,505 L560,560 L0,560Z" fill="#fafaf5" opacity="0.55"/>
+
+  <!-- Birds top right -->
+  <path d="M474,44 Q478,40 482,44" stroke="#1a1208" stroke-width="1" fill="none" opacity="0.25"/>
+  <path d="M490,34 Q494,30 498,34" stroke="#1a1208" stroke-width="1" fill="none" opacity="0.20"/>
+  <path d="M508,50 Q512,46 516,50" stroke="#1a1208" stroke-width="1" fill="none" opacity="0.16"/>
+</svg>

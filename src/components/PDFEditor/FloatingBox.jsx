@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { C, LACQUER, FB_SIZES, FONT_FAMILIES, CINZEL, DRAW_COLORS } from "../utils/constant";
+import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES, CINZEL, DRAW_COLORS } from "../utils/constant";
 
 const RotateIcon = () => (
   <svg
@@ -209,7 +209,7 @@ export default function FloatingBox({
         width: editorW,
         height: editorH,
         zIndex: 1000,
-        border: `1px dashed rgba(139,26,26,0.4)`,
+        border: `1px dashed ${GOLD}`,
         borderRadius: 3,
         background:
           fb.bgColor && fb.bgColor !== "transparent"
@@ -400,7 +400,7 @@ export default function FloatingBox({
             style={{ width: 18, height: 18, borderRadius: "50%", background: fb.color || "#000000", border: "2px solid rgba(255,255,255,0.6)", cursor: "pointer", padding: 0, display: "block" }}
           />
           {openPanel === 'textColor' && (
-            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: C.card, border: `1px solid ${C.borderStrong}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
               {DRAW_COLORS.map(c => (
                 <button key={c} type="button" onClick={e => { e.stopPropagation(); onUpdate({ color: c }); setOpenPanel(null); refocusText(); }}
                   style={{ width: 20, height: 20, background: c, border: (fb.color || "#000000") === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
@@ -430,7 +430,7 @@ export default function FloatingBox({
             }}
           />
           {openPanel === 'bgColor' && (
-            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: C.card, border: `1px solid ${C.borderStrong}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
               {DRAW_COLORS.map(c => (
                 <button key={c} type="button" onClick={e => { e.stopPropagation(); onUpdate({ bgColor: c }); setOpenPanel(null); refocusText(); }}
                   style={{ width: 20, height: 20, background: c, border: fb.bgColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />

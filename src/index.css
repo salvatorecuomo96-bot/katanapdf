@@ -4,44 +4,6 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  --bg: #ffffff;
-  --surface: #f7f7f5;
-  --card: #f2f2ef;
-  --text: #111111;
-  --text-muted: #777777;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
-  --toolbar-bg: #ffffff;
-  --tab-bg: #f5f5f3;
-  --tab-active-bg: #ffffff;
-  --input-bg: #ffffff;
-  --page-area-bg: #f0f0ee;
-  --footer-bg: #111111;
-  --footer-text: #cccccc;
-  --scrollbar-track: #f0f0f0;
-  --scrollbar-thumb: #cccccc;
-}
-
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  --bg: #0f0f0f;
-  --surface: #181818;
-  --card: #1f1f1f;
-  --text: #ededed;
-  --text-muted: #888888;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.13);
-  --toolbar-bg: #181818;
-  --tab-bg: #111111;
-  --tab-active-bg: #181818;
-  --input-bg: #252525;
-  --page-area-bg: #111111;
-  --footer-bg: #0a0a0a;
-  --footer-text: #888888;
-  --scrollbar-track: #1a1a1a;
-  --scrollbar-thumb: #333333;
 }
 
 *, *::before, *::after {
@@ -50,9 +12,6 @@
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  transition: background 0.2s, color 0.2s;
 }
 
 #root {
@@ -61,6 +20,34 @@ body {
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #999; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139,26,26,0.25); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8B1A1A; }
+
+/* ── Hero responsive ─────────────────────────────── */
+@media (max-width: 767px) {
+  .homepage-hero { padding: 40px 20px 32px !important; }
+}
+
+/* ── Trust badges vertical border ───────────────── */
+.trust-badge-border {
+  border-right: 1px solid rgba(0,0,0,0.07);
+}
+@media (max-width: 540px) {
+  .trust-badge { padding: 16px 18px !important; }
+  .trust-badge-border { border-right: none; }
+}
+
+/* ── Editor toolbar overflow on narrow screens ───── */
+[data-edit-toolbar] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-shrink: 0;
+}
+[data-edit-toolbar]::-webkit-scrollbar { display: none; }
+
+@media (max-width: 599px) {
+  [data-edit-toolbar] { gap: 4px !important; padding: 0 8px !important; height: 44px !important; }
+}

@@ -16,7 +16,7 @@ import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../util
 import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
-import { C, CINZEL, CROSSHATCH, DRAW_COLORS, FB_SIZES, FELL, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
+import { CINZEL, DRAW_COLORS, FB_SIZES, FELL, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
 
 import "./PDFEditor.css";
 
@@ -130,16 +130,6 @@ export default function PDFEditor() {
   const addTextClickLock = useRef(false);
   const autoZoomPendingRef = useRef(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [isDark, setIsDark] = useState(() => {
-    const dark = localStorage.getItem("theme") === "dark";
-    document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
-    return dark;
-  });
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "");
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  }, [isDark]);
-  const toggleDark = () => setIsDark(v => !v);
   // Close sidebar by default only on actual phone screens
   useEffect(() => { if (window.innerWidth < 480) setSidebarOpen(false); }, []);
 
@@ -1481,8 +1471,6 @@ export default function PDFEditor() {
           onFile={handleFile}
           onDropFile={handleDroppedFile}
           onCreateBlank={createBlankPdf}
-          isDark={isDark}
-          onToggleDark={toggleDark}
         />
       ) : (
         <>
@@ -1498,8 +1486,6 @@ export default function PDFEditor() {
             setDrawMode={setDrawMode}
             sidebarOpen={sidebarOpen}
             toggleSidebar={() => setSidebarOpen(v => !v)}
-            isDark={isDark}
-            onToggleDark={toggleDark}
           />
 
           <EditorHeader
@@ -1509,6 +1495,7 @@ export default function PDFEditor() {
             closeTab={closeTab}
             handleFile={handleFile}
           />
+          <div className="mobile-editor-hint">For best editing, use a desktop or tablet</div>
 
 
 <div
@@ -1531,19 +1518,19 @@ export default function PDFEditor() {
         flexShrink: 0,
         flexBasis: "clamp(220px, 22vw, 340px)",
         minHeight: 0,
-        background: C.surface,
-        borderRight: `1px solid ${C.borderStrong}`,
-        borderTop: `1px solid ${C.border}`,
+        background: "#e8e0d0",
+        borderRight: `1px solid rgba(139,26,26,0.35)`,
+        borderTop: `1px solid rgba(139,26,26,0.15)`,
         overflowY: "auto",
         overflowX: "hidden",
         display: "flex",
         flexDirection: "column",
       }}
-    >              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: C.surface, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${C.border}` }}>
-                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid ${C.borderStrong}`, borderRadius: '4px', background: C.card, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    >              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: "#e8e0d0", padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
+                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <GridIcon />
                 </button>
-                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid ${C.borderStrong}`, borderRadius: '4px', background: C.card, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
+                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
                   +
                   <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
                 </label>
@@ -1596,7 +1583,7 @@ export default function PDFEditor() {
                          transition: 'opacity 0.2s'
                        }}>
                     <div style={{ 
-                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${C.borderStrong}`, cursor: 'pointer',
+                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
                       aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                     }}>
@@ -1610,10 +1597,10 @@ export default function PDFEditor() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
                       <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, fontWeight: 600 }}>{i + 1}</span>
-                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: `1px solid ${C.borderStrong}`, borderRadius: '4px', background: C.card, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
+                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
                         <RotateIcon size={14} />
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: `1px solid ${C.borderStrong}`, borderRadius: '4px', background: C.card, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
+                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
                     </div>
                     
                     {i < visiblePages.length - 1 && (
@@ -1656,7 +1643,7 @@ export default function PDFEditor() {
                 setEncryptionNoticeDismissed={setEncryptionNoticeDismissed}
               />
 
-              <div ref={containerRef} className="main-scroll-area" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: C.pageAreaBg, display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
+              <div ref={containerRef} className="main-scroll-area" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: "#f0ece3", display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
               {visiblePages.map((pg, displayIdx) => {
                 if (!pg) return null;
                 const rotation = rotatedPages[pg.num] || 0;
@@ -1715,7 +1702,7 @@ export default function PDFEditor() {
                             <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 2, fontWeight: 600 }}>MOVE TO</span>
                           </button>
                           {moveToPanelPage === pg.num && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: C.card, border: `1px solid ${C.borderStrong}`, borderRadius: 6, padding: "6px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 3, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", maxHeight: 200, overflowY: "auto", minWidth: 64 }}>
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 3, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", maxHeight: 200, overflowY: "auto", minWidth: 64 }}>
                               {visiblePages.map((_, i) => (
                                 <button
                                   key={i}
@@ -1729,10 +1716,10 @@ export default function PDFEditor() {
                           )}
                         </div>
                         {/* Per-page zoom controls */}
-                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", border: `1px solid ${C.borderStrong}`, borderRadius: 3, overflow: "hidden" }}>
-                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderRight: `1px solid ${C.borderStrong}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom out">−</button>
+                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", border: `1px solid ${GOLD}`, borderRadius: 3, overflow: "hidden" }}>
+                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderRight: `1px solid ${GOLD}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom out">−</button>
                           <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, minWidth: 42, textAlign: "center", letterSpacing: 1, padding: "7px 4px", fontWeight: 600 }}>{Math.round(zoom * 100)}%</span>
-                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderLeft: `1px solid ${C.borderStrong}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom in">+</button>
+                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderLeft: `1px solid ${GOLD}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom in">+</button>
                         </div>
                         <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90deg" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <RotateIcon size={14} />
@@ -1766,11 +1753,11 @@ export default function PDFEditor() {
                             <span className="page-action-label">Draw</span>
                           </button>
                           {drawPanelOpen && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: C.card, border: `1px solid ${C.borderStrong}`, borderRadius: 4, padding: "8px", zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", minWidth: 136 }}>
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: "8px", zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", minWidth: 136 }}>
                               {/* Pencil / Highlight toggle — closes panel on click */}
                               <div style={{ display: "flex", gap: 4 }}>
-                                <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${C.borderStrong}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
-                                <button onClick={() => { setDrawTool('highlighter'); if (drawWidth < 10) setDrawWidth(14); }} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${C.borderStrong}`, borderRadius: 2, background: drawTool === 'highlighter' ? LACQUER : "transparent", color: drawTool === 'highlighter' ? "#fff" : LACQUER, fontWeight: 700 }}>HIGHLIGHT</button>
+                                <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
+                                <button onClick={() => { setDrawTool('highlighter'); if (drawWidth < 10) setDrawWidth(14); }} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'highlighter' ? LACQUER : "transparent", color: drawTool === 'highlighter' ? "#fff" : LACQUER, fontWeight: 700 }}>HIGHLIGHT</button>
                               </div>
                               {/* 4×4 color grid — closes panel on color select */}
                               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
@@ -1788,7 +1775,7 @@ export default function PDFEditor() {
                               {/* Width — same size list as text */}
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <span style={{ fontSize: 9, color: LACQUER, fontFamily: CINZEL, letterSpacing: 1 }}>SIZE</span>
-                                <select value={FB_SIZES.includes(drawWidth) ? drawWidth : FB_SIZES.reduce((a, b) => Math.abs(b - drawWidth) < Math.abs(a - drawWidth) ? b : a)} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, fontSize: 11, background: C.inputBg, color: C.text, border: `1px solid ${C.borderStrong}`, borderRadius: 2, padding: "1px 2px", height: 23 }}>
+                                <select value={FB_SIZES.includes(drawWidth) ? drawWidth : FB_SIZES.reduce((a, b) => Math.abs(b - drawWidth) < Math.abs(a - drawWidth) ? b : a)} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, fontSize: 11, background: "#fff", border: `1px solid ${GOLD}`, borderRadius: 2, padding: "1px 2px", height: 23 }}>
                                   {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                               </div>
@@ -1807,10 +1794,10 @@ export default function PDFEditor() {
                             <span className="page-action-label">Shapes</span>
                           </button>
                           {shapePanelPage === pg.num && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: C.card, border: `1px solid ${C.borderStrong}`, borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", minWidth: 160 }}>
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", minWidth: 160 }}>
                               <div style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, letterSpacing: 3, fontWeight: 700 }}>SHAPE COLOR</div>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <input type="color" value={shapePanelColor} onChange={e => setShapePanelColor(e.target.value)} style={{ width: 28, height: 28, cursor: "pointer", border: `1px solid ${C.borderStrong}`, borderRadius: 4, padding: 2 }} />
+                                <input type="color" value={shapePanelColor} onChange={e => setShapePanelColor(e.target.value)} style={{ width: 28, height: 28, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 4, padding: 2 }} />
                                 <label style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: CINZEL, fontSize: 10, color: LACQUER, cursor: "pointer", letterSpacing: 2 }}>
                                   <input type="checkbox" checked={shapePanelFill} onChange={e => setShapePanelFill(e.target.checked)} style={{ accentColor: LACQUER }} />
                                   FILLED
@@ -1976,19 +1963,19 @@ export default function PDFEditor() {
       {showLeaveConfirm && (
         <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
              onClick={() => setShowLeaveConfirm(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: C.card, border: `1px solid ${C.borderStrong}`, padding: "28px 32px", maxWidth: 400, width: "90%", textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.28)", borderRadius: 4 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: PARCHMENT, border: `1px solid ${GOLD}`, padding: "28px 32px", maxWidth: 400, width: "90%", textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.28)" }}>
             <p style={{ fontFamily: CINZEL, fontSize: 14, letterSpacing: 2, color: LACQUER, fontWeight: 700, margin: "0 0 10px", textTransform: "uppercase" }}>Unsaved changes</p>
-            <p style={{ fontFamily: FELL, fontSize: 15, color: C.text, margin: "0 0 22px", lineHeight: 1.55 }}>
+            <p style={{ fontFamily: FELL, fontSize: 15, color: INK, margin: "0 0 22px", lineHeight: 1.55 }}>
               Going back will discard all your edits. Download your PDF first to keep them.
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <button onClick={() => { setShowLeaveConfirm(false); handleDownload(); }} style={{ padding: "9px 20px", background: LACQUER, color: "#fff", border: "none", fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700, borderRadius: 2 }}>
+              <button onClick={() => { setShowLeaveConfirm(false); handleDownload(); }} style={{ padding: "9px 20px", background: LACQUER, color: "#fff", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700 }}>
                 DOWNLOAD FIRST
               </button>
-              <button onClick={() => { setShowLeaveConfirm(false); doGoHome(); }} style={{ padding: "9px 20px", background: "transparent", color: LACQUER, border: `1px solid ${LACQUER}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700, borderRadius: 2 }}>
+              <button onClick={() => { setShowLeaveConfirm(false); doGoHome(); }} style={{ padding: "9px 20px", background: "transparent", color: LACQUER, border: `1px solid ${LACQUER}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700 }}>
                 LEAVE ANYWAY
               </button>
-              <button onClick={() => setShowLeaveConfirm(false)} style={{ padding: "9px 20px", background: "transparent", color: C.textMuted, border: `1px solid ${C.border}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", borderRadius: 2 }}>
+              <button onClick={() => setShowLeaveConfirm(false)} style={{ padding: "9px 20px", background: "transparent", color: INK, border: `1px solid rgba(26,18,8,0.3)`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer" }}>
                 STAY
               </button>
             </div>

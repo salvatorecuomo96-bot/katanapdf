@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { C, CINZEL, FELL, LACQUER, pageBtn } from "../utils/constant";
+import { CINZEL, FELL, GOLD, INK, LACQUER, pageBtn, PARCHMENT } from "../utils/constant";
 
 export default function SignatureModal({ onClose, onInsert, color, setColor }) {
   const canvasRef = useRef(null);
@@ -131,12 +131,12 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(26,18,8,0.8)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div style={{ background: C.card, border: `1px solid ${C.borderStrong}`, padding: "24px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: "90vw", boxSizing: "border-box", borderRadius: 4 }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: PARCHMENT, border: `2px solid ${GOLD}`, padding: "24px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: "90vw", boxSizing: "border-box" }} onClick={e => e.stopPropagation()}>
         <h2 style={{ margin: 0, fontFamily: CINZEL, color: LACQUER, fontSize: 24, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>Sign Document</h2>
 
-        <div style={{ display: "flex", gap: 8, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, width: "100%", justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: 8, borderBottom: `1px solid ${GOLD}`, paddingBottom: 8, width: "100%", justifyContent: "center" }}>
           {["draw", "type", "upload"].map(tab => (
-            <button key={tab} onClick={() => setSignTab(tab)} style={{ ...pageBtn, background: signTab === tab ? LACQUER : "transparent", color: signTab === tab ? "#fff" : LACQUER }}>
+            <button key={tab} onClick={() => setSignTab(tab)} style={{ ...pageBtn, background: signTab === tab ? LACQUER : "transparent", color: signTab === tab ? PARCHMENT : LACQUER }}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
@@ -173,8 +173,8 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
                 <label key={f} style={{ 
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
                   fontFamily: `"${f}", cursive`, fontSize: 32, 
-                  color: selectedSignFont === f ? LACQUER : C.text,
-                  border: selectedSignFont === f ? `2px solid ${LACQUER}` : `2px solid transparent`,
+                  color: selectedSignFont === f ? LACQUER : INK,
+                  border: selectedSignFont === f ? `2px solid ${GOLD}` : "2px solid transparent",
                   padding: "4px 12px", borderRadius: 4, background: "rgba(0,0,0,0.02)"
                 }}>
                   <input type="radio" name="signFont" value={f} checked={selectedSignFont === f} onChange={() => setSelectedSignFont(f)} style={{ display: "none" }} />
@@ -204,13 +204,13 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
           <div style={{ display: "flex", gap: 12 }}>
             <button onClick={handleClear} style={{ ...pageBtn, padding: "8px 16px" }}>Clear</button>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 32, height: 32, borderRadius: "4px", border: `1px solid ${C.borderStrong}`, background: "transparent", cursor: "pointer", padding: 0 }} aria-label="Signature Color" title="Signature Color" />
+              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 32, height: 32, borderRadius: "4px", border: `2px solid ${GOLD}`, background: "transparent", cursor: "pointer", padding: 0 }} aria-label="Signature Color" title="Signature Color" />
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: `1px solid ${C.border}`, color: C.textMuted }}>Cancel</button>
-              <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: "#fff", border: "none" }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
+              <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: "1px solid transparent", color: INK }}>Cancel</button>
+              <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: PARCHMENT }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
             </div>
           </div>
         </div>
