@@ -95,7 +95,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, recoveryAv
               background: "transparent", border: `1px solid ${GOLD}`, color: INK, fontFamily: FELL,
               fontSize: 14, cursor: "pointer", padding: "6px 18px", letterSpacing: 1,
             }}>
-              ↩ Recover last session
+              ↩ Recover {recoveryAvailable.tabs?.length > 1 ? `${recoveryAvailable.tabs.length} sessions` : "last session"}
             </button>
           )}
           <span style={{ fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.5)", fontStyle: "italic" }}>

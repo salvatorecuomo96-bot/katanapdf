@@ -36,12 +36,23 @@ async function idbOpen() {
   });
 }
 
-async function saveToIDB(bytes, name) {
-  if (bytes.byteLength > IDB_MAX_BYTES) return;
+async function saveToIDB(tabs) {
+  // tabs = [{bytes: Uint8Array, name: string}, ...]
+  // Keep as many as fit within IDB_MAX_BYTES total (most recent first)
+  let total = 0;
+  const keep = [];
+  for (const t of [...tabs].reverse()) {
+    if (t.bytes && total + t.bytes.byteLength <= IDB_MAX_BYTES) {
+      keep.push(t);
+      total += t.bytes.byteLength;
+    }
+  }
+  keep.reverse();
+  if (!keep.length) return;
   try {
     const db = await idbOpen();
     const tx = db.transaction(IDB_STORE, "readwrite");
-    tx.objectStore(IDB_STORE).put({ bytes, name, ts: Date.now() }, IDB_KEY);
+    tx.objectStore(IDB_STORE).put({ tabs: keep, ts: Date.now() }, IDB_KEY);
     await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
     db.close();
   } catch { /* non-fatal */ }
@@ -58,7 +69,10 @@ async function loadFromIDB() {
     });
     db.close();
     if (!rec || Date.now() - rec.ts > 24 * 60 * 60 * 1000) return null;
-    return rec;
+    // Backward compat: old format stored {bytes, name, ts}
+    if (rec.bytes) return { tabs: [{ bytes: rec.bytes, name: rec.name }], ts: rec.ts };
+    if (rec.tabs && rec.tabs.length) return rec;
+    return null;
   } catch { return null; }
 }
 
@@ -148,15 +162,29 @@ export default function PDFEditor() {
   async function handleFile(e) {
     const input = e.target;
     const file = input.files && input.files[0];
-    // Reset value so the same file can be picked again later
     input.value = "";
     if (!file) return;
     try {
       snapshotCurrentTab();
-      await loadPdfFromFile(file);
+      const { bytes: newBytes, name: newName } = await loadPdfFromFile(file);
       const id = makeTabId();
-      setTabsList(prev => [...prev, { id, fileName: file.name.match(/\.pdf$/i) ? file.name : file.name.replace(/\.[^/.]+$/, "") + ".pdf" }]);
+      setTabsList(prev => [...prev, { id, fileName: newName }]);
       setActiveTabId(id);
+      // Save all open tabs (previous snapshots + new) to IDB with full edit state
+      const prevTabs = Object.values(tabSnapshots.current)
+        .filter(s => s.pdfBytes)
+        .map(s => ({
+          bytes: s.pdfBytes, name: s.fileName || "document.pdf",
+          textBlocks: s.textBlocks || {}, floatingBoxes: s.floatingBoxes || [],
+          floatingImages: s.floatingImages || [], floatingShapes: s.floatingShapes || [],
+          pageOrder: s.pageOrder || [], rotatedPages: s.rotatedPages || {},
+          deletedPages: Array.from(s.deletedPages || []), zoom: s.zoom || 1,
+        }));
+      saveToIDB([...prevTabs, {
+        bytes: newBytes, name: newName,
+        textBlocks: {}, floatingBoxes: [], floatingImages: [], floatingShapes: [],
+        pageOrder: [], rotatedPages: {}, deletedPages: [], zoom: 1,
+      }]);
     } catch (err) {
       console.error("Failed to load PDF/Image:", err);
       alert("Couldn't open this file: " + (err.message || err) + "\n\nTry a different file or refresh the page.");
@@ -165,22 +193,24 @@ export default function PDFEditor() {
 
   async function loadPdfFromFile(file) {
     let bytes;
+    let name;
     if (file.type === "application/pdf") {
-      setFileName(file.name);
-      const buf = await file.arrayBuffer();
-      bytes = new Uint8Array(buf);
+      name = file.name.match(/\.pdf$/i) ? file.name : file.name + ".pdf";
+      setFileName(name);
+      bytes = new Uint8Array(await file.arrayBuffer());
     } else if (file.type.startsWith("image/")) {
-      setFileName(file.name.replace(/\.[^/.]+$/, "") + ".pdf");
+      name = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
+      setFileName(name);
       bytes = await convertImageToPdfBytes(file);
     } else {
       throw new Error("Unsupported file type: " + file.type);
     }
     await loadPdfFromBytes(bytes);
+    return { bytes, name };
   }
 
    async function loadPdfFromBytes(bytes) {
     setPdfBytes(bytes);
-    saveToIDB(bytes, fileName);
 
     // Phase 3 - encryption probe. pdfjs renders encrypted PDFs fine, but pdf-lib's
     // strict load throws when the trailer has /Encrypt. We use this only as a flag.
@@ -219,6 +249,7 @@ export default function PDFEditor() {
     );
     setHasTextLayer(totalWords > 0);
     setTextLayerNoticeDismissed(false);
+    return { pageData, words };
   }
 
   useEffect(() => {
@@ -300,6 +331,7 @@ export default function PDFEditor() {
     setTabsList([]);
     setActiveTabId(null);
     setPages([]);
+    loadFromIDB().then(r => setRecoveryAvailable(r || null));
     setPageOrder([]);
     setRotatedPages({});
     setDeletedPages(new Set());
@@ -1058,11 +1090,54 @@ export default function PDFEditor() {
   async function handleRecover(rec) {
     try {
       setRecoveryAvailable(null);
-      setFileName(rec.name || "recovered.pdf");
-      await loadPdfFromBytes(rec.bytes);
-      const id = makeTabId();
-      setTabsList(prev => [...prev, { id, fileName: rec.name || "recovered.pdf" }]);
-      setActiveTabId(id);
+      let prevId = null;
+      let prevPageData = null;
+      let prevTabData = null;
+
+      for (let i = 0; i < rec.tabs.length; i++) {
+        const tabData = rec.tabs[i];
+        const name = tabData.name || "recovered.pdf";
+        const id = makeTabId();
+
+        // Before loading next PDF, manually snapshot the previous tab's full state
+        // into tabSnapshots so switching back to it works correctly
+        if (prevId && prevPageData && prevTabData) {
+          tabSnapshots.current[prevId] = {
+            pdfBytes: prevTabData.bytes,
+            pages: prevPageData,
+            pageOrder: prevTabData.pageOrder?.length ? prevTabData.pageOrder : prevPageData.map((_, idx) => idx),
+            rotatedPages: prevTabData.rotatedPages || {},
+            deletedPages: Array.from(prevTabData.deletedPages || []),
+            textBlocks: prevTabData.textBlocks || {},
+            floatingBoxes: prevTabData.floatingBoxes || [],
+            floatingImages: prevTabData.floatingImages || [],
+            history: [],
+            fileName: prevTabData.name,
+            zoom: prevTabData.zoom || 1,
+            hasTextLayer: true,
+            isEncrypted: false,
+          };
+        }
+
+        setFileName(name);
+        const { pageData } = await loadPdfFromBytes(tabData.bytes);
+
+        // Override with saved edits
+        if (tabData.textBlocks && Object.keys(tabData.textBlocks).length) setTextBlocks(tabData.textBlocks);
+        if (tabData.floatingBoxes?.length) setFloatingBoxes(tabData.floatingBoxes);
+        if (tabData.floatingImages?.length) setFloatingImages(tabData.floatingImages);
+        if (tabData.floatingShapes?.length) setFloatingShapes(tabData.floatingShapes);
+        if (tabData.pageOrder?.length) setPageOrder(tabData.pageOrder);
+        if (tabData.rotatedPages && Object.keys(tabData.rotatedPages).length) setRotatedPages(tabData.rotatedPages);
+        if (tabData.deletedPages?.length) setDeletedPages(new Set(tabData.deletedPages));
+
+        setTabsList(prev => [...prev, { id, fileName: name }]);
+        setActiveTabId(id);
+
+        prevId = id;
+        prevPageData = pageData;
+        prevTabData = tabData;
+      }
     } catch (err) {
       alert("Could not recover: " + (err.message || err));
     }
@@ -1070,6 +1145,26 @@ export default function PDFEditor() {
 
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
+    // Update IDB with current edit state so recovery reflects latest changes
+    snapshotCurrentTab();
+    const allTabs = Object.values(tabSnapshots.current)
+      .filter(s => s.pdfBytes)
+      .map(s => ({
+        bytes: s.pdfBytes, name: s.fileName || "document.pdf",
+        textBlocks: s.textBlocks || {}, floatingBoxes: s.floatingBoxes || [],
+        floatingImages: s.floatingImages || [], floatingShapes: s.floatingShapes || [],
+        pageOrder: s.pageOrder || [], rotatedPages: s.rotatedPages || {},
+        deletedPages: Array.from(s.deletedPages || []), zoom: s.zoom || 1,
+      }));
+    // Also include the currently-active tab (snapshot above captured it)
+    if (!allTabs.length) {
+      allTabs.push({
+        bytes: pdfBytes, name: fileName || "document.pdf",
+        textBlocks, floatingBoxes, floatingImages, floatingShapes: [],
+        pageOrder, rotatedPages, deletedPages: Array.from(deletedPages), zoom,
+      });
+    }
+    saveToIDB(allTabs);
     try {
  // Phase 3: don't silently strip encryption. Try strict first; only
       // fall back to ignoreEncryption: true if we hit an actual encryption
