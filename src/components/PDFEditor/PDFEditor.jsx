@@ -180,6 +180,7 @@ export default function PDFEditor() {
 
    async function loadPdfFromBytes(bytes) {
     setPdfBytes(bytes);
+    saveToIDB(bytes, fileName);
 
     // Phase 3 - encryption probe. pdfjs renders encrypted PDFs fine, but pdf-lib's
     // strict load throws when the trailer has /Encrypt. We use this only as a flag.
@@ -531,12 +532,21 @@ export default function PDFEditor() {
     floatingIdCounter++;
     const id = `float-${floatingIdCounter}`;
     const rotation = rotatedPages[pageNum] || 0;
+
+    let initialY = pg.height * 0.15;
+    if (containerRef.current) {
+      const el = containerRef.current.querySelector(`[data-pgwrap="${pageNum}"]`);
+      if (el) {
+        const scrollWithinPage = Math.max(0, containerRef.current.scrollTop - el.offsetTop);
+        const visibleY = scrollWithinPage / zoom + 60;
+        initialY = Math.min(Math.max(visibleY, 40), pg.height * 0.75);
+      }
+    }
+
     setFloatingBoxes(prev => [...prev, {
       id, page: pageNum,
-      // z baselines stack newer overlays above older ones; bumped on every
-      // create so a text box added after an image lands on top of it.
       z: 50 + floatingIdCounter,
-      x: pg.width / 2, y: pg.height / 2, text: "",
+      x: pg.width / 2, y: initialY, text: "",
       fontSize: 14, fontFamily: "Arial, sans-serif",
       isBold: false, isItalic: false, color: "#000000",
       bgColor: "#ffffff",
@@ -585,12 +595,23 @@ export default function PDFEditor() {
     floatingIdCounter++;
     const id = `shape-${floatingIdCounter}`;
     const size = Math.min(pg.width, pg.height) * 0.25;
+
+    let initialY = pg.height * 0.15;
+    if (containerRef.current) {
+      const el = containerRef.current.querySelector(`[data-pgwrap="${pageNum}"]`);
+      if (el) {
+        const scrollWithinPage = Math.max(0, containerRef.current.scrollTop - el.offsetTop);
+        const visibleY = scrollWithinPage / zoom + 60;
+        initialY = Math.min(Math.max(visibleY, 20), pg.height * 0.75 - size);
+      }
+    }
+
     setFloatingShapes(prev => [...prev, {
       id,
       page: pageNum,
       z: 50 + floatingIdCounter,
       x: pg.width / 2 - size / 2,
-      y: pg.height / 2 - size / 2,
+      y: initialY,
       w: size,
       h: size,
       shapeType,
@@ -602,8 +623,7 @@ export default function PDFEditor() {
     setTimeout(() => {
       const el = containerRef.current?.querySelector(`[data-pgwrap="${pageNum}"]`);
       if (el && containerRef.current) {
-        const shapeCenterY = (pg.height / 2) * zoom;
-        const target = el.offsetTop + shapeCenterY - containerRef.current.clientHeight / 2;
+        const target = el.offsetTop + initialY * zoom - 80;
         containerRef.current.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
       }
     }, 50);
@@ -1050,7 +1070,6 @@ export default function PDFEditor() {
 
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
-    saveToIDB(pdfBytes, fileName);
     try {
  // Phase 3: don't silently strip encryption. Try strict first; only
       // fall back to ignoreEncryption: true if we hit an actual encryption
