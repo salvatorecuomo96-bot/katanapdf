@@ -16,7 +16,7 @@ import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../util
 import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
-import { CINZEL, CROSSHATCH, DRAW_COLORS, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
+import { CINZEL, CROSSHATCH, DRAW_COLORS, FB_SIZES, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
 
 import "./PDFEditor.css";
 
@@ -78,7 +78,7 @@ export default function PDFEditor() {
   const [dragOverPageNum, setDragOverPageNum] = useState(null);
   const [drawMode, setDrawMode] = useState(false);
   const [drawColor, setDrawColor] = useState('#e53e3e');
-  const [drawWidth, setDrawWidth] = useState(4);
+  const [drawWidth, setDrawWidth] = useState(6);
   const [drawTool, setDrawTool] = useState('pencil');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [floatingShapes, setFloatingShapes] = useState([]);
@@ -698,11 +698,13 @@ export default function PDFEditor() {
       ctx.fill();
     }
     // Highlighter + drag: snap to a clean horizontal rectangle so it lines up with text.
+    let hlRect = null;
     if (isHighlighter && hasMoved && stroke.points && stroke.points.length > 1) {
       const pts = stroke.points;
       const minX = Math.min(...pts.map(p => p.x));
       const maxX = Math.max(...pts.map(p => p.x));
       const avgY = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      hlRect = { x: minX, y: avgY - width / 2, w: maxX - minX, h: width, color };
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.globalAlpha = 0.4;
       ctx.fillStyle = color;
@@ -723,6 +725,7 @@ export default function PDFEditor() {
       h: pg.height,
       dataUrl,
       isDrawStroke: true,
+      ...(hlRect ? { isHighlight: true, hlRect } : {}),
     }]);
   }
 
@@ -1250,6 +1253,19 @@ export default function PDFEditor() {
 
         // 3. Floating images
         for (const fi of floatingImages.filter(f => f.page === pg.num)) {
+          if (fi.isHighlight && fi.hlRect) {
+            const r = fi.hlRect;
+            pdfPage.drawRectangle({
+              x: r.x * sx,
+              y: pdfH - (r.y + r.h) * sy,
+              width: r.w * sx,
+              height: r.h * sy,
+              color: hexToRgb(r.color),
+              opacity: 0.4,
+              borderWidth: 0,
+            });
+            continue;
+          }
           const isJpg = /^data:image\/jpe?g/i.test(fi.dataUrl);
           const data = await (await fetch(fi.dataUrl)).arrayBuffer();
           let img;
@@ -1717,10 +1733,12 @@ export default function PDFEditor() {
                                   <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
                                 </label>
                               </div>
-                              {/* Width slider */}
+                              {/* Width — same size list as text */}
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, accentColor: LACQUER }} title="Width" />
-                                <span style={{ fontSize: 10, color: LACQUER, minWidth: 22, fontFamily: CINZEL }}>{drawWidth}px</span>
+                                <span style={{ fontSize: 9, color: LACQUER, fontFamily: CINZEL, letterSpacing: 1 }}>SIZE</span>
+                                <select value={FB_SIZES.includes(drawWidth) ? drawWidth : FB_SIZES.reduce((a, b) => Math.abs(b - drawWidth) < Math.abs(a - drawWidth) ? b : a)} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, fontSize: 11, background: "#fff", border: `1px solid ${GOLD}`, borderRadius: 2, padding: "1px 2px", height: 23 }}>
+                                  {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
                               </div>
                             </div>
                           )}
