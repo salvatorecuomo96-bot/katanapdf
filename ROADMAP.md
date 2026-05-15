@@ -19,8 +19,8 @@ Update this table at the end of every session so any device can see where we are
 | 9 | Signature pad | ✅ Done | 2026-05-10 | [09](phases/09-signature-pad.md) |
 | 10 | Text highlighting | ✅ Done | 2026-05-14 | [10](phases/10-text-highlighting.md) |
 | 11 | Per-page fallback + IndexedDB recovery | ✅ Done | 2026-05-15 | [11](phases/11-per-page-fallback.md) |
-| 12 | Original text color | ⏳ Next | — | [12](phases/12-original-text-color.md) |
-| 13 | SEO basics + per-tool routes | 🟡 Partial | 2026-05-15 | [13](phases/13-seo-basics.md) |
+| 12 | Original text color | ✅ Done | 2026-05-15 | [12](phases/12-original-text-color.md) |
+| 13 | SEO basics + per-tool routes | ✅ Done | 2026-05-15 | [13](phases/13-seo-basics.md) |
 | 14 | Mobile-friendly pass (whole site) | 🟡 Partial | 2026-05-15 | [14](phases/14-mobile-friendly.md) |
 | 15 | Pre-launch QA + ship | Pending | — | [15](phases/15-prelaunch-qa.md) |
 
@@ -46,6 +46,9 @@ Post-roadmap UX sessions (shipped 2026-05-14):
 - Removed Tab/Esc hint text from all toolbars and modals ✅
 - Sidebar height fixed: uses flex stretch instead of calc(100vh - N) hack ✅
 - Empty text boxes auto-deleted when clicking outside ✅
+
+Post-roadmap bug fixes + features (2026-05-15 continued):
+- Font/size/color matching on text edit: EditPopup now pre-fills font family, snapped font size, and canvas-sampled text color from the original PDF text block ✅
 
 Post-roadmap bug fixes + features (2026-05-15):
 - Text highlighting (HL button) confirmed shipped in EditPopup + FloatingBox toolbars ✅

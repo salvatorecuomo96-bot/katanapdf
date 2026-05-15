@@ -39,6 +39,32 @@ export default function PDFEditor() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  // Dynamic title + meta description per hash route
+  useEffect(() => {
+    const PAGE_META = {
+      "":              { title: "katanapdf — Free PDF Editor Online",         desc: "Edit, merge, sign, annotate and reorder PDF pages directly in your browser — no upload, no account." },
+      "merge":         { title: "Merge PDF Files Free – katanapdf",           desc: "Combine multiple PDF files into one instantly in your browser. No upload, no account required." },
+      "reorder":       { title: "Reorder PDF Pages Free – katanapdf",         desc: "Drag and drop to rearrange pages in your PDF for free, right in your browser." },
+      "sign":          { title: "Sign PDF Online Free – katanapdf",           desc: "Add your handwritten signature to any PDF in seconds. No upload, no account." },
+      "image-to-pdf":  { title: "Image to PDF Converter – katanapdf",        desc: "Convert JPG or PNG images to PDF instantly in your browser. Free, no upload needed." },
+      "draw":          { title: "Draw & Annotate PDF Free – katanapdf",      desc: "Freehand draw, highlight and annotate your PDF directly in the browser. Free, no upload." },
+      "shapes":        { title: "Add Shapes to PDF Free – katanapdf",        desc: "Add circles, rectangles and shapes to your PDF for free, right in your browser." },
+      "about":         { title: "About – katanapdf",                          desc: "Learn about katanapdf, the free browser-based PDF editor with no upload and no account." },
+      "privacy":       { title: "Privacy Policy – katanapdf",                 desc: "katanapdf privacy policy. Your files never leave your browser." },
+      "terms":         { title: "Terms of Service – katanapdf",               desc: "katanapdf terms of service." },
+    };
+    const update = () => {
+      const h = window.location.hash.slice(1) || "";
+      const meta = PAGE_META[h] || PAGE_META[""];
+      document.title = meta.title;
+      const el = document.querySelector('meta[name="description"]');
+      if (el) el.setAttribute("content", meta.desc);
+    };
+    update();
+    window.addEventListener("hashchange", update);
+    return () => window.removeEventListener("hashchange", update);
+  }, []);
+
   const [pages, setPages] = useState([]);
   // Phase 6: pageOrder is an array of indices into `pages[]` describing the
   // current display order. When unmodified it equals [0,1,...,n-1]. Reorder
@@ -77,6 +103,7 @@ export default function PDFEditor() {
   const [draggedPageNum, setDraggedPageNum] = useState(null);
   const [dragOverPageNum, setDragOverPageNum] = useState(null);
   const [drawMode, setDrawMode] = useState(false);
+  const [drawPanelOpen, setDrawPanelOpen] = useState(false);
   const [drawColor, setDrawColor] = useState('#e53e3e');
   const [drawWidth, setDrawWidth] = useState(6);
   const [drawTool, setDrawTool] = useState('pencil');
@@ -727,6 +754,8 @@ export default function PDFEditor() {
       isDrawStroke: true,
       ...(hlRect ? { isHighlight: true, hlRect } : {}),
     }]);
+    setDrawMode(false);
+    setDrawPanelOpen(false);
   }
 
   function handleInsertSignature(dataUrl) {
@@ -854,11 +883,11 @@ export default function PDFEditor() {
   // Drag the corner handle on a text box to scale fontSize. Diagonal drag
   // (down-right grows, up-left shrinks) feels closest to the picture
   // resize that scales the image.
-  function startResizeFb(e, fb) {
+  function startResizeFb(e, fb, axis = 'both') {
     e.preventDefault();
     e.stopPropagation();
     saveHistory();
-    fbResizeOrigin.current = { mx: e.clientX, my: e.clientY, fs: fb.fontSize };
+    fbResizeOrigin.current = { mx: e.clientX, my: e.clientY, fs: fb.fontSize, axis };
     setResizingFb({ id: fb.id });
   }
 
@@ -957,7 +986,7 @@ export default function PDFEditor() {
       if (!o) return;
       const dx = e.clientX - o.mx;
       const dy = e.clientY - o.my;
-      const delta = (dx + dy) / 2;
+      const delta = o.axis === 'x' ? dx : o.axis === '-x' ? -dx : (dx + dy) / 2;
       const newFs = Math.max(6, Math.min(200, Math.round(o.fs + delta * 0.18)));
       setFloatingBoxes(prev => prev.map(fb => fb.id === resizingFb.id
         ? { ...fb, fontSize: newFs }
@@ -1699,7 +1728,7 @@ export default function PDFEditor() {
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         {/* Sign */}
                         <button
-                          onClick={e => { e.stopPropagation(); setDrawMode(false); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
+                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
                           style={pageActionBtn} title="Sign"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.2"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>
@@ -1709,28 +1738,37 @@ export default function PDFEditor() {
                         {/* Draw + controls dropdown */}
                         <div style={{ position: "relative" }}>
                           <button
-                            onClick={e => { e.stopPropagation(); setDrawMode(d => !d); }}
+                            onClick={e => {
+                              e.stopPropagation();
+                              const next = !drawMode;
+                              setDrawMode(next);
+                              setDrawPanelOpen(next);
+                              if (next) setShapePanelPage(null);
+                            }}
                             style={{ ...pageActionBtn, background: drawMode ? 'rgba(139,26,26,0.12)' : 'transparent', outline: drawMode ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
                             title="Freehand draw"
                           >
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
                             <span className="page-action-label">Draw</span>
                           </button>
-                          {drawMode && (
+                          {drawPanelOpen && (
                             <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: "8px", zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", minWidth: 136 }}>
-                              {/* Pencil / Highlight toggle */}
+                              {/* Pencil / Highlight toggle — closes panel on click */}
                               <div style={{ display: "flex", gap: 4 }}>
                                 <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
                                 <button onClick={() => { setDrawTool('highlighter'); if (drawWidth < 10) setDrawWidth(14); }} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'highlighter' ? LACQUER : "transparent", color: drawTool === 'highlighter' ? "#fff" : LACQUER, fontWeight: 700 }}>HIGHLIGHT</button>
                               </div>
-                              {/* 4×4 color grid: 15 presets + eyedropper */}
+                              {/* 4×4 color grid — closes panel on color select */}
                               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
                                 {DRAW_COLORS.map(c => (
-                                  <button key={c} onClick={() => setDrawColor(c)} title={c} style={{ width: 26, height: 26, background: c, border: drawColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                                  <button key={c} onClick={() => { setDrawColor(c); setDrawPanelOpen(false); }} title={c} style={{ width: 26, height: 26, background: c, border: drawColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
                                 ))}
                                 <label title="Custom color" style={{ width: 26, height: 26, border: `1px solid rgba(0,0,0,0.2)`, borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 0 0-20 0"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                                  <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                                  <input type="color" value={drawColor}
+                                    onChange={e => setDrawColor(e.target.value)}
+                                    onBlur={() => setDrawPanelOpen(false)}
+                                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
                                 </label>
                               </div>
                               {/* Width — same size list as text */}
@@ -1747,7 +1785,7 @@ export default function PDFEditor() {
                         {/* Shapes */}
                         <div style={{ position: "relative" }}>
                           <button
-                            onClick={e => { e.stopPropagation(); setDrawMode(false); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
+                            onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
                             style={{ ...pageActionBtn, background: shapePanelPage === pg.num ? 'rgba(139,26,26,0.12)' : 'transparent', outline: shapePanelPage === pg.num ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
                             title="Add shape"
                           >
@@ -1780,7 +1818,7 @@ export default function PDFEditor() {
 
                         {/* Add Text */}
                         <button
-                          onClick={e => { e.stopPropagation(); setDrawMode(false); addFloatingBox(pg.num); }}
+                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); addFloatingBox(pg.num); }}
                           style={pageActionBtn} title="Add text box"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
@@ -1788,7 +1826,7 @@ export default function PDFEditor() {
                         </button>
 
                         {/* Add Image */}
-                        <label style={pageActionBtn} title="Add image" onClick={() => setDrawMode(false)}>
+                        <label style={pageActionBtn} title="Add image" onClick={() => { setDrawMode(false); setDrawPanelOpen(false); }}>
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                           <span className="page-action-label">Add image</span>
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
@@ -1875,7 +1913,7 @@ export default function PDFEditor() {
                           rotation={rotation}
                           onSelect={() => setSelected(fb.id)}
                           onStartDrag={e => startDragFloat(e, fb)}
-                          onStartResize={e => startResizeFb(e, fb)}
+                          onStartResize={(e, axis) => startResizeFb(e, fb, axis)}
                           onStartRotate={e => startRotateFb(e, fb)}
                           onUpdate={u => updateFloatingBox(fb.id, u)}
                           onCommit={() => setSelected(null)}

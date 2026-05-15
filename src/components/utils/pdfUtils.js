@@ -73,29 +73,23 @@ export function mergeLineClustersIntoParagraphs(lineClusters) {
     const hyphenHung = /[-\u00ad]\s*$/.test(prevStr) || /\d[-\u00ad]\s*$/.test(prevStr);
     const nextLooksLikeDateTail = /^\d{2,4}\b/.test(nextStr) || /^to\s+\d/i.test(nextStr);
 
-    const prevAvgFs = prevC.reduce((s, w) => s + w.fontSize, 0) / prevC.length;
-    const nextAvgFs = nextC.reduce((s, w) => s + w.fontSize, 0) / nextC.length;
-    const headingPullsBody = prevAvgFs > nextAvgFs * 1.12;
-
     const gapLo = -fsMin * 0.4;
     let gapHi = fsMin * 2.2;
     if (hyphenHung) gapHi = Math.max(gapHi, fsMin * 3.85);
     else if (nextLooksLikeDateTail && overlapRatio > 0.06 && Math.abs(nextMinX - prevMinX) < fsMin * 6)
       gapHi = Math.max(gapHi, fsMin * 3.1);
-    if (headingPullsBody) gapHi = Math.max(gapHi, Math.max(prevAvgFs, nextAvgFs) * 3.6);
     const gapOK = gap >= gapLo && gap < gapHi;
 
     let isolatedSideBySide = nextMaxX < prevMinX - fsMin * 2.5 || nextMinX > prevMaxX + fsMin * 4;
     if (hyphenHung)
       isolatedSideBySide = nextMaxX < prevMinX - fsMin * 8 || nextMinX > prevMaxX + fsMin * 12;
 
-    const sizeMismatch = fsMax > fsMin * 1.32 && !headingPullsBody;
+    const sizeMismatch = fsMax > fsMin * 1.32;
     const leftAligned = Math.abs(nextMinX - prevMinX) < fsMin * 4.5;
 
     let merge = false;
     if (!gapOK || isolatedSideBySide) merge = false;
     else if (sizeMismatch) merge = false;
-    else if (headingPullsBody) merge = true;
     else if (hyphenHung) merge = true;
     else if (leftAligned) merge = true;
     else if (overlapRatio > 0.32) merge = true;
@@ -131,7 +125,7 @@ export function paragraphWordsToTextBlock(words, paraIdx) {
   const fs = sortedLines.length > 1
     ? words.reduce((a, w) => a + w.fontSize, 0) / words.length
     : topLine.reduce((s, w) => s + w.fontSize, 0) / Math.max(topLine.length, 1);
-  const { fontFamily, isBold, isItalic } = topLine[0];
+  const { fontFamily, isBold, isItalic, color } = topLine[0];
 
   return {
     id: `${page}-P${paraIdx}`,
@@ -147,6 +141,7 @@ export function paragraphWordsToTextBlock(words, paraIdx) {
     fontFamily,
     isBold,
     isItalic,
+    color: color || "#000000",
     edited: false,
   };
 }
@@ -177,7 +172,7 @@ export function redrawPage(canvas, dataUrl, edits) {
       const lineCount = Math.max(1, lines.length);
       const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
       
-      ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
+      ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"`;
       
       let textW = 0;
       for (const line of lines) {

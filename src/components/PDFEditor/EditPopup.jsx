@@ -29,9 +29,14 @@ export default function EditPopup({
   const [text, setText] = useState(block.text || "");
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const rawSize = Math.round((block.fontSize || 14) / SCALE);
+  const snapSize = FB_SIZES.reduce((prev, curr) =>
+    Math.abs(curr - rawSize) < Math.abs(prev - rawSize) ? curr : prev
+  );
+
   const [format, setFormat] = useState({
     fontFamily: block.fontFamily || "Arial, sans-serif",
-    fontSize: Math.round((block.fontSize || 14) / SCALE),
+    fontSize: snapSize,
     color: block.color || "#000000",
     isBold: block.isBold || false,
     isItalic: block.isItalic || false,
@@ -39,7 +44,7 @@ export default function EditPopup({
     angle: block.angle || 0,
   });
 
-  const [colorOpen, setColorOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState(null); // 'textColor' | 'bgColor' | null
   const dragOrigin = useRef(null);
   const taRef = useRef(null);
   const boxRef = useRef(null);
@@ -77,7 +82,7 @@ export default function EditPopup({
 
     const timer = setTimeout(() => {
       el.focus();
-      el.select();
+      el.setSelectionRange(el.value.length, el.value.length);
     }, 30);
 
     return () => clearTimeout(timer);
@@ -175,7 +180,7 @@ export default function EditPopup({
     window.addEventListener("mouseup", up);
   };
 
-  const startResizeText = e => {
+  const startResizeText = (e, axis = 'both') => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -186,7 +191,7 @@ export default function EditPopup({
     const move = moveEvent => {
       const dx = moveEvent.clientX - startX;
       const dy = moveEvent.clientY - startY;
-      const delta = (dx + dy) / 2;
+      const delta = axis === 'x' ? dx : axis === '-x' ? -dx : (dx + dy) / 2;
 
       const nextFontSize = Math.max(
         6,
@@ -439,59 +444,54 @@ export default function EditPopup({
             <button
               type="button"
               title="Text colour"
-              onClick={e => { e.stopPropagation(); setColorOpen(o => !o); }}
+              onClick={e => { e.stopPropagation(); setOpenPanel(o => o === 'textColor' ? null : 'textColor'); }}
               style={{ width: 18, height: 18, borderRadius: "50%", background: format.color, border: "2px solid rgba(255,255,255,0.6)", cursor: "pointer", padding: 0, display: "block" }}
             />
-            {colorOpen && (
+            {openPanel === 'textColor' && (
               <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
                 {DRAW_COLORS.map(c => (
-                  <button key={c} type="button" onClick={e => { e.stopPropagation(); setFormat(prev => ({ ...prev, color: c })); setColorOpen(false); refocusText(); }}
+                  <button key={c} type="button" onClick={e => { e.stopPropagation(); setFormat(prev => ({ ...prev, color: c })); setOpenPanel(null); refocusText(); }}
                     style={{ width: 20, height: 20, background: c, border: format.color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
                 ))}
                 <label title="Custom" style={{ width: 20, height: 20, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                  <input type="color" value={format.color} onChange={e => { setFormat(prev => ({ ...prev, color: e.target.value })); refocusText(); }} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                  <input type="color" value={format.color}
+                    onChange={e => { setFormat(prev => ({ ...prev, color: e.target.value })); }}
+                    onBlur={() => { setOpenPanel(null); refocusText(); }}
+                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
                 </label>
               </div>
             )}
           </div>
 
-          <div
-            title="Background colour"
-            onPointerDown={keepInsideEditor}
-            onMouseDown={keepInsideEditor}
-            onClick={keepInsideEditor}
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              overflow: "hidden",
-              border: "1px dashed #aaa",
-              position: "relative",
-              flex: "0 0 auto",
-            }}
-          >
-            <input
-              type="color"
-              value={
-                format.bgColor === "transparent"
-                  ? "#ffffff"
-                  : format.bgColor || "#ffffff"
-              }
-              onChange={e => {
-                setFormat(prev => ({ ...prev, bgColor: e.target.value }));
-                refocusText();
-              }}
+          {/* Background colour — same grid as text colour */}
+          <div style={{ position: "relative", flex: "0 0 auto" }} onMouseDown={keepInsideEditor} onClick={keepInsideEditor} onPointerDown={keepInsideEditor}>
+            <button
+              type="button"
+              title="Background colour"
+              onClick={e => { e.stopPropagation(); setOpenPanel(o => o === 'bgColor' ? null : 'bgColor'); }}
               style={{
-                position: "absolute",
-                top: -10,
-                left: -10,
-                width: 40,
-                height: 40,
-                cursor: "pointer",
-                border: "none",
+                width: 18, height: 18, borderRadius: "50%",
+                background: format.bgColor === "transparent" || !format.bgColor ? "#ffffff" : format.bgColor,
+                border: format.bgColor === "transparent" || !format.bgColor ? "2px dashed rgba(255,255,255,0.6)" : "2px solid rgba(255,255,255,0.6)",
+                cursor: "pointer", padding: 0, display: "block",
               }}
             />
+            {openPanel === 'bgColor' && (
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                {DRAW_COLORS.map(c => (
+                  <button key={c} type="button" onClick={e => { e.stopPropagation(); setFormat(prev => ({ ...prev, bgColor: c })); setOpenPanel(null); refocusText(); }}
+                    style={{ width: 20, height: 20, background: c, border: format.bgColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                ))}
+                <label title="Custom" style={{ width: 20, height: 20, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  <input type="color" value={format.bgColor === "transparent" ? "#ffffff" : format.bgColor || "#ffffff"}
+                    onChange={e => { setFormat(prev => ({ ...prev, bgColor: e.target.value })); }}
+                    onBlur={() => { setOpenPanel(null); refocusText(); }}
+                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                </label>
+              </div>
+            )}
           </div>
 
           <button
@@ -500,6 +500,7 @@ export default function EditPopup({
               e.preventDefault();
               e.stopPropagation();
               setFormat(prev => ({ ...prev, bgColor: "transparent" }));
+              setOpenPanel(null);
               refocusText();
             }}
             onMouseDown={keepInsideEditor}
@@ -580,22 +581,9 @@ export default function EditPopup({
           }}
  />
 
-        <div
-          onMouseDown={startResizeText}
-          title="Hold and drag to resize text"
-          style={{
-            position: "absolute",
-            bottom: -6,
-            right: -6,
-            width: 12,
-            height: 12,
-            background: LACQUER,
-            cursor: "nwse-resize",
-            borderRadius: "50%",
-            border: "2px solid #fff",
-            zIndex: 20,
-          }}
-        />
+        <div onMouseDown={e => startResizeText(e, 'both')} title="Drag to resize text" style={{ position: "absolute", bottom: -4, right: -4, width: 8, height: 8, background: "rgba(139,26,26,0.35)", cursor: "nwse-resize", borderRadius: "50%", border: "1px solid rgba(139,26,26,0.5)", zIndex: 20 }} />
+        <div onMouseDown={e => startResizeText(e, 'x')} title="Drag to resize text" style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, background: "rgba(139,26,26,0.25)", cursor: "ew-resize", borderRadius: "50%", border: "1px solid rgba(139,26,26,0.4)", zIndex: 20 }} />
+        <div onMouseDown={e => startResizeText(e, '-x')} title="Drag to resize text" style={{ position: "absolute", left: -4, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, background: "rgba(139,26,26,0.25)", cursor: "ew-resize", borderRadius: "50%", border: "1px solid rgba(139,26,26,0.4)", zIndex: 20 }} />
       </div>
     </>
   );
