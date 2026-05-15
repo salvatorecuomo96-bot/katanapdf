@@ -20,6 +20,14 @@ export const tbIconBtn = { width: 28, height: 28, border: "1px solid rgba(196,15
 export const tbSelect = { padding: "4px 8px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 12, background: INK, color: PARCHMENT, cursor: "pointer", fontFamily: CINZEL, letterSpacing: 1 };
 export const pageBtn = { padding: "7px 16px", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, background: "transparent", color: LACQUER, cursor: "pointer", userSelect: "none" };
 
+export const DRAW_COLORS = [
+  '#000000', '#ffffff', '#9e9e9e',
+  '#f44336', '#ff9800', '#ffeb3b',
+  '#4caf50', '#2196f3', '#9c27b0',
+  '#e91e63', '#00bcd4', '#795548',
+  '#607d8b', '#ff5722', '#8bc34a',
+];
+
 export const FB_SIZES = [6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,32,36,40,48,56,64,72,80,96,120];
 export const FONT_FAMILIES = [
   { label: "Arial", value: "Arial, sans-serif" },

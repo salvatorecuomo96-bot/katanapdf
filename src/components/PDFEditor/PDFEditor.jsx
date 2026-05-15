@@ -16,65 +16,12 @@ import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../util
 import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
-import { CINZEL, CROSSHATCH, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
+import { CINZEL, CROSSHATCH, DRAW_COLORS, GOLD, hiddenFileInput, INK, LACQUER, pageBtn, PARCHMENT, PARCHMENT_2, SCALE } from "../utils/constant";
 
 import "./PDFEditor.css";
 
 let floatingIdCounter = 0;
 
-const IDB_NAME = "katanapdf";
-const IDB_STORE = "recovery";
-const IDB_KEY = "lastInput";
-const IDB_MAX_BYTES = 50 * 1024 * 1024;
-
-async function idbOpen() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_NAME, 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror = e => reject(e.target.error);
-  });
-}
-
-async function saveToIDB(tabs) {
-  // tabs = [{bytes: Uint8Array, name: string}, ...]
-  // Keep as many as fit within IDB_MAX_BYTES total (most recent first)
-  let total = 0;
-  const keep = [];
-  for (const t of [...tabs].reverse()) {
-    if (t.bytes && total + t.bytes.byteLength <= IDB_MAX_BYTES) {
-      keep.push(t);
-      total += t.bytes.byteLength;
-    }
-  }
-  keep.reverse();
-  if (!keep.length) return;
-  try {
-    const db = await idbOpen();
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    tx.objectStore(IDB_STORE).put({ tabs: keep, ts: Date.now() }, IDB_KEY);
-    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-    db.close();
-  } catch { /* non-fatal */ }
-}
-
-async function loadFromIDB() {
-  try {
-    const db = await idbOpen();
-    const tx = db.transaction(IDB_STORE, "readonly");
-    const rec = await new Promise((res, rej) => {
-      const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
-      req.onsuccess = e => res(e.target.result);
-      req.onerror = () => rej(req.error);
-    });
-    db.close();
-    if (!rec || Date.now() - rec.ts > 24 * 60 * 60 * 1000) return null;
-    // Backward compat: old format stored {bytes, name, ts}
-    if (rec.bytes) return { tabs: [{ bytes: rec.bytes, name: rec.name }], ts: rec.ts };
-    if (rec.tabs && rec.tabs.length) return rec;
-    return null;
-  } catch { return null; }
-}
 
 export default function PDFEditor() {
   const [pdfBytes, setPdfBytes] = useState(null);
@@ -132,6 +79,7 @@ export default function PDFEditor() {
   const [drawMode, setDrawMode] = useState(false);
   const [drawColor, setDrawColor] = useState('#e53e3e');
   const [drawWidth, setDrawWidth] = useState(4);
+  const [drawTool, setDrawTool] = useState('pencil');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [floatingShapes, setFloatingShapes] = useState([]);
   const [shapePanelPage, setShapePanelPage] = useState(null);
@@ -154,10 +102,9 @@ export default function PDFEditor() {
   const currentStrokeRef = useRef(null);
   const addTextClickLock = useRef(false);
   const autoZoomPendingRef = useRef(false);
-  const [recoveryAvailable, setRecoveryAvailable] = useState(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   // Close sidebar by default only on actual phone screens
   useEffect(() => { if (window.innerWidth < 480) setSidebarOpen(false); }, []);
-  useEffect(() => { loadFromIDB().then(r => r && setRecoveryAvailable(r)); }, []);
 
   async function handleFile(e) {
     const input = e.target;
@@ -170,21 +117,6 @@ export default function PDFEditor() {
       const id = makeTabId();
       setTabsList(prev => [...prev, { id, fileName: newName }]);
       setActiveTabId(id);
-      // Save all open tabs (previous snapshots + new) to IDB with full edit state
-      const prevTabs = Object.values(tabSnapshots.current)
-        .filter(s => s.pdfBytes)
-        .map(s => ({
-          bytes: s.pdfBytes, name: s.fileName || "document.pdf",
-          textBlocks: s.textBlocks || {}, floatingBoxes: s.floatingBoxes || [],
-          floatingImages: s.floatingImages || [], floatingShapes: s.floatingShapes || [],
-          pageOrder: s.pageOrder || [], rotatedPages: s.rotatedPages || {},
-          deletedPages: Array.from(s.deletedPages || []), zoom: s.zoom || 1,
-        }));
-      saveToIDB([...prevTabs, {
-        bytes: newBytes, name: newName,
-        textBlocks: {}, floatingBoxes: [], floatingImages: [], floatingShapes: [],
-        pageOrder: [], rotatedPages: {}, deletedPages: [], zoom: 1,
-      }]);
     } catch (err) {
       console.error("Failed to load PDF/Image:", err);
       alert("Couldn't open this file: " + (err.message || err) + "\n\nTry a different file or refresh the page.");
@@ -280,10 +212,21 @@ export default function PDFEditor() {
   // Mirror live state into a ref so snapshotCurrent always reads fresh values
   useEffect(() => {
     liveStateRef.current = {
-      pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, history, fileName, zoom, hasTextLayer, isEncrypted,
+      pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, floatingShapes, history, fileName, zoom, hasTextLayer, isEncrypted,
       rotatedPages, deletedPages,
     };
   });
+
+  // Warn on browser refresh/tab-close when a PDF is open
+  useEffect(() => {
+    const onBeforeUnload = e => {
+      if (!pdfBytes) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [pdfBytes]);
 
   function snapshotCurrentTab() {
     if (!activeTabId) return;
@@ -326,12 +269,11 @@ export default function PDFEditor() {
   // Close the editor entirely and return to the homepage. Wired to the
   // \'katanapdf\' wordmark in the editor toolbar - without this the link only
   // updates the URL hash and the editor still renders because pages.length > 0.
-  function goHome() {
+  function doGoHome() {
     tabSnapshots.current = {};
     setTabsList([]);
     setActiveTabId(null);
     setPages([]);
-    loadFromIDB().then(r => setRecoveryAvailable(r || null));
     setPageOrder([]);
     setRotatedPages({});
     setDeletedPages(new Set());
@@ -347,6 +289,11 @@ export default function PDFEditor() {
     setTextLayerNoticeDismissed(false);
     setSelected(null);
     setActivePopup(null);
+  }
+
+  function goHome() {
+    if (pdfBytes) { setShowLeaveConfirm(true); return; }
+    doGoHome();
   }
 
   function closeTab(id) {
@@ -695,26 +642,44 @@ export default function PDFEditor() {
     const x = (e.clientX - rect.left) / scale;
     const y = (e.clientY - rect.top) / scale;
     const ctx = canvas.getContext('2d');
+    const isHL = drawTool === 'highlighter';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1.0;
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.strokeStyle = drawColor;
     ctx.lineWidth = drawWidth;
-    ctx.lineCap = 'round';
+    ctx.lineCap = isHL ? 'square' : 'round';
     ctx.lineJoin = 'round';
-    currentStrokeRef.current = { pgNum, ctx, canvas, color: drawColor, width: drawWidth, startX: x, startY: y, hasMoved: false };
+    currentStrokeRef.current = { pgNum, ctx, canvas, color: drawColor, width: drawWidth, startX: x, startY: y, hasMoved: false, isHighlighter: isHL, points: isHL ? [{x, y}] : null };
   }
 
   function handleDrawMove(e, pgNum, scale) {
     if (!isDrawingRef.current || !currentStrokeRef.current || currentStrokeRef.current.pgNum !== pgNum) return;
     e.preventDefault();
-    const { ctx, canvas } = currentStrokeRef.current;
+    const stroke = currentStrokeRef.current;
+    const { ctx, canvas } = stroke;
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) / scale;
     const y = (e.clientY - rect.top) / scale;
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    currentStrokeRef.current.hasMoved = true;
+    if (stroke.isHighlighter) {
+      stroke.points.push({x, y});
+      // Redraw entire path at once so semi-transparency doesn't compound
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 0.4;
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.width;
+      ctx.lineCap = 'square';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      for (let i = 1; i < stroke.points.length; i++) ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+      ctx.stroke();
+    } else {
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+    stroke.hasMoved = true;
   }
 
   function handleDrawEnd(pgNum, pg) {
@@ -722,12 +687,26 @@ export default function PDFEditor() {
     isDrawingRef.current = false;
     const stroke = currentStrokeRef.current;
     currentStrokeRef.current = null;
-    const { canvas, ctx, hasMoved, startX, startY, color, width } = stroke;
+    const { canvas, ctx, hasMoved, startX, startY, color, width, isHighlighter } = stroke;
     if (!hasMoved) {
+      // Tap with no drag: draw a dot. Highlighter uses 40% alpha.
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = isHighlighter ? 0.4 : 1.0;
       ctx.beginPath();
       ctx.arc(startX, startY, width / 2, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
+    }
+    // Highlighter + drag: snap to a clean horizontal rectangle so it lines up with text.
+    if (isHighlighter && hasMoved && stroke.points && stroke.points.length > 1) {
+      const pts = stroke.points;
+      const minX = Math.min(...pts.map(p => p.x));
+      const maxX = Math.max(...pts.map(p => p.x));
+      const avgY = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = color;
+      ctx.fillRect(minX, avgY - width / 2, maxX - minX, width);
     }
     saveHistory();
     const dataUrl = canvas.toDataURL('image/png');
@@ -1087,84 +1066,8 @@ export default function PDFEditor() {
     return canvas.toDataURL("image/png");
   }
 
-  async function handleRecover(rec) {
-    try {
-      setRecoveryAvailable(null);
-      let prevId = null;
-      let prevPageData = null;
-      let prevTabData = null;
-
-      for (let i = 0; i < rec.tabs.length; i++) {
-        const tabData = rec.tabs[i];
-        const name = tabData.name || "recovered.pdf";
-        const id = makeTabId();
-
-        // Before loading next PDF, manually snapshot the previous tab's full state
-        // into tabSnapshots so switching back to it works correctly
-        if (prevId && prevPageData && prevTabData) {
-          tabSnapshots.current[prevId] = {
-            pdfBytes: prevTabData.bytes,
-            pages: prevPageData,
-            pageOrder: prevTabData.pageOrder?.length ? prevTabData.pageOrder : prevPageData.map((_, idx) => idx),
-            rotatedPages: prevTabData.rotatedPages || {},
-            deletedPages: Array.from(prevTabData.deletedPages || []),
-            textBlocks: prevTabData.textBlocks || {},
-            floatingBoxes: prevTabData.floatingBoxes || [],
-            floatingImages: prevTabData.floatingImages || [],
-            history: [],
-            fileName: prevTabData.name,
-            zoom: prevTabData.zoom || 1,
-            hasTextLayer: true,
-            isEncrypted: false,
-          };
-        }
-
-        setFileName(name);
-        const { pageData } = await loadPdfFromBytes(tabData.bytes);
-
-        // Override with saved edits
-        if (tabData.textBlocks && Object.keys(tabData.textBlocks).length) setTextBlocks(tabData.textBlocks);
-        if (tabData.floatingBoxes?.length) setFloatingBoxes(tabData.floatingBoxes);
-        if (tabData.floatingImages?.length) setFloatingImages(tabData.floatingImages);
-        if (tabData.floatingShapes?.length) setFloatingShapes(tabData.floatingShapes);
-        if (tabData.pageOrder?.length) setPageOrder(tabData.pageOrder);
-        if (tabData.rotatedPages && Object.keys(tabData.rotatedPages).length) setRotatedPages(tabData.rotatedPages);
-        if (tabData.deletedPages?.length) setDeletedPages(new Set(tabData.deletedPages));
-
-        setTabsList(prev => [...prev, { id, fileName: name }]);
-        setActiveTabId(id);
-
-        prevId = id;
-        prevPageData = pageData;
-        prevTabData = tabData;
-      }
-    } catch (err) {
-      alert("Could not recover: " + (err.message || err));
-    }
-  }
-
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
-    // Update IDB with current edit state so recovery reflects latest changes
-    snapshotCurrentTab();
-    const allTabs = Object.values(tabSnapshots.current)
-      .filter(s => s.pdfBytes)
-      .map(s => ({
-        bytes: s.pdfBytes, name: s.fileName || "document.pdf",
-        textBlocks: s.textBlocks || {}, floatingBoxes: s.floatingBoxes || [],
-        floatingImages: s.floatingImages || [], floatingShapes: s.floatingShapes || [],
-        pageOrder: s.pageOrder || [], rotatedPages: s.rotatedPages || {},
-        deletedPages: Array.from(s.deletedPages || []), zoom: s.zoom || 1,
-      }));
-    // Also include the currently-active tab (snapshot above captured it)
-    if (!allTabs.length) {
-      allTabs.push({
-        bytes: pdfBytes, name: fileName || "document.pdf",
-        textBlocks, floatingBoxes, floatingImages, floatingShapes: [],
-        pageOrder, rotatedPages, deletedPages: Array.from(deletedPages), zoom,
-      });
-    }
-    saveToIDB(allTabs);
     try {
  // Phase 3: don't silently strip encryption. Try strict first; only
       // fall back to ignoreEncryption: true if we hit an actual encryption
@@ -1523,8 +1426,6 @@ export default function PDFEditor() {
           onFile={handleFile}
           onDropFile={handleDroppedFile}
           onCreateBlank={createBlankPdf}
-          recoveryAvailable={recoveryAvailable}
-          onRecover={handleRecover}
         />
       ) : (
         <>
@@ -1785,7 +1686,7 @@ export default function PDFEditor() {
                           onClick={e => { e.stopPropagation(); setDrawMode(false); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
                           style={pageActionBtn} title="Sign"
                         >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c2-2 4-4 6-3s3 3 5 1 3-5 5-6"/><path d="M3 17c1-1 2-2 3-1"/><path d="M20 5 L18 3 L6 15 L5 19 L9 18 Z"/></svg>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.2"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>
                           <span className="page-action-label">Sign</span>
                         </button>
 
@@ -1800,10 +1701,27 @@ export default function PDFEditor() {
                             <span className="page-action-label">Draw</span>
                           </button>
                           {drawMode && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", alignItems: "center", gap: 6, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: "4px 8px", zIndex: 9999, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-                              <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ width: 22, height: 22, cursor: "pointer", border: "none", background: "none", padding: 0 }} title="Pen color" />
-                              <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ width: 60, accentColor: LACQUER }} title="Pen width" />
-                              <span style={{ fontSize: 10, color: LACQUER, minWidth: 22, fontFamily: CINZEL }}>{drawWidth}px</span>
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: "8px", zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", minWidth: 136 }}>
+                              {/* Pencil / Highlight toggle */}
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
+                                <button onClick={() => { setDrawTool('highlighter'); if (drawWidth < 10) setDrawWidth(14); }} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'highlighter' ? LACQUER : "transparent", color: drawTool === 'highlighter' ? "#fff" : LACQUER, fontWeight: 700 }}>HIGHLIGHT</button>
+                              </div>
+                              {/* 4×4 color grid: 15 presets + eyedropper */}
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
+                                {DRAW_COLORS.map(c => (
+                                  <button key={c} onClick={() => setDrawColor(c)} title={c} style={{ width: 26, height: 26, background: c, border: drawColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                                ))}
+                                <label title="Custom color" style={{ width: 26, height: 26, border: `1px solid rgba(0,0,0,0.2)`, borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 0 0-20 0"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                                  <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                                </label>
+                              </div>
+                              {/* Width slider */}
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <input type="range" min={1} max={20} value={drawWidth} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, accentColor: LACQUER }} title="Width" />
+                                <span style={{ fontSize: 10, color: LACQUER, minWidth: 22, fontFamily: CINZEL }}>{drawWidth}px</span>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1982,6 +1900,30 @@ export default function PDFEditor() {
           color={signatureColor}
           setColor={setSignatureColor}
         />
+      )}
+
+      {/* Leave confirmation modal */}
+      {showLeaveConfirm && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
+             onClick={() => setShowLeaveConfirm(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: PARCHMENT, border: `1px solid ${GOLD}`, padding: "28px 32px", maxWidth: 400, width: "90%", textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.28)" }}>
+            <p style={{ fontFamily: CINZEL, fontSize: 14, letterSpacing: 2, color: LACQUER, fontWeight: 700, margin: "0 0 10px", textTransform: "uppercase" }}>Unsaved changes</p>
+            <p style={{ fontFamily: "'IM Fell English', serif", fontSize: 15, color: INK, margin: "0 0 22px", lineHeight: 1.55 }}>
+              Going back will discard all your edits. Download your PDF first to keep them.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              <button onClick={() => { setShowLeaveConfirm(false); handleDownload(); }} style={{ padding: "9px 20px", background: LACQUER, color: "#fff", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700 }}>
+                DOWNLOAD FIRST
+              </button>
+              <button onClick={() => { setShowLeaveConfirm(false); doGoHome(); }} style={{ padding: "9px 20px", background: "transparent", color: LACQUER, border: `1px solid ${LACQUER}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700 }}>
+                LEAVE ANYWAY
+              </button>
+              <button onClick={() => setShowLeaveConfirm(false)} style={{ padding: "9px 20px", background: "transparent", color: INK, border: `1px solid rgba(26,18,8,0.3)`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer" }}>
+                STAY
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

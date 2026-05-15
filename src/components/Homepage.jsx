@@ -13,7 +13,7 @@ function use4KZoom() {
   return physicalW >= 2560 ? 1.3 : 1;
 }
 
-export default function Homepage({ onFile, onDropFile, onCreateBlank, recoveryAvailable, onRecover }) {
+export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
   const [dragOver, setDragOver] = useState(false);
   const zoom4k = use4KZoom();
 
@@ -90,14 +90,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, recoveryAv
           }}>
             Create a blank PDF
           </button>
-          {recoveryAvailable && (
-            <button onClick={() => onRecover(recoveryAvailable)} style={{
-              background: "transparent", border: `1px solid ${GOLD}`, color: INK, fontFamily: FELL,
-              fontSize: 14, cursor: "pointer", padding: "6px 18px", letterSpacing: 1,
-            }}>
-              ↩ Recover {recoveryAvailable.tabs?.length > 1 ? `${recoveryAvailable.tabs.length} sessions` : "last session"}
-            </button>
-          )}
           <span style={{ fontFamily: FELL, fontSize: 13, color: "rgba(26,18,8,0.5)", fontStyle: "italic" }}>
             or drag a PDF or image anywhere on this page
           </span>

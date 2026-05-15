@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES, CINZEL } from "../utils/constant";
+import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES, CINZEL, DRAW_COLORS } from "../utils/constant";
 
 const RotateIcon = () => (
   <svg
@@ -33,6 +33,7 @@ export default function FloatingBox({
 }) {
   const taRef = useRef(null);
   const [hovered, setHovered] = useState(false);
+  const [colorOpen, setColorOpen] = useState(false);
   const draggingRef = useRef(false);
 
   // Reset hover badge when leaving edit mode so it doesn't linger
@@ -390,61 +391,26 @@ export default function FloatingBox({
           I
         </button>
 
-        <button
-          type="button"
-          onClick={e => {
-            e.preventDefault();
-            e.stopPropagation();
-            onUpdate({ bgColor: "#fff59d" });
-            refocusText();
-          }}
-          style={{
-            minWidth: 26,
-            height: 23,
-            borderRadius: 2,
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: fb.bgColor === "#fff59d" ? "#fff59d" : "rgba(255,255,255,0.08)",
-            color: fb.bgColor === "#fff59d" ? INK : "#fff",
-            fontWeight: "bold",
-            fontSize: 10,
-            cursor: "pointer",
-            padding: "1px 5px",
-          }}
-          title="Highlight"
-        >
-          HL
-        </button>
-
-        <div
-          title="Text colour"
-          style={{
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            overflow: "hidden",
-            border: "1px solid #ddd",
-            position: "relative",
-            flex: "0 0 auto",
-          }}
-        >
-          <input
-            type="color"
-            value={fb.color || "#000000"}
-            onChange={e => {
-              e.stopPropagation();
-              onUpdate({ color: e.target.value });
-              refocusText();
-            }}
-            style={{
-              position: "absolute",
-              top: -10,
-              left: -10,
-              width: 40,
-              height: 40,
-              cursor: "pointer",
-              border: "none",
-            }}
+        {/* Text colour — swatch opens 4×4 grid */}
+        <div style={{ position: "relative", flex: "0 0 auto" }}>
+          <button
+            type="button"
+            title="Text colour"
+            onClick={e => { e.stopPropagation(); setColorOpen(o => !o); }}
+            style={{ width: 18, height: 18, borderRadius: "50%", background: fb.color || "#000000", border: "2px solid rgba(255,255,255,0.6)", cursor: "pointer", padding: 0, display: "block" }}
           />
+          {colorOpen && (
+            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+              {DRAW_COLORS.map(c => (
+                <button key={c} type="button" onClick={e => { e.stopPropagation(); onUpdate({ color: c }); setColorOpen(false); refocusText(); }}
+                  style={{ width: 20, height: 20, background: c, border: (fb.color || "#000000") === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+              ))}
+              <label title="Custom" style={{ width: 20, height: 20, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <input type="color" value={fb.color || "#000000"} onChange={e => { e.stopPropagation(); onUpdate({ color: e.target.value }); refocusText(); }} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+              </label>
+            </div>
+          )}
         </div>
 
         <div
