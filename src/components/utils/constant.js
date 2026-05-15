@@ -1,24 +1,44 @@
 // Shared design tokens and inline style objects for katanapdf.
 export const SCALE = 2;
 
+// Legacy — kept for EditPopup/FloatingBox editing toolbars (always LACQUER red)
 export const PARCHMENT = "#F5EDD6";
 export const PARCHMENT_2 = "#EDE0BC";
+export const INK = "#1a1208";
+export const CROSSHATCH = "";
+
+// Brand constants — never change between themes
 export const LACQUER = "#8B1A1A";
 export const GOLD = "#C4963A";
-export const INK = "#1a1208";
-
 export const CINZEL = '"Cinzel", "Times New Roman", serif';
 export const FELL = '"Lora", Georgia, "Times New Roman", serif';
 
-export const CROSSHATCH = `repeating-linear-gradient(45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px), repeating-linear-gradient(-45deg, transparent 0 9px, rgba(26,18,8,0.035) 9px 10px)`;
+// CSS variable references — use these for theme-aware colors in inline styles
+export const C = {
+  bg:           "var(--bg)",
+  surface:      "var(--surface)",
+  card:         "var(--card)",
+  text:         "var(--text)",
+  textMuted:    "var(--text-muted)",
+  border:       "var(--border)",
+  borderStrong: "var(--border-strong)",
+  toolbarBg:    "var(--toolbar-bg)",
+  tabBg:        "var(--tab-bg)",
+  tabActiveBg:  "var(--tab-active-bg)",
+  inputBg:      "var(--input-bg)",
+  pageAreaBg:   "var(--page-area-bg)",
+  footerBg:     "var(--footer-bg)",
+  footerText:   "var(--footer-text)",
+};
 
-// iOS-friendly hidden file input - display:none breaks file picker on some iOS Safari versions.
+// iOS-friendly hidden file input
 export const hiddenFileInput = { position: "absolute", width: 0.1, height: 0.1, opacity: 0, overflow: "hidden", pointerEvents: "none" };
 
-export const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 11, background: "transparent", color: GOLD, cursor: "pointer", userSelect: "none", fontFamily: CINZEL, letterSpacing: 2, textTransform: "uppercase" };
-export const tbIconBtn = { width: 28, height: 28, border: "1px solid rgba(196,150,58,0.4)", fontSize: 13, background: "transparent", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: CINZEL, padding: 0 };
-export const tbSelect = { padding: "4px 8px", border: "1px solid rgba(196,150,58,0.4)", fontSize: 12, background: INK, color: PARCHMENT, cursor: "pointer", fontFamily: CINZEL, letterSpacing: 1 };
-export const pageBtn = { padding: "7px 16px", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 600, background: "transparent", color: LACQUER, cursor: "pointer", userSelect: "none" };
+// Editor top toolbar button styles (white toolbar)
+export const tbBtn = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid var(--border-strong)", fontSize: 11, background: "transparent", color: "var(--text)", cursor: "pointer", userSelect: "none", fontFamily: CINZEL, letterSpacing: 2, textTransform: "uppercase", borderRadius: 3 };
+export const tbIconBtn = { width: 28, height: 28, border: "1px solid var(--border)", fontSize: 13, background: "transparent", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: CINZEL, padding: 0, borderRadius: 3 };
+export const tbSelect = { padding: "4px 8px", border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--input-bg)", color: "var(--text)", cursor: "pointer", fontFamily: CINZEL, letterSpacing: 1, borderRadius: 3 };
+export const pageBtn = { padding: "7px 16px", border: `1px solid var(--border-strong)`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600, background: "transparent", color: LACQUER, cursor: "pointer", userSelect: "none", borderRadius: 3 };
 
 export const DRAW_COLORS = [
   '#000000', '#ffffff', '#9e9e9e',

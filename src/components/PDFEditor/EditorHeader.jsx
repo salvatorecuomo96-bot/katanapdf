@@ -1,4 +1,4 @@
-import { GOLD, INK, CINZEL, hiddenFileInput } from "../utils/constant";
+import { CINZEL, C, LACQUER, hiddenFileInput } from "../utils/constant";
 
 export default function EditorHeader({ tabsList = [], activeTabId, switchTab, closeTab, handleFile }) {
   if (tabsList.length === 0) return null;
@@ -7,8 +7,8 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
     <div
       onClick={e => e.stopPropagation()}
       style={{
-        background: INK,
-        borderBottom: `1px solid rgba(196,150,58,0.3)`,
+        background: C.tabBg,
+        borderBottom: `1px solid ${C.border}`,
         display: "flex",
         alignItems: "stretch",
         overflowX: "auto",
@@ -35,10 +35,10 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
               fontSize: 10,
               letterSpacing: "2px",
               textTransform: "uppercase",
-              color: isActive ? GOLD : "rgba(196,150,58,0.4)",
-              borderRight: "1px solid rgba(196,150,58,0.12)",
-              borderBottom: isActive ? `2px solid ${GOLD}` : "2px solid transparent",
-              background: isActive ? "rgba(196,150,58,0.08)" : "transparent",
+              color: isActive ? LACQUER : C.textMuted,
+              borderRight: `1px solid ${C.border}`,
+              borderBottom: isActive ? `2px solid ${LACQUER}` : "2px solid transparent",
+              background: isActive ? C.tabActiveBg : "transparent",
               whiteSpace: "nowrap",
               flexShrink: 0,
               maxWidth: 240,
@@ -60,7 +60,7 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
                 fontWeight: 700,
                 borderRadius: "50%",
                 cursor: "pointer",
-                color: isActive ? GOLD : "rgba(196,150,58,0.35)",
+                color: isActive ? LACQUER : C.textMuted,
                 flexShrink: 0,
                 lineHeight: 1,
               }}
@@ -80,10 +80,10 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
           width: 36,
           height: "100%",
           cursor: "pointer",
-          color: "rgba(196,150,58,0.4)",
+          color: C.textMuted,
           fontSize: 18,
           fontWeight: 300,
-          borderRight: "1px solid rgba(196,150,58,0.12)",
+          borderRight: `1px solid ${C.border}`,
           flexShrink: 0,
         }}
       >

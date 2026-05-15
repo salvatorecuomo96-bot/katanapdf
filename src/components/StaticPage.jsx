@@ -1,5 +1,5 @@
 import Footer from "./ui/Footer";
-import { CINZEL, CROSSHATCH, FELL, GOLD, INK, LACQUER, PARCHMENT } from "./utils/constant";
+import { C, CINZEL, FELL, LACQUER } from "./utils/constant";
 
 export default function StaticPage({ route }) {
   const content = {
@@ -56,19 +56,19 @@ export default function StaticPage({ route }) {
   if (!content) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: PARCHMENT, backgroundImage: CROSSHATCH, color: INK, fontFamily: FELL }}>
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: FELL }}>
       <header style={{ padding: "20px", textAlign: "center" }}>
         <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "0 auto 14px", opacity: 0.5 }} />
         <a href="#home" style={{ textDecoration: "none" }}>
-          <span style={{ fontFamily: CINZEL, fontSize: 18, color: INK, letterSpacing: 5, textTransform: "uppercase", fontWeight: 600 }}>
+          <span style={{ fontFamily: CINZEL, fontSize: 18, color: LACQUER, letterSpacing: 5, textTransform: "uppercase", fontWeight: 600 }}>
             katanapdf
           </span>
         </a>
         <div style={{ height: 1, background: LACQUER, maxWidth: 920, margin: "14px auto 0", opacity: 0.5 }} />
       </header>
-      <article style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 64px", fontSize: 16, lineHeight: 1.75, fontFamily: FELL, color: INK }}>
-        <h1 style={{ fontFamily: CINZEL, fontSize: 30, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase", marginTop: 0, marginBottom: 8, color: INK }}>{content.title}</h1>
-        <div style={{ height: 1, background: GOLD, width: 80, marginBottom: 28 }} />
+      <article style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 64px", fontSize: 16, lineHeight: 1.75, fontFamily: FELL, color: C.text }}>
+        <h1 style={{ fontFamily: CINZEL, fontSize: 30, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase", marginTop: 0, marginBottom: 8, color: C.text }}>{content.title}</h1>
+        <div style={{ height: 1, background: LACQUER, opacity: 0.3, width: 80, marginBottom: 28 }} />
         <div className="static-body">{content.body}</div>
         <p style={{ marginTop: 40 }}>
           <a href="#home" style={{ color: LACQUER, fontFamily: CINZEL, fontSize: 12, letterSpacing: 3, textTransform: "uppercase", textDecoration: "underline", fontWeight: 600 }}>

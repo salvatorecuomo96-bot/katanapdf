@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES, CINZEL, DRAW_COLORS } from "../utils/constant";
+import { C, LACQUER, FB_SIZES, FONT_FAMILIES, CINZEL, DRAW_COLORS } from "../utils/constant";
 
 const RotateIcon = () => (
   <svg
@@ -167,9 +167,9 @@ export default function FloatingBox({
             position: "absolute",
             top: -28,
             left: 0,
-            background: INK,
-            color: GOLD,
-            border: "1px solid rgba(196,150,58,0.4)",
+            background: "transparent",
+            color: LACQUER,
+            border: `1px solid ${LACQUER}`,
             borderRadius: 2,
             padding: "3px 8px",
             fontSize: 11,
@@ -184,7 +184,7 @@ export default function FloatingBox({
             gap: 5,
             fontWeight: 700,
           }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}>
               <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
               <line x1="12" y1="2" x2="12" y2="22"/>
@@ -209,7 +209,7 @@ export default function FloatingBox({
         width: editorW,
         height: editorH,
         zIndex: 1000,
-        border: `1px dashed ${GOLD}`,
+        border: `1px dashed rgba(139,26,26,0.4)`,
         borderRadius: 3,
         background:
           fb.bgColor && fb.bgColor !== "transparent"
@@ -400,7 +400,7 @@ export default function FloatingBox({
             style={{ width: 18, height: 18, borderRadius: "50%", background: fb.color || "#000000", border: "2px solid rgba(255,255,255,0.6)", cursor: "pointer", padding: 0, display: "block" }}
           />
           {openPanel === 'textColor' && (
-            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: C.card, border: `1px solid ${C.borderStrong}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
               {DRAW_COLORS.map(c => (
                 <button key={c} type="button" onClick={e => { e.stopPropagation(); onUpdate({ color: c }); setOpenPanel(null); refocusText(); }}
                   style={{ width: 20, height: 20, background: c, border: (fb.color || "#000000") === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
@@ -430,7 +430,7 @@ export default function FloatingBox({
             }}
           />
           {openPanel === 'bgColor' && (
-            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: C.card, border: `1px solid ${C.borderStrong}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
               {DRAW_COLORS.map(c => (
                 <button key={c} type="button" onClick={e => { e.stopPropagation(); onUpdate({ bgColor: c }); setOpenPanel(null); refocusText(); }}
                   style={{ width: 20, height: 20, background: c, border: fb.bgColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
