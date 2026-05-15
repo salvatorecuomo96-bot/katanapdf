@@ -22,6 +22,46 @@ import "./PDFEditor.css";
 
 let floatingIdCounter = 0;
 
+const IDB_NAME = "katanapdf";
+const IDB_STORE = "recovery";
+const IDB_KEY = "lastInput";
+const IDB_MAX_BYTES = 50 * 1024 * 1024;
+
+async function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function saveToIDB(bytes, name) {
+  if (bytes.byteLength > IDB_MAX_BYTES) return;
+  try {
+    const db = await idbOpen();
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).put({ bytes, name, ts: Date.now() }, IDB_KEY);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    db.close();
+  } catch { /* non-fatal */ }
+}
+
+async function loadFromIDB() {
+  try {
+    const db = await idbOpen();
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const rec = await new Promise((res, rej) => {
+      const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+      req.onsuccess = e => res(e.target.result);
+      req.onerror = () => rej(req.error);
+    });
+    db.close();
+    if (!rec || Date.now() - rec.ts > 24 * 60 * 60 * 1000) return null;
+    return rec;
+  } catch { return null; }
+}
+
 export default function PDFEditor() {
   const [pdfBytes, setPdfBytes] = useState(null);
   const [route, setRoute] = useState(() => {
@@ -100,8 +140,10 @@ export default function PDFEditor() {
   const currentStrokeRef = useRef(null);
   const addTextClickLock = useRef(false);
   const autoZoomPendingRef = useRef(false);
+  const [recoveryAvailable, setRecoveryAvailable] = useState(null);
   // Close sidebar by default only on actual phone screens
   useEffect(() => { if (window.innerWidth < 480) setSidebarOpen(false); }, []);
+  useEffect(() => { loadFromIDB().then(r => r && setRecoveryAvailable(r)); }, []);
 
   async function handleFile(e) {
     const input = e.target;
@@ -924,8 +966,91 @@ export default function PDFEditor() {
     };
   }, [onMouseMove, onMouseUp]);
 
+  async function rasterizePage(pg) {
+    const canvas = document.createElement("canvas");
+    canvas.width = pg.width;
+    canvas.height = pg.height;
+    const ctx = canvas.getContext("2d");
+    await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
+      img.src = pg.dataUrl;
+    });
+    const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
+    for (const e of edits) {
+      const lines = e.text.split(/\r?\n/);
+      const lh = e.fontSize * 1.22;
+      const lineCount = Math.max(1, lines.length);
+      const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
+      ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
+      let maxLineW = e.width;
+      for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
+      let whiteH;
+      if (useBaselines && lines.length > 1) {
+        const bs = e.lineBaselines;
+        whiteH = Math.max(e.height + 12, Math.max(...bs) - Math.min(...bs) + lh + 16);
+      } else {
+        whiteH = Math.max(e.height + 12, lineCount * lh + 14);
+      }
+      ctx.fillStyle = e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
+      ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
+      ctx.fillStyle = e.color || "#000";
+      ctx.textBaseline = "alphabetic";
+      if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
+      else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
+    }
+    for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
+      const lines = fb.text.split(/\r?\n/);
+      ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
+      ctx.textBaseline = "top";
+      if (fb.bgColor && fb.bgColor !== "transparent") {
+        let maxW = 0;
+        for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
+        const lh = fb.fontSize * 1.5;
+        ctx.fillStyle = fb.bgColor;
+        ctx.fillRect(fb.x - 4, fb.y - 3, maxW + 8, lines.length * lh + 6);
+      }
+      ctx.fillStyle = fb.color || "#000";
+      lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
+    }
+    for (const fi of floatingImages.filter(f => f.page === pg.num)) {
+      await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); };
+        img.src = fi.dataUrl;
+      });
+    }
+    for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
+      ctx.beginPath();
+      ctx.strokeStyle = shape.shapeColor;
+      ctx.fillStyle = shape.shapeColor;
+      ctx.lineWidth = 3;
+      if (shape.shapeType === "circle") {
+        ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
+      } else {
+        ctx.rect(shape.x, shape.y, shape.w, shape.h);
+      }
+      if (shape.shapeFill) ctx.fill(); else ctx.stroke();
+    }
+    return canvas.toDataURL("image/png");
+  }
+
+  async function handleRecover(rec) {
+    try {
+      setRecoveryAvailable(null);
+      setFileName(rec.name || "recovered.pdf");
+      await loadPdfFromBytes(rec.bytes);
+      const id = makeTabId();
+      setTabsList(prev => [...prev, { id, fileName: rec.name || "recovered.pdf" }]);
+      setActiveTabId(id);
+    } catch (err) {
+      alert("Could not recover: " + (err.message || err));
+    }
+  }
+
   async function handleDownload() {
     if (!pages.length) { alert("No PDF loaded."); return; }
+    saveToIDB(pdfBytes, fileName);
     try {
  // Phase 3: don't silently strip encryption. Try strict first; only
       // fall back to ignoreEncryption: true if we hit an actual encryption
@@ -976,19 +1101,33 @@ export default function PDFEditor() {
         timesB: await doc.embedFont(noto["noto-serif-bold"], { subset: true }),
         courier: await doc.embedFont(noto["noto-sans-mono-regular"], { subset: true }),
       };
-      const copiedPages = await doc.copyPages(srcDoc, finalPageOrder);
-      for (const p of copiedPages) doc.addPage(p);
-
-      for (let displayIdx = 0; displayIdx < copiedPages.length; displayIdx++) {
+      for (let displayIdx = 0; displayIdx < finalPageOrder.length; displayIdx++) {
         const pg = pages[finalPageOrder[displayIdx]];
-        const pdfPage = doc.getPages()[displayIdx];
-        if (!pdfPage || !pg) continue;
-        const { width: pdfW, height: pdfH } = pdfPage.getSize();
-        const sx = pdfW / pg.width;
-        const sy = pdfH / pg.height;
+        if (!pg) continue;
+        try {
+          const [copiedPage] = await doc.copyPages(srcDoc, [finalPageOrder[displayIdx]]);
+          doc.addPage(copiedPage);
+        } catch (copyErr) {
+          console.warn(`Page ${displayIdx + 1} copy failed, rasterizing:`, copyErr.message);
+          const dataUrl = await rasterizePage(pg);
+          const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
+          const pngImg = await doc.embedPng(pngBytes);
+          const rotation = rotatedPages[pg.num] || 0;
+          const rasterPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
+          rasterPage.setRotation(degrees(rotation));
+          rasterPage.drawImage(pngImg, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+          continue;
+        }
 
-        // 1. Edited original text <-' white rectangle over the original area + new text on top
-        const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
+        try {
+          const pdfPage = doc.getPages()[displayIdx];
+          if (!pdfPage) continue;
+          const { width: pdfW, height: pdfH } = pdfPage.getSize();
+          const sx = pdfW / pg.width;
+          const sy = pdfH / pg.height;
+
+          // 1. Edited original text — white rectangle over the original area + new text on top
+          const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
         for (const e of edits) {
           const text = e.text || "";
           const lines = text.split(/\r?\n/);
@@ -1130,6 +1269,17 @@ export default function PDFEditor() {
             });
           }
         }
+        } catch (overlayErr) {
+          console.warn(`Page ${displayIdx + 1} overlay failed, rasterizing:`, overlayErr.message);
+          const dataUrl = await rasterizePage(pg);
+          const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
+          const pngImg = await doc.embedPng(pngBytes);
+          const rotation = rotatedPages[pg.num] || 0;
+          const pages_ = doc.getPages();
+          const pdfPage_ = pages_[displayIdx];
+          const { width: pw, height: ph } = pdfPage_.getSize();
+          pdfPage_.drawImage(pngImg, { x: 0, y: 0, width: pw, height: ph, rotate: degrees(rotation) });
+        }
       }
 
       const bytes = await doc.save();
@@ -1217,100 +1367,15 @@ export default function PDFEditor() {
     URL.revokeObjectURL(url);
   }
 
-  // Fallback used when pdf-lib can\'t parse the original PDF (rare): rasterise via canvas.
   async function handleDownloadCanvasFallback() {
     const doc = await PDFDocument.create();
-    // Phase 6+7: iterate by pageOrder, filtering deleted, so reorders/deletes apply in the canvas path too.
     const finalPageOrder = pageOrder.filter(pIdx => !deletedPages.has(pages[pIdx].num));
-
     for (const i of finalPageOrder) {
       const pg = pages[i];
       if (!pg) continue;
-      const canvas = document.createElement("canvas");
-      canvas.width = pg.width;
-      canvas.height = pg.height;
-      const ctx = canvas.getContext("2d");
-
       const rotation = rotatedPages[pg.num] || 0;
-      await new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
-        img.src = pg.dataUrl;
-      });
-
-      const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
-      for (const e of edits) {
-        const lines = e.text.split(/\r?\n/);
-        const lh = e.fontSize * 1.22;
-        const lineCount = Math.max(1, lines.length);
-        const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
-        ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
-        let maxLineW = e.width;
-        for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
-        let whiteH;
-        if (useBaselines && lines.length > 1) {
-          const bs = e.lineBaselines;
-          whiteH = Math.max(e.height + 12, Math.max(...bs) - Math.min(...bs) + lh + 16);
-        } else {
-          whiteH = Math.max(e.height + 12, lineCount * lh + 14);
-        }
-        ctx.fillStyle =
-          e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
-        ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
-        ctx.fillStyle = e.color || "#000";
-        ctx.textBaseline = "alphabetic";
-        if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
-        else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
-      }
-      for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-        const lines = fb.text.split(/\r?\n/);
-        ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
-        ctx.textBaseline = "top";
-
-        if (fb.bgColor && fb.bgColor !== "transparent") {
-          let maxLineW = 0;
-
-          for (const ln of lines) {
-            maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
-          }
-
-          const padX = 4;
-          const padY = 3;
-          const lineH = fb.fontSize * 1.5;
-
-          ctx.fillStyle = fb.bgColor;
-          ctx.fillRect(
-            fb.x - padX,
-            fb.y - padY,
-            maxLineW + padX * 2,
-            lines.length * lineH + padY * 2
-          );
-        }
-
-        ctx.fillStyle = fb.color || "#000";
-        lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
-      }
-      for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-        await new Promise(resolve => {
-          const img = new Image();
-          img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); };
-          img.src = fi.dataUrl;
-        });
-      }
-      for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
-        ctx.beginPath();
-        ctx.strokeStyle = shape.shapeColor;
-        ctx.fillStyle = shape.shapeColor;
-        ctx.lineWidth = 3;
-        if (shape.shapeType === 'circle') {
-          ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
-        } else {
-          ctx.rect(shape.x, shape.y, shape.w, shape.h);
-        }
-        if (shape.shapeFill) ctx.fill(); else ctx.stroke();
-      }
-
-      const pngBytes = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
+      const dataUrl = await rasterizePage(pg);
+      const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
       const pngImg = await doc.embedPng(pngBytes);
       const pdfPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
       pdfPage.setRotation(degrees(rotation));
@@ -1344,6 +1409,8 @@ export default function PDFEditor() {
           onFile={handleFile}
           onDropFile={handleDroppedFile}
           onCreateBlank={createBlankPdf}
+          recoveryAvailable={recoveryAvailable}
+          onRecover={handleRecover}
         />
       ) : (
         <>

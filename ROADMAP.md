@@ -18,8 +18,8 @@ Update this table at the end of every session so any device can see where we are
 | 8 | Image to PDF | ✅ Done | 2026-05-09 | [08](phases/08-image-to-pdf.md) |
 | 9 | Signature pad | ✅ Done | 2026-05-10 | [09](phases/09-signature-pad.md) |
 | 10 | Text highlighting | ✅ Done | 2026-05-14 | [10](phases/10-text-highlighting.md) |
-| 11 | Per-page fallback + IndexedDB recovery | ⏳ Next | — | [11](phases/11-per-page-fallback.md) |
-| 12 | Original text color | Pending | — | [12](phases/12-original-text-color.md) |
+| 11 | Per-page fallback + IndexedDB recovery | ✅ Done | 2026-05-15 | [11](phases/11-per-page-fallback.md) |
+| 12 | Original text color | ⏳ Next | — | [12](phases/12-original-text-color.md) |
 | 13 | SEO basics + per-tool routes | 🟡 Partial | 2026-05-15 | [13](phases/13-seo-basics.md) |
 | 14 | Mobile-friendly pass (whole site) | 🟡 Partial | 2026-05-15 | [14](phases/14-mobile-friendly.md) |
 | 15 | Pre-launch QA + ship | Pending | — | [15](phases/15-prelaunch-qa.md) |
