@@ -1,4 +1,6 @@
-import { GOLD, INK, CINZEL, hiddenFileInput } from "../utils/constant";
+import { INK, LACQUER, CINZEL, hiddenFileInput } from "../utils/constant";
+
+const LINE = "rgba(116,86,44,0.18)";
 
 export default function EditorHeader({ tabsList = [], activeTabId, switchTab, closeTab, handleFile }) {
   if (tabsList.length === 0) return null;
@@ -7,14 +9,14 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
     <div
       onClick={e => e.stopPropagation()}
       style={{
-        background: INK,
-        borderBottom: `1px solid rgba(196,150,58,0.3)`,
+        background: "rgba(255,253,248,0.97)",
+        borderBottom: `1px solid ${LINE}`,
         display: "flex",
         alignItems: "stretch",
         overflowX: "auto",
         overflowY: "hidden",
         flexShrink: 0,
-        height: 36,
+        height: 38,
         scrollbarWidth: "none",
       }}
     >
@@ -32,16 +34,17 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
               cursor: "pointer",
               userSelect: "none",
               fontFamily: CINZEL,
-              fontSize: 10,
-              letterSpacing: "2px",
+              fontSize: 11.5,
+              letterSpacing: "1.8px",
               textTransform: "uppercase",
-              color: isActive ? GOLD : "rgba(196,150,58,0.4)",
-              borderRight: "1px solid rgba(196,150,58,0.12)",
-              borderBottom: isActive ? `2px solid ${GOLD}` : "2px solid transparent",
-              background: isActive ? "rgba(196,150,58,0.08)" : "transparent",
+              color: isActive ? LACQUER : "rgba(24,19,13,0.38)",
+              borderRight: `1px solid ${LINE}`,
+              borderBottom: isActive ? `2px solid ${LACQUER}` : "2px solid transparent",
+              background: isActive ? "rgba(139,26,26,0.04)" : "transparent",
               whiteSpace: "nowrap",
               flexShrink: 0,
               maxWidth: 240,
+              fontWeight: isActive ? 700 : 500,
             }}
           >
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -54,13 +57,13 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 14,
-                height: 14,
-                fontSize: 9,
+                width: 16,
+                height: 16,
+                fontSize: 10,
                 fontWeight: 700,
                 borderRadius: "50%",
                 cursor: "pointer",
-                color: isActive ? GOLD : "rgba(196,150,58,0.35)",
+                color: isActive ? LACQUER : "rgba(24,19,13,0.3)",
                 flexShrink: 0,
                 lineHeight: 1,
               }}
@@ -77,13 +80,13 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          width: 36,
+          width: 34,
           height: "100%",
           cursor: "pointer",
-          color: "rgba(196,150,58,0.4)",
+          color: "rgba(139,26,26,0.5)",
           fontSize: 18,
           fontWeight: 300,
-          borderRight: "1px solid rgba(196,150,58,0.12)",
+          borderRight: `1px solid ${LINE}`,
           flexShrink: 0,
         }}
       >

@@ -15,25 +15,21 @@ function use4KZoom() {
 }
 
 const FEATURES = [
-  { icon: "✎", label: "Edit Text",         detail: "Click any text block to edit it in place. Font, size and colour are pre-filled automatically." },
-  { icon: "＋", label: "Add Text & Images", detail: "Place new text boxes or images anywhere on the page." },
-  { icon: "✦", label: "Sign & Draw",        detail: "Draw your signature or annotate freehand with the built-in pen." },
-  { icon: "⇄", label: "Merge & Reorder",   detail: "Combine PDFs, reorder and delete pages without any upload." },
+  { icon: "✎", label: "Edit Text",      detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
+  { icon: "＋", label: "Add Text",      detail: "Drop new text boxes anywhere on the page at any size." },
+  { icon: "⬜", label: "Add Images",    detail: "Insert photos or logos directly on top of any page." },
+  { icon: "✍", label: "Sign",           detail: "Draw, type or upload your signature and place it on any page." },
+  { icon: "✏", label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
+  { icon: "◇", label: "Shapes",         detail: "Add circles and rectangles with custom colour and fill." },
+  { icon: "⇄", label: "Merge & Split", detail: "Combine multiple PDFs or split a document into separate files." },
+  { icon: "⊞", label: "Reorder Pages", detail: "Drag pages into any order, rotate or delete them instantly." },
 ];
 
-const STEPS = [
-  "Open your PDF — click the button above or drag a file onto this page.",
-  "Edit text, add text boxes, images, signatures or shapes on any page.",
-  "Download the finished PDF. Your file never leaves your device.",
-];
-
-const FAQ = [
-  { q: "Is katanapdf really free?",           a: "Yes. Every feature is free with no paid tier." },
-  { q: "Are my files uploaded somewhere?",    a: "No. The PDF is opened, edited and saved entirely inside your browser. We have no servers that receive your file." },
-  { q: "Do I need an account?",               a: "No. There is no sign-up, no email required, no tracking of who edits what." },
-  { q: "What size of PDF can I edit?",        a: "Any size your browser can handle — typically files up to a few hundred MB work fine on a modern computer." },
-  { q: "Can I edit existing text in a PDF?",  a: "Yes, if the PDF has a selectable text layer. Click any text block to edit it. Scanned PDFs won't have editable text, but you can still add new text and images on top." },
-  { q: "Will the layout of my PDF break?",    a: "katanapdf preserves the original page as a high-resolution image and overlays your edits on top, so the visual layout stays intact." },
+const NAV = [
+  ["About",   "#about"],
+  ["FAQs",    "#faqs"],
+  ["Privacy", "#privacy"],
+  ["Terms",   "#terms"],
 ];
 
 export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, onToggleDark }) {
@@ -65,66 +61,77 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           background: rgba(255,253,248,0.92);
           backdrop-filter: blur(10px);
           border-bottom: 1px solid ${LINE};
-          height: 68px;
-          display: flex; align-items: center; justify-content: center;
-          padding: 0 32px;
+          height: 48px;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 0 36px;
         }
-        .hp-logo { width: min(240px,52vw); height: auto; display: block; }
+        .hp-logo { width: min(160px,36vw); height: auto; display: block; }
+        .hp-nav {
+          display: flex; align-items: center; gap: 0;
+        }
+        .hp-nav a {
+          font-family: ${CINZEL}; font-size: 9px; letter-spacing: 2.5px;
+          text-transform: uppercase; font-weight: 700;
+          color: rgba(24,19,13,0.5); text-decoration: none;
+          padding: 0 14px; border-right: 1px solid ${LINE};
+          transition: color .13s;
+        }
+        .hp-nav a:last-child { border-right: none; }
+        .hp-nav a:hover { color: ${RED}; }
 
         /* ── Hero ─────────────────────────────────── */
         .hp-hero {
           max-width: 1240px; margin: 0 auto;
-          padding: 64px 48px 52px;
+          padding: 20px 48px 16px;
           display: grid;
-          grid-template-columns: 1fr minmax(0, 540px);
+          grid-template-columns: 1fr minmax(0, 380px);
           align-items: center;
-          gap: 32px;
-          min-height: 580px;
+          gap: 24px;
         }
         .hp-copy { max-width: 580px; }
         .hp-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 3.5px;
           text-transform: uppercase; color: ${RED}; font-weight: 700;
-          margin-bottom: 22px;
+          margin-bottom: 12px;
         }
         .hp-eyebrow::before, .hp-eyebrow::after {
           content: ""; display: inline-block;
-          width: 28px; height: 1px; background: ${RED};
+          width: 20px; height: 1px; background: ${RED};
         }
         .hp-h1 {
           font-family: ${FELL};
-          font-size: clamp(48px, 5.4vw, 82px);
-          line-height: 1.06; letter-spacing: -1.5px;
+          font-size: clamp(24px, 2.6vw, 38px);
+          line-height: 1.06; letter-spacing: -0.8px;
           color: ${INK}; font-weight: 600;
-          margin: 0 0 22px;
+          margin: 0 0 12px;
         }
         .hp-h1 em { font-style: normal; color: ${RED}; }
         .hp-sub {
-          font-size: 17.5px; line-height: 1.68;
-          color: ${MUTED}; margin: 0 0 36px;
-          max-width: 460px;
+          font-size: 14px; line-height: 1.62;
+          color: ${MUTED}; margin: 0 0 20px;
+          max-width: 440px;
         }
         .hp-actions {
-          display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-          margin-bottom: 26px;
+          display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+          margin-bottom: 12px;
         }
         .hp-btn-primary {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 52px; padding: 0 36px;
+          height: 40px; padding: 0 26px;
           background: ${RED}; color: #fff;
-          font-family: ${CINZEL}; font-size: 11.5px; letter-spacing: 2.5px;
+          font-family: ${CINZEL}; font-size: 10px; letter-spacing: 2px;
           text-transform: uppercase; font-weight: 800;
           border: none; border-radius: 3px; cursor: pointer;
-          box-shadow: 0 14px 30px rgba(139,26,26,0.22);
+          box-shadow: 0 10px 22px rgba(139,26,26,0.22);
           transition: transform .13s, box-shadow .13s;
         }
         .hp-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 38px rgba(139,26,26,0.28); }
         .hp-btn-secondary {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 52px; padding: 0 32px;
+          height: 40px; padding: 0 22px;
           background: transparent; color: ${RED};
-          font-family: ${CINZEL}; font-size: 11.5px; letter-spacing: 2.5px;
+          font-family: ${CINZEL}; font-size: 10px; letter-spacing: 2px;
           text-transform: uppercase; font-weight: 800;
           border: 1.5px solid rgba(139,26,26,0.48); border-radius: 3px; cursor: pointer;
           transition: border-color .13s, background .13s;
@@ -139,17 +146,46 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           position: relative;
           display: flex; align-items: center; justify-content: center;
         }
-        .hp-art::before {
-          content: "";
-          position: absolute; inset: -20px;
-          background: radial-gradient(ellipse 70% 80% at 55% 50%, rgba(139,26,26,0.07), transparent 68%);
-          pointer-events: none;
+        /* ── Samurai art ────────────────────────────── */
+        .hp-art {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          box-shadow: none;
+          border: none;
+          padding: 0;
         }
+
+        .hp-art::before {
+          display: none;
+          content: none;
+        }
+
         .hp-art img {
-          width: 100%; max-width: 520px; height: auto;
+          width: 100%;
+          max-width: 360px;
+          max-height: 240px;
           object-fit: contain;
-          filter: drop-shadow(0 28px 48px rgba(20,10,4,0.18));
-          position: relative; z-index: 1;
+          filter: none;
+          box-shadow: none;
+          background: transparent;
+          border: none;
+          position: relative;
+          z-index: 1;
+        }
+        .hp-ukiyo-seal {
+          position: absolute; bottom: 6px; right: 6px;
+          width: 34px; height: 34px;
+          background: rgba(139,26,26,0.85);
+          color: rgba(255,253,248,0.95);
+          font-size: 17px;
+          display: flex; align-items: center; justify-content: center;
+          font-family: serif; line-height: 1;
+          border-radius: 2px;
+          box-shadow: 0 2px 6px rgba(40,24,8,0.2);
+          z-index: 2;
         }
 
         /* ── Trust strip ─────────────────────────────── */
@@ -164,73 +200,73 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           display: grid; grid-template-columns: repeat(4,1fr);
         }
         .hp-badge {
-          padding: 20px 28px;
+          padding: 10px 16px;
           border-right: 1px solid ${LINE};
           display: flex; flex-direction: column; align-items: center;
-          text-align: center; gap: 7px;
+          text-align: center; gap: 4px;
         }
         .hp-badge:last-child { border-right: none; }
-        .hp-badge-icon { font-size: 22px; line-height: 1; }
+        .hp-badge-icon { font-size: 16px; line-height: 1; }
         .hp-badge-label {
-          font-family: ${CINZEL}; font-size: 10.5px; letter-spacing: 2px;
+          font-family: ${CINZEL}; font-size: 9px; letter-spacing: 1.5px;
           text-transform: uppercase; font-weight: 800; color: ${INK};
         }
         .hp-badge-sub {
-          font-size: 12.5px; color: ${MUTED}; line-height: 1.4;
+          font-size: 11px; color: ${MUTED}; line-height: 1.35;
         }
 
         /* ── Sections ─────────────────────────────────── */
         .hp-section {
-          max-width: 1100px; margin: 0 auto; padding: 76px 42px 0;
+          max-width: 1100px; margin: 0 auto; padding: 18px 42px 0;
         }
-        .hp-section-last { padding-bottom: 80px; }
+        .hp-section-last { padding-bottom: 18px; }
         .hp-heading {
-          text-align: center; margin: 0 0 40px;
+          text-align: center; margin: 0 0 14px;
         }
         .hp-heading span {
-          font-family: ${CINZEL}; font-size: 10.5px; letter-spacing: 4.5px;
+          font-family: ${CINZEL}; font-size: 9px; letter-spacing: 4px;
           text-transform: uppercase; font-weight: 800; color: ${RED};
         }
         .hp-heading-bar {
-          width: 36px; height: 2.5px; background: ${RED};
-          border-radius: 2px; margin: 10px auto 0;
+          width: 28px; height: 2px; background: ${RED};
+          border-radius: 2px; margin: 6px auto 0;
         }
 
         /* ── Feature cards ────────────────────────────── */
         .hp-features {
-          display: grid; grid-template-columns: repeat(4,1fr); gap: 16px;
+          display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
         }
         .hp-feat {
           background: rgba(255,253,248,0.78);
           border: 1px solid ${LINE};
           border-radius: 4px;
-          padding: 26px 20px 22px;
+          padding: 10px 12px 10px;
           position: relative; overflow: hidden;
-          box-shadow: 0 12px 32px rgba(40,24,8,0.05);
+          box-shadow: 0 8px 24px rgba(40,24,8,0.05);
         }
         .hp-feat::after {
           content: ""; position: absolute;
-          top: 0; left: 0; right: 0; height: 2.5px;
+          top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, ${RED}, ${GOLD});
         }
         .hp-feat-icon {
-          width: 44px; height: 44px;
+          width: 26px; height: 26px;
           background: rgba(139,26,26,0.06);
-          border: 1px solid rgba(139,26,26,0.18);
-          border-radius: 4px;
+          border: 1px solid rgba(139,26,26,0.15);
+          border-radius: 3px;
           display: flex; align-items: center; justify-content: center;
-          font-size: 20px; color: ${RED};
-          margin-bottom: 16px;
+          font-size: 12px; color: ${RED};
+          margin-bottom: 6px;
         }
         .hp-feat-label {
           display: block;
-          font-family: ${CINZEL}; font-size: 11px;
-          letter-spacing: 1.8px; text-transform: uppercase;
-          font-weight: 800; color: ${INK}; margin-bottom: 10px;
+          font-family: ${CINZEL}; font-size: 8.5px;
+          letter-spacing: 1.4px; text-transform: uppercase;
+          font-weight: 800; color: ${INK}; margin-bottom: 4px;
         }
         .hp-feat-detail {
-          display: block; font-size: 13.5px;
-          color: ${MUTED}; line-height: 1.55;
+          display: block; font-size: 10.5px;
+          color: ${MUTED}; line-height: 1.42;
         }
 
         /* ── Steps ─────────────────────────────────── */
@@ -293,11 +329,10 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         @media (max-width: 960px) {
           .hp-hero {
             grid-template-columns: 1fr;
-            padding: 40px 28px 36px;
-            min-height: auto;
+            padding: 20px 28px 16px;
           }
-          .hp-art { order: -1; min-height: 300px; }
-          .hp-art img { max-width: min(88vw, 440px); }
+          .hp-art { order: -1; }
+          .hp-art img { max-width: min(70vw, 280px); max-height: 180px; }
           .hp-copy { max-width: 100%; }
           .hp-trust-inner { grid-template-columns: repeat(2,1fr); }
           .hp-badge:nth-child(2) { border-right: none; }
@@ -308,20 +343,20 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         }
 
         @media (max-width: 580px) {
-          .hp-header { height: 58px; padding: 0 18px; }
-          .hp-logo { width: min(200px,64vw); }
+          .hp-header { height: 58px; padding: 0 16px; }
+          .hp-logo { width: min(160px,44vw); }
+          .hp-nav a { padding: 0 8px; font-size: 8px; letter-spacing: 1.5px; }
           .hp-hero { padding: 28px 18px 32px; }
-          .hp-art { min-height: 220px; }
-          .hp-art img { max-width: min(94vw, 340px); }
-          .hp-h1 { font-size: clamp(40px,13vw,56px); letter-spacing: -0.8px; }
-          .hp-sub { font-size: 16px; }
+          .hp-art img { max-width: min(80vw, 220px); max-height: 140px; }
+          .hp-h1 { font-size: clamp(24px,10vw,36px); letter-spacing: -0.5px; }
+          .hp-sub { font-size: 13px; }
           .hp-actions { flex-direction: column; align-items: stretch; gap: 10px; }
           .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 50px; }
           .hp-trust-inner { grid-template-columns: 1fr; }
           .hp-badge { border-right: none; border-bottom: 1px solid ${LINE}; }
           .hp-badge:last-child { border-bottom: none; }
-          .hp-features { grid-template-columns: 1fr; gap: 12px; }
-          .hp-section { padding-left: 18px; padding-right: 18px; padding-top: 52px; }
+          .hp-features { grid-template-columns: repeat(2,1fr); gap: 6px; }
+          .hp-section { padding-left: 14px; padding-right: 14px; padding-top: 14px; }
           .hp-step { grid-template-columns: 38px 1fr; padding: 14px 16px; }
           .hp-step-num { font-size: 26px; }
           .hp-step-text { font-size: 14px; }
@@ -340,19 +375,23 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
       {/* ── Header ── */}
       <header className="hp-header">
         <img src="/logo.png" alt="katanapdf" className="hp-logo" />
+        <nav className="hp-nav">
+          {NAV.map(([label, href]) => (
+            <a key={label} href={href}>{label}</a>
+          ))}
+        </nav>
       </header>
 
       {/* ── Hero ── */}
       <section className="hp-hero">
         <div className="hp-copy">
-          <div className="hp-eyebrow">Free PDF Editor</div>
+          <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
           <h1 className="hp-h1">
-            Edit PDFs.<br />
-            <em>Right in your<br />browser.</em>
+            Free PDF Editor<em>.</em><br />
+            <em>Runs in your Browser<em>.</em></em>
           </h1>
           <p className="hp-sub">
-            Annotate, sign, merge and reorder PDFs without uploading a single byte.
-            No account. No watermark. No catch.
+            Edit, annotate, sign, merge and split PDFs directly in your browser. No upload, no account, no watermark.
           </p>
           <div className="hp-actions">
             <label className="hp-btn-primary">
@@ -368,6 +407,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
         <div className="hp-art" aria-hidden="true">
           <img src="/samurai.png" alt="" draggable={false} />
+          <div className="hp-ukiyo-seal">波</div>
         </div>
       </section>
 
@@ -390,7 +430,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
       </div>
 
       {/* ── Features ── */}
-      <section className="hp-section">
+      <section className="hp-section hp-section-last">
         <div className="hp-heading">
           <span>What you can do</span>
           <div className="hp-heading-bar" />
@@ -402,41 +442,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
               <span className="hp-feat-label">{f.label}</span>
               <span className="hp-feat-detail">{f.detail}</span>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section className="hp-section">
-        <div className="hp-heading">
-          <span>How it works</span>
-          <div className="hp-heading-bar" />
-        </div>
-        <div className="hp-steps">
-          {STEPS.map((s, i) => (
-            <div className="hp-step" key={i}>
-              <span className="hp-step-num">{i + 1}</span>
-              <span className="hp-step-text">{s}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── FAQ ── */}
-      <section className="hp-section hp-section-last">
-        <div className="hp-heading">
-          <span>Frequently asked questions</span>
-          <div className="hp-heading-bar" />
-        </div>
-        <div className="hp-faq-wrap">
-          {FAQ.map((f, i) => (
-            <details className="hp-faq-item" key={i}>
-              <summary className="hp-faq-summary">
-                {f.q}
-                <span className="hp-faq-plus">+</span>
-              </summary>
-              <p className="hp-faq-answer">{f.a}</p>
-            </details>
           ))}
         </div>
       </section>

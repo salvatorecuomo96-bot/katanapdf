@@ -1,4 +1,4 @@
-import { PARCHMENT_2, LACQUER, INK, CINZEL, FELL } from "../utils/constant";
+import { LACQUER, INK, CINZEL, FELL } from "../utils/constant";
 
 function NoticeBox({ title, children, onDismiss, ariaLabel }) {
   return (
@@ -8,10 +8,13 @@ function NoticeBox({ title, children, onDismiss, ariaLabel }) {
         boxSizing: "border-box",
         margin: "12px 16px",
         padding: "12px 20px",
-        background: PARCHMENT_2,
+        background: "rgba(255,253,248,0.96)",
         borderLeft: `3px solid ${LACQUER}`,
+        border: `1px solid rgba(116,86,44,0.2)`,
+        borderLeftWidth: 3,
+        borderLeftColor: LACQUER,
         borderRadius: 4,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+        boxShadow: "0 2px 12px rgba(40,24,8,0.08)",
         fontFamily: FELL,
         fontSize: 13,
         lineHeight: 1.5,

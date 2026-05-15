@@ -112,8 +112,8 @@ body {
     justify-content: center;
     gap: 8px;
     padding: 7px 16px;
-    background: rgba(139,26,26,0.06);
-    border-bottom: 1px solid rgba(139,26,26,0.12);
+    background: rgba(255,253,248,0.97);
+    border-bottom: 1px solid rgba(116,86,44,0.18);
     font-size: 11px;
     font-family: "Cinzel", "Times New Roman", serif;
     letter-spacing: 1.5px;

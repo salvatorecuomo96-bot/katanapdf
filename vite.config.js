@@ -1,14 +1,18 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [react()],
-  // Target modern environments to support import.meta, while maintaining compatibility via build target if needed
   build: {
-    target: 'es2020',
+    target: "es2020",
+    // SSR build goes to dist/server; client build goes to dist/client
+    outDir: isSsrBuild ? "dist/server" : "dist/client",
   },
   esbuild: {
-    target: 'es2020',
+    target: "es2020",
   },
-})
+  // Tell the preview server to serve from dist/client
+  preview: {
+    outDir: "dist/client",
+  },
+}));

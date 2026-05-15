@@ -7,6 +7,7 @@ import EditPopup from "./EditPopup";
 import FloatingBox from "./FloatingBox";
 import FloatingImage from "./FloatingImage";
 import SignatureModal from "./SignatureModal";
+import SplitModal from "./SplitModal";
 import EditorNotices from "./EditorNotices";
 import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
@@ -27,7 +28,7 @@ export default function PDFEditor() {
   const [pdfBytes, setPdfBytes] = useState(null);
   const [route, setRoute] = useState(() => {
     const h = (typeof window !== "undefined" && window.location.hash.slice(1)) || "home";
-    return ["privacy", "terms", "about"].includes(h) ? h : "home";
+    return ["privacy", "terms", "about", "faqs"].includes(h) ? h : "home";
   });
   useEffect(() => {
     const onHash = () => {
@@ -52,6 +53,7 @@ export default function PDFEditor() {
       "about":         { title: "About – katanapdf",                          desc: "Learn about katanapdf, the free browser-based PDF editor with no upload and no account." },
       "privacy":       { title: "Privacy Policy – katanapdf",                 desc: "katanapdf privacy policy. Your files never leave your browser." },
       "terms":         { title: "Terms of Service – katanapdf",               desc: "katanapdf terms of service." },
+      "faqs":          { title: "FAQs – katanapdf",                           desc: "Frequently asked questions about katanapdf, the free browser-based PDF editor." },
     };
     const update = () => {
       const h = window.location.hash.slice(1) || "";
@@ -98,6 +100,7 @@ export default function PDFEditor() {
   const [zoom, setZoom] = useState(1);
   const [isGridView, setIsGridView] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
   const [signatureColor, setSignatureColor] = useState("#000000");
   const [signatureTargetPageNum, setSignatureTargetPageNum] = useState(null);
   const [draggedPageNum, setDraggedPageNum] = useState(null);
@@ -539,20 +542,10 @@ export default function PDFEditor() {
     const id = `float-${floatingIdCounter}`;
     const rotation = rotatedPages[pageNum] || 0;
 
-    let initialY = pg.height * 0.15;
-    if (containerRef.current) {
-      const el = containerRef.current.querySelector(`[data-pgwrap="${pageNum}"]`);
-      if (el) {
-        const scrollWithinPage = Math.max(0, containerRef.current.scrollTop - el.offsetTop);
-        const visibleY = scrollWithinPage / zoom + 60;
-        initialY = Math.min(Math.max(visibleY, 40), pg.height * 0.75);
-      }
-    }
-
     setFloatingBoxes(prev => [...prev, {
       id, page: pageNum,
       z: 50 + floatingIdCounter,
-      x: pg.width / 2, y: initialY, text: "",
+      x: pg.width / 2, y: 80, text: "",
       fontSize: 14, fontFamily: "Arial, sans-serif",
       isBold: false, isItalic: false, color: "#000000",
       bgColor: "#ffffff",
@@ -1417,6 +1410,55 @@ export default function PDFEditor() {
     }
   }
 
+  // Split modal: download each group as a separate PDF
+  async function handleSplitDownload(groups) {
+    const baseName = (fileName || "document").replace(/\.pdf$/i, "");
+    for (let gi = 0; gi < groups.length; gi++) {
+      const doc = await PDFDocument.create();
+      for (const pIdx of groups[gi]) {
+        const pg = pages[pIdx];
+        if (!pg) continue;
+        const dataUrl = await rasterizePage(pg);
+        const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
+        const img = await doc.embedPng(pngBytes);
+        const p = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
+        p.drawImage(img, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+      }
+      const outBytes = await doc.save();
+      const blob = new Blob([outBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = groups.length === 1 ? `${baseName}.pdf` : `${baseName}_part_${gi + 1}.pdf`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      if (gi < groups.length - 1) await new Promise(r => setTimeout(r, 120));
+    }
+  }
+
+  // Split modal: download selected pages as a single PDF
+  async function handleExtractDownload(pageIndices) {
+    const baseName = (fileName || "document").replace(/\.pdf$/i, "");
+    const doc = await PDFDocument.create();
+    for (const pIdx of pageIndices) {
+      const pg = pages[pIdx];
+      if (!pg) continue;
+      const dataUrl = await rasterizePage(pg);
+      const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
+      const img = await doc.embedPng(pngBytes);
+      const p = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
+      p.drawImage(img, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+    }
+    const outBytes = await doc.save();
+    const blob = new Blob([outBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${baseName}_pages.pdf`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function triggerPdfDownload(bytes) {
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
@@ -1482,6 +1524,7 @@ export default function PDFEditor() {
             historyLength={history.length}
             handleDownload={handleDownload}
             handleDownloadImages={handleDownloadImages}
+            openSplitModal={() => setIsSplitModalOpen(true)}
             drawMode={drawMode}
             setDrawMode={setDrawMode}
             sidebarOpen={sidebarOpen}
@@ -1518,19 +1561,19 @@ export default function PDFEditor() {
         flexShrink: 0,
         flexBasis: "clamp(220px, 22vw, 340px)",
         minHeight: 0,
-        background: "#e8e0d0",
-        borderRight: `1px solid rgba(139,26,26,0.35)`,
-        borderTop: `1px solid rgba(139,26,26,0.15)`,
+        background: "rgba(255,253,248,0.97)",
+        borderRight: `1px solid rgba(116,86,44,0.18)`,
+        borderTop: `1px solid rgba(116,86,44,0.10)`,
         overflowY: "auto",
         overflowX: "hidden",
         display: "flex",
         flexDirection: "column",
       }}
-    >              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: "#e8e0d0", padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(139,26,26,0.1)' }}>
-                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    >              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: "rgba(255,253,248,0.97)", padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(116,86,44,0.14)' }}>
+                <button onClick={() => setIsGridView(g => !g)} title={isGridView ? "Exit Grid" : "Grid View"} style={{ width: 32, height: 32, border: `1px solid rgba(116,86,44,0.22)`, borderRadius: '4px', background: "transparent", color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <GridIcon />
                 </button>
-                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(196,150,58,0.4)`, borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
+                <label title="Add PDF or Image" style={{ width: 32, height: 32, border: `1px solid rgba(116,86,44,0.22)`, borderRadius: '4px', background: "transparent", color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 600 }}>
                   +
                   <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
                 </label>
@@ -1582,8 +1625,8 @@ export default function PDFEditor() {
                          borderBottom: dragOverPageNum === pg.num ? `4px solid ${LACQUER}` : "none",
                          transition: 'opacity 0.2s'
                        }}>
-                    <div style={{ 
-                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
+                    <div style={{
+                      position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(40,24,8,0.08)', border: `1px solid rgba(116,86,44,0.22)`, cursor: 'pointer',
                       aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                     }}>
@@ -1597,10 +1640,10 @@ export default function PDFEditor() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}>
                       <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, fontWeight: 600 }}>{i + 1}</span>
-                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
+                      <button onClick={(e) => { e.stopPropagation(); rotatePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(116,86,44,0.22)', borderRadius: '4px', background: "transparent", color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rotate">
                         <RotateIcon size={14} />
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(196,150,58,0.4)', borderRadius: '4px', background: PARCHMENT, color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
+                      <button onClick={(e) => { e.stopPropagation(); deletePage(pg.num); }} style={{ width: 26, height: 26, border: '1px solid rgba(116,86,44,0.22)', borderRadius: '4px', background: "transparent", color: LACQUER, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Delete">X</button>
                     </div>
                     
                     {i < visiblePages.length - 1 && (
@@ -1702,7 +1745,7 @@ export default function PDFEditor() {
                             <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 2, fontWeight: 600 }}>MOVE TO</span>
                           </button>
                           {moveToPanelPage === pg.num && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 3, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", maxHeight: 200, overflowY: "auto", minWidth: 64 }}>
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "6px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 3, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", maxHeight: 200, overflowY: "auto", minWidth: 64 }}>
                               {visiblePages.map((_, i) => (
                                 <button
                                   key={i}
@@ -1716,12 +1759,15 @@ export default function PDFEditor() {
                           )}
                         </div>
                         {/* Per-page zoom controls */}
-                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", border: `1px solid ${GOLD}`, borderRadius: 3, overflow: "hidden" }}>
-                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderRight: `1px solid ${GOLD}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom out">−</button>
+                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", border: `1px solid rgba(139,26,26,0.3)`, borderRadius: 3, overflow: "hidden" }}>
+                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderRight: `1px solid rgba(139,26,26,0.2)`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom out">−</button>
                           <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, minWidth: 42, textAlign: "center", letterSpacing: 1, padding: "7px 4px", fontWeight: 600 }}>{Math.round(zoom * 100)}%</span>
-                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderLeft: `1px solid ${GOLD}`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom in">+</button>
+                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderLeft: `1px solid rgba(139,26,26,0.2)`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom in">+</button>
                         </div>
-                        <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page 90deg" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <button onClick={e => { e.stopPropagation(); undo(); }} disabled={!history.length} aria-label="Undo" title="Undo last action" style={{ ...pageBtn, padding: "4px 10px", opacity: history.length ? 1 : 0.3, display: "flex", alignItems: "center", gap: 4 }}>
+                          &#8630;
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <RotateIcon size={14} />
                         </button>
                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>X</button>
@@ -1729,7 +1775,7 @@ export default function PDFEditor() {
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         {/* Sign */}
                         <button
-                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
+                          onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
                           style={pageActionBtn} title="Sign"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.2"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>
@@ -1742,6 +1788,7 @@ export default function PDFEditor() {
                             onClick={e => {
                               e.stopPropagation();
                               const next = !drawMode;
+                              setSelected(null); setActivePopup(null);
                               setDrawMode(next);
                               setDrawPanelOpen(next);
                               if (next) setShapePanelPage(null);
@@ -1753,7 +1800,7 @@ export default function PDFEditor() {
                             <span className="page-action-label">Draw</span>
                           </button>
                           {drawPanelOpen && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: "8px", zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", minWidth: 136 }}>
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "10px", zIndex: 9999, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 136 }}>
                               {/* Pencil / Highlight toggle — closes panel on click */}
                               <div style={{ display: "flex", gap: 4 }}>
                                 <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
@@ -1786,7 +1833,7 @@ export default function PDFEditor() {
                         {/* Shapes */}
                         <div style={{ position: "relative" }}>
                           <button
-                            onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
+                            onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
                             style={{ ...pageActionBtn, background: shapePanelPage === pg.num ? 'rgba(139,26,26,0.12)' : 'transparent', outline: shapePanelPage === pg.num ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
                             title="Add shape"
                           >
@@ -1794,7 +1841,7 @@ export default function PDFEditor() {
                             <span className="page-action-label">Shapes</span>
                           </button>
                           {shapePanelPage === pg.num && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", minWidth: 160 }}>
+                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 160 }}>
                               <div style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, letterSpacing: 3, fontWeight: 700 }}>SHAPE COLOR</div>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <input type="color" value={shapePanelColor} onChange={e => setShapePanelColor(e.target.value)} style={{ width: 28, height: 28, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 4, padding: 2 }} />
@@ -1819,7 +1866,7 @@ export default function PDFEditor() {
 
                         {/* Add Text */}
                         <button
-                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); addFloatingBox(pg.num); }}
+                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); addFloatingBox(pg.num); }}
                           style={pageActionBtn} title="Add text box"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
@@ -1827,7 +1874,7 @@ export default function PDFEditor() {
                         </button>
 
                         {/* Add Image */}
-                        <label style={pageActionBtn} title="Add image" onClick={() => { setDrawMode(false); setDrawPanelOpen(false); }}>
+                        <label style={pageActionBtn} title="Add image" onClick={() => { setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); }}>
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                           <span className="page-action-label">Add image</span>
                           <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
@@ -1947,6 +1994,17 @@ export default function PDFEditor() {
           </div>
         </>
       )}
+      {isSplitModalOpen && (
+        <SplitModal
+          pages={pages}
+          pageOrder={pageOrder}
+          deletedPages={deletedPages}
+          onSplitDownload={handleSplitDownload}
+          onExtractDownload={handleExtractDownload}
+          onClose={() => setIsSplitModalOpen(false)}
+        />
+      )}
+
       {isSignModalOpen && (
         <SignatureModal
           onClose={() => {
@@ -1963,20 +2021,20 @@ export default function PDFEditor() {
       {showLeaveConfirm && (
         <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
              onClick={() => setShowLeaveConfirm(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: PARCHMENT, border: `1px solid ${GOLD}`, padding: "28px 32px", maxWidth: 400, width: "90%", textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.28)" }}>
-            <p style={{ fontFamily: CINZEL, fontSize: 14, letterSpacing: 2, color: LACQUER, fontWeight: 700, margin: "0 0 10px", textTransform: "uppercase" }}>Unsaved changes</p>
-            <p style={{ fontFamily: FELL, fontSize: 15, color: INK, margin: "0 0 22px", lineHeight: 1.55 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fffdf8", border: "1px solid rgba(116,86,44,0.2)", borderRadius: 8, padding: "32px 36px", maxWidth: 420, width: "90%", textAlign: "center", boxShadow: "0 16px 48px rgba(40,24,8,0.18)" }}>
+            <p style={{ fontFamily: CINZEL, fontSize: 13, letterSpacing: 3, color: LACQUER, fontWeight: 800, margin: "0 0 14px", textTransform: "uppercase" }}>Unsaved Changes</p>
+            <p style={{ fontFamily: FELL, fontSize: 15.5, color: "rgba(24,19,13,0.78)", margin: "0 0 26px", lineHeight: 1.62 }}>
               Going back will discard all your edits. Download your PDF first to keep them.
             </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <button onClick={() => { setShowLeaveConfirm(false); handleDownload(); }} style={{ padding: "9px 20px", background: LACQUER, color: "#fff", border: `1px solid ${GOLD}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700 }}>
-                DOWNLOAD FIRST
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch" }}>
+              <button onClick={() => { setShowLeaveConfirm(false); handleDownload(); }} style={{ padding: "11px 20px", background: LACQUER, color: "#fff", border: "none", borderRadius: 3, fontFamily: CINZEL, fontSize: 13, letterSpacing: 2, cursor: "pointer", fontWeight: 800, boxShadow: "0 4px 14px rgba(139,26,26,0.22)" }}>
+                Download First
               </button>
-              <button onClick={() => { setShowLeaveConfirm(false); doGoHome(); }} style={{ padding: "9px 20px", background: "transparent", color: LACQUER, border: `1px solid ${LACQUER}`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer", fontWeight: 700 }}>
-                LEAVE ANYWAY
+              <button onClick={() => { setShowLeaveConfirm(false); doGoHome(); }} style={{ padding: "10px 20px", background: "transparent", color: LACQUER, border: `1px solid rgba(139,26,26,0.48)`, borderRadius: 3, fontFamily: CINZEL, fontSize: 13, letterSpacing: 2, cursor: "pointer", fontWeight: 700 }}>
+                Leave Anyway
               </button>
-              <button onClick={() => setShowLeaveConfirm(false)} style={{ padding: "9px 20px", background: "transparent", color: INK, border: `1px solid rgba(26,18,8,0.3)`, fontFamily: CINZEL, fontSize: 11, letterSpacing: 2, cursor: "pointer" }}>
-                STAY
+              <button onClick={() => setShowLeaveConfirm(false)} style={{ padding: "10px 20px", background: "transparent", color: "rgba(24,19,13,0.45)", border: "1px solid rgba(116,86,44,0.2)", borderRadius: 3, fontFamily: CINZEL, fontSize: 13, letterSpacing: 2, cursor: "pointer" }}>
+                Stay
               </button>
             </div>
           </div>

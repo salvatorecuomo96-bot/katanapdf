@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && vite build --ssr src/entry-server.jsx && node scripts/prerender.mjs",
+    "build:client": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --outDir dist/client",
     "test:export": "node tests/export-smoke.mjs",
     "test:utils": "node tests/utils-smoke.mjs",
     "test": "npm run test:export && npm run test:utils"

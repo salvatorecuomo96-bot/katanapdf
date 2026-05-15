@@ -289,7 +289,7 @@ export default function EditPopup({
             height: 30,
             width: "max-content",
             maxWidth: 560,
-            background: LACQUER,
+            background: "#fffdf8",
             padding: "2px 4px",
             cursor: "default",
             display: "flex",
@@ -297,8 +297,8 @@ export default function EditPopup({
             gap: 6,
             borderRadius: 3,
             userSelect: "none",
-            border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
+            border: "1px solid rgba(116,86,44,0.25)",
+            boxShadow: "0 4px 16px rgba(40,24,8,0.12)",
             boxSizing: "border-box",
           }}
         >
@@ -316,9 +316,9 @@ export default function EditPopup({
               minWidth: 26,
               height: 23,
               borderRadius: 2,
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: "rgba(255,255,255,0.08)",
-              color: "#fff",
+              border: "1px solid rgba(116,86,44,0.22)",
+              background: "rgba(139,26,26,0.04)",
+              color: INK,
               fontSize: 10,
               cursor: "grab",
               padding: "1px 5px",
@@ -329,7 +329,7 @@ export default function EditPopup({
               flexShrink: 0,
             }}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:"block"}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
           </button>
 
           <select
@@ -399,9 +399,9 @@ export default function EditPopup({
               minWidth: 23,
               height: 23,
               borderRadius: 2,
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: format.isBold ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)",
-              color: "#fff",
+              border: format.isBold ? `1px solid rgba(139,26,26,0.5)` : "1px solid rgba(116,86,44,0.22)",
+              background: format.isBold ? "rgba(139,26,26,0.1)" : "rgba(139,26,26,0.04)",
+              color: INK,
               fontWeight: "bold",
               fontSize: 11,
               cursor: "pointer",
@@ -425,9 +425,9 @@ export default function EditPopup({
               minWidth: 23,
               height: 23,
               borderRadius: 2,
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: format.isItalic ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)",
-              color: "#fff",
+              border: format.isItalic ? `1px solid rgba(139,26,26,0.5)` : "1px solid rgba(116,86,44,0.22)",
+              background: format.isItalic ? "rgba(139,26,26,0.1)" : "rgba(139,26,26,0.04)",
+              color: INK,
               fontStyle: "italic",
               fontWeight: "bold",
               fontSize: 11,
@@ -445,7 +445,7 @@ export default function EditPopup({
               type="button"
               title="Text colour"
               onClick={e => { e.stopPropagation(); setOpenPanel(o => o === 'textColor' ? null : 'textColor'); }}
-              style={{ width: 18, height: 18, borderRadius: "50%", background: format.color, border: "2px solid rgba(255,255,255,0.6)", cursor: "pointer", padding: 0, display: "block" }}
+              style={{ width: 18, height: 18, borderRadius: "50%", background: format.color, border: "2px solid rgba(116,86,44,0.4)", cursor: "pointer", padding: 0, display: "block" }}
             />
             {openPanel === 'textColor' && (
               <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
@@ -473,7 +473,7 @@ export default function EditPopup({
               style={{
                 width: 18, height: 18, borderRadius: "50%",
                 background: format.bgColor === "transparent" || !format.bgColor ? "#ffffff" : format.bgColor,
-                border: format.bgColor === "transparent" || !format.bgColor ? "2px dashed rgba(255,255,255,0.6)" : "2px solid rgba(255,255,255,0.6)",
+                border: format.bgColor === "transparent" || !format.bgColor ? "2px dashed rgba(116,86,44,0.4)" : "2px solid rgba(116,86,44,0.4)",
                 cursor: "pointer", padding: 0, display: "block",
               }}
             />
@@ -506,13 +506,15 @@ export default function EditPopup({
             onMouseDown={keepInsideEditor}
             style={{
               fontSize: 9,
-              background: "rgba(255,255,255,0.08)",
-              color: "#fff",
-              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(139,26,26,0.04)",
+              color: INK,
+              border: "1px solid rgba(116,86,44,0.22)",
               borderRadius: 2,
               padding: "1px 4px",
               cursor: "pointer",
               height: 23,
+              fontFamily: CINZEL,
+              letterSpacing: 1,
             }}
             title="No background"
           >
@@ -524,19 +526,21 @@ export default function EditPopup({
             onClick={commit}
             onMouseDown={keepInsideEditor}
             style={{
-              background: "rgba(255,255,255,0.18)",
+              background: LACQUER,
               color: "#fff",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: `1px solid ${LACQUER}`,
               borderRadius: 3,
-              padding: "1px 6px",
+              padding: "1px 8px",
               cursor: "pointer",
               fontWeight: "bold",
               fontSize: 11,
               height: 23,
+              fontFamily: CINZEL,
+              letterSpacing: 1,
             }}
-            title="Close and keep text"
+            title="Save text"
           >
-            X
+            Save
           </button>
         </div>
 
