@@ -226,6 +226,32 @@ export default function PDFEditor() {
     return { pageData, words };
   }
 
+  function _ocrGetBBox(item) {
+    const b = item.bbox || item;
+    const x0 = b.x0 ?? b.left ?? b.x ?? 0;
+    const y0 = b.y0 ?? b.top ?? b.y ?? 0;
+    const x1 = b.x1 ?? b.right ?? (x0 + (b.width || 0));
+    const y1 = b.y1 ?? b.bottom ?? (y0 + (b.height || 0));
+    return { x0, y0, x1, y1 };
+  }
+
+  function _ocrGetItems(data) {
+    if (Array.isArray(data.lines) && data.lines.length) return data.lines;
+    if (Array.isArray(data.words) && data.words.length) return data.words;
+    if (Array.isArray(data.blocks) && data.blocks.length) {
+      const out = [];
+      for (const block of data.blocks) {
+        for (const para of block.paragraphs || []) {
+          for (const line of para.lines || []) {
+            out.push(line);
+          }
+        }
+      }
+      if (out.length) return out;
+    }
+    return [];
+  }
+
   async function handleActivateOCR() {
     const { pages: livePages, deletedPages: liveDel, pageOrder: liveOrder } = liveStateRef.current;
     const activePages = liveOrder
@@ -251,6 +277,7 @@ export default function PDFEditor() {
 
       saveHistory();
       const newTextBlocksByPage = {};
+      let lastOCRText = "";
 
       for (let i = 0; i < activePages.length; i++) {
         if (ocrCancelRef.current) {
@@ -261,14 +288,41 @@ export default function PDFEditor() {
         const pg = activePages[i];
         setOcrProgress({ page: i + 1, total: activePages.length, pct: 0 });
 
-        const { data } = await worker.recognize(pg.dataUrl);
+        const result = await worker.recognize(
+          pg.dataUrl,
+          {},
+          {
+            text: true,
+            blocks: true,
+            hocr: false,
+            tsv: false,
+            box: false,
+            unlv: false,
+            osd: false,
+            pdf: false,
+            imageColor: false,
+            imageGrey: false,
+            imageBinary: false,
+          }
+        );
+        const { data } = result;
 
-        const rawLines = (data.lines && data.lines.length > 0) ? data.lines : (data.words || []);
+        console.log("OCR text:", data.text);
+        console.log("OCR lines:", data.lines?.length || 0);
+        console.log("OCR words:", data.words?.length || 0);
+        console.log("OCR blocks:", data.blocks?.length || 0);
+
+        lastOCRText += "\n" + (data.text || "");
+
+        const rawLines = _ocrGetItems(data);
         const pageBlocks = rawLines
-          .filter(line => line.text.trim() && (line.confidence == null || line.confidence > 30))
+          .filter(line => {
+            const text = (line.text || "").trim();
+            return text && (line.confidence == null || line.confidence > 20);
+          })
           .map((line, li) => {
-            const { x0, y0, x1, y1 } = line.bbox;
-            const height = y1 - y0;
+            const { x0, y0, x1, y1 } = _ocrGetBBox(line);
+            const height = Math.max(y1 - y0, 1);
             const fontSize = Math.max(8, Math.round(height * 0.72));
             const baselineY = y1 - Math.max(2, fontSize * 0.18);
             return {
@@ -277,7 +331,7 @@ export default function PDFEditor() {
               text: line.text.trim(),
               x: x0,
               y: y0,
-              width: x1 - x0,
+              width: Math.max(x1 - x0, 10),
               height,
               baselineY,
               lineBaselines: [baselineY],
@@ -293,7 +347,6 @@ export default function PDFEditor() {
           });
         newTextBlocksByPage[pg.num] = pageBlocks;
 
-        // Yield so the UI can update between pages
         await new Promise(r => setTimeout(r, 10));
       }
 
@@ -301,7 +354,11 @@ export default function PDFEditor() {
 
       const totalFound = Object.values(newTextBlocksByPage).reduce((s, arr) => s + arr.length, 0);
       if (totalFound === 0) {
-        setOcrError("No readable text was found.");
+        if (lastOCRText.trim()) {
+          setOcrError("Text was detected, but text positions were not returned. OCR layout output is missing.");
+        } else {
+          setOcrError("No readable text was found.");
+        }
         setOcrState('error');
         return;
       }
