@@ -238,7 +238,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-feat::after {
           content: ""; position: absolute;
           top: 0; left: 0; right: 0; height: 2px;
-          background: linear-gradient(90deg, ${RED}, ${GOLD});
+          background: ${RED};
         }
         .hp-feat-icon {
           width: 26px; height: 26px;
