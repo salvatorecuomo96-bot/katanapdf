@@ -119,6 +119,7 @@ export default function PDFEditor() {
   const [ocrProgress, setOcrProgress] = useState({ page: 0, total: 0, pct: 0 });
   const [ocrError, setOcrError] = useState('');
   const ocrCancelRef = useRef(false);
+  const ocrWorkerRef = useRef(null);
   const [shapePanelPage, setShapePanelPage] = useState(null);
   const [shapePanelColor, setShapePanelColor] = useState('#000000');
   const [shapePanelFill, setShapePanelFill] = useState(false);
@@ -236,8 +237,7 @@ export default function PDFEditor() {
   }
 
   function _ocrGetItems(data) {
-    if (Array.isArray(data.lines) && data.lines.length) return data.lines;
-    if (Array.isArray(data.words) && data.words.length) return data.words;
+    // prefer blocks (preserves line layout), then fall back
     if (Array.isArray(data.blocks) && data.blocks.length) {
       const out = [];
       for (const block of data.blocks) {
@@ -249,7 +249,39 @@ export default function PDFEditor() {
       }
       if (out.length) return out;
     }
+    if (Array.isArray(data.lines) && data.lines.length) return data.lines;
+    if (Array.isArray(data.words) && data.words.length) return data.words;
     return [];
+  }
+
+  function _ocrPreprocess(dataUrl, width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    return new Promise(resolve => {
+      img.onload = () => {
+        // white background first so transparent areas become white
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // grayscale + contrast boost via pixel manipulation
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const d = imageData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          // stretch contrast: push darks darker, lights lighter
+          const contrast = Math.min(255, Math.max(0, (gray - 128) * 1.5 + 128));
+          d[i] = d[i + 1] = d[i + 2] = contrast;
+          d[i + 3] = 255;
+        }
+        ctx.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = dataUrl;
+    });
   }
 
   async function handleActivateOCR() {
@@ -274,6 +306,7 @@ export default function PDFEditor() {
           }
         },
       });
+      ocrWorkerRef.current = worker;
 
       saveHistory();
       const newTextBlocksByPage = {};
@@ -282,14 +315,17 @@ export default function PDFEditor() {
       for (let i = 0; i < activePages.length; i++) {
         if (ocrCancelRef.current) {
           await worker.terminate();
+          ocrWorkerRef.current = null;
           setOcrState(null);
           return;
         }
         const pg = activePages[i];
         setOcrProgress({ page: i + 1, total: activePages.length, pct: 0 });
 
+        const processedUrl = await _ocrPreprocess(pg.dataUrl, pg.width, pg.height);
+
         const result = await worker.recognize(
-          pg.dataUrl,
+          processedUrl,
           {},
           {
             text: true,
@@ -340,7 +376,7 @@ export default function PDFEditor() {
               isBold: false,
               isItalic: false,
               color: "#000000",
-              bgColor: "transparent",
+              bgColor: "#ffffff",
               edited: false,
               ocr: true,
             };
@@ -351,6 +387,7 @@ export default function PDFEditor() {
       }
 
       await worker.terminate();
+      ocrWorkerRef.current = null;
 
       const totalFound = Object.values(newTextBlocksByPage).reduce((s, arr) => s + arr.length, 0);
       if (totalFound === 0) {
@@ -378,13 +415,19 @@ export default function PDFEditor() {
       const msg = err?.message || String(err);
       console.error("OCR error:", msg);
       if (worker) { try { await worker.terminate(); } catch (_) {} }
+      ocrWorkerRef.current = null;
       setOcrError(msg);
       setOcrState('error');
     }
   }
 
-  function handleCancelOCR() {
+  async function handleCancelOCR() {
     ocrCancelRef.current = true;
+    if (ocrWorkerRef.current) {
+      try { await ocrWorkerRef.current.terminate(); } catch (_) {}
+      ocrWorkerRef.current = null;
+    }
+    setOcrState(null);
   }
 
   useEffect(() => {

@@ -156,7 +156,7 @@ export default function EditorNotices({
           onDismiss={onDismissOCRDone}
           ariaLabel="Dismiss OCR complete notice"
         >
-          OCR complete. Click the scanned text to edit it.
+          OCR complete. Click detected text to edit it. Some scans may need manual correction.
         </NoticeBox>
       )}
 
