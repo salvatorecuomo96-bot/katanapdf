@@ -61,13 +61,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           background: rgba(255,253,248,0.92);
           backdrop-filter: blur(10px);
           border-bottom: 1px solid ${LINE};
-          height: 48px;
-          display: flex; align-items: center; justify-content: space-between;
+          height: 60px;
+          display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
           padding: 0 36px;
         }
-        .hp-logo { width: min(160px,36vw); height: auto; display: block; }
+        .hp-logo { width: min(200px,44vw); height: auto; display: block; }
         .hp-nav {
-          display: flex; align-items: center; gap: 0;
+          display: flex; align-items: center; gap: 0; justify-content: flex-end;
         }
         .hp-nav a {
           font-family: ${CINZEL}; font-size: 9px; letter-spacing: 2.5px;
@@ -332,7 +332,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         }
 
         @media (max-width: 580px) {
-          .hp-header { height: 58px; padding: 0 16px; }
+          .hp-header { height: 60px; padding: 0 16px; }
           .hp-logo { width: min(160px,44vw); }
           .hp-nav a { padding: 0 8px; font-size: 8px; letter-spacing: 1.5px; }
           .hp-hero { padding: 28px 18px 32px; }
@@ -363,6 +363,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
       {/* ── Header ── */}
       <header className="hp-header">
+        <div />
         <img src="/logo.png" alt="katanapdf" className="hp-logo" />
         <nav className="hp-nav">
           {NAV.map(([label, href]) => (
