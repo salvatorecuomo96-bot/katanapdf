@@ -263,13 +263,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           background:
             /* corner blobs — break straight corners */
             radial-gradient(ellipse 34% 30% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 35%, rgba(255,252,246,0.22) 58%, transparent 78%),
-            radial-gradient(ellipse 28% 26% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 35%, rgba(255,252,246,0.16) 58%, transparent 78%),
+            radial-gradient(ellipse 34% 30% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.64) 32%, rgba(255,252,246,0.20) 58%, transparent 78%),
             radial-gradient(ellipse 32% 28% at   0% 100%, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.64) 35%, rgba(255,252,246,0.18) 58%, transparent 78%),
-            radial-gradient(ellipse 26% 24% at 100% 100%, rgba(255,252,246,0.95) 0%, rgba(255,252,246,0.54) 35%, rgba(255,252,246,0.14) 58%, transparent 78%),
+            radial-gradient(ellipse 32% 28% at 100% 100%, rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.60) 32%, rgba(255,252,246,0.18) 58%, transparent 78%),
             /* left — fast initial spike, then taper so sidebar stays legible */
             linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
-            /* right — same strategy */
-            linear-gradient(to left,   rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.56) 6%, rgba(255,252,246,0.18) 14%, rgba(255,252,246,0.05) 22%, transparent 32%),
+            /* right — slightly more than left */
+            linear-gradient(to left,   rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.64) 7%, rgba(255,252,246,0.28) 16%, rgba(255,252,246,0.08) 26%, transparent 38%),
             /* top — light, keep nav bar legible */
             linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.30) 4%, rgba(255,252,246,0.08) 9%,  transparent 16%),
             /* bottom */
@@ -282,13 +282,12 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           max-height: min(82vh, 800px);
           object-fit: contain;
           mix-blend-mode: multiply;
-          /* 20% fade from each side — fully transparent at the edges */
           -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 80%, rgba(0,0,0,0.4) 92%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 72%, rgba(0,0,0,0.35) 84%, rgba(0,0,0,0.08) 94%, transparent 100%),
             linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
           -webkit-mask-composite: source-in;
           mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 80%, rgba(0,0,0,0.4) 92%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 72%, rgba(0,0,0,0.35) 84%, rgba(0,0,0,0.08) 94%, transparent 100%),
             linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
           mask-composite: intersect;
         }
