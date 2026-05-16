@@ -79,63 +79,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Feature strip (horizontal, above hero) ─── */
-        .hp-strip {
-          flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center;
-          border-bottom: 1px solid ${LINE};
-          background: rgba(255,253,248,0.7);
-          backdrop-filter: blur(6px);
-          padding: 0 36px;
-          overflow: hidden;
-        }
-        .hp-strip-inner {
-          display: flex; align-items: stretch;
-          border-left: 1px solid ${LINE};
-        }
-        .hp-strip-item {
-          display: flex; align-items: center; gap: 7px;
-          padding: 9px 14px;
-          border-right: 1px solid ${LINE};
-          position: relative; cursor: pointer;
-          transition: background 0.12s, color 0.12s;
-          white-space: nowrap;
-          user-select: none;
-        }
-        .hp-strip-item:hover { background: rgba(139,26,26,0.06); }
-        .hp-strip-item:hover .hp-strip-name { color: ${RED}; }
-        .hp-strip-item:hover .hp-strip-icon { color: ${RED}; }
-        .hp-strip-icon {
-          font-size: 12px; color: ${RED};
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-        }
-        .hp-strip-name {
-          font-family: ${CINZEL}; font-size: 7.5px; letter-spacing: 1.3px;
-          text-transform: uppercase; font-weight: 800; color: ${INK};
-        }
-        /* tooltip drops down */
-        .hp-strip-tooltip {
-          visibility: hidden; opacity: 0;
-          position: absolute; top: calc(100% + 8px); left: 50%;
-          transform: translateX(-50%);
-          background: ${INK}; color: rgba(255,253,248,0.92);
-          font-size: 11px; line-height: 1.45; font-family: ${FELL};
-          padding: 7px 11px; border-radius: 4px;
-          width: 190px; text-align: center;
-          pointer-events: none; z-index: 300;
-          transition: opacity 0.15s; white-space: normal;
-        }
-        .hp-strip-tooltip::after {
-          content: ""; position: absolute;
-          bottom: 100%; left: 50%; transform: translateX(-50%);
-          border: 5px solid transparent;
-          border-bottom-color: ${INK};
-        }
-        .hp-strip-item:hover .hp-strip-tooltip {
-          visibility: visible; opacity: 1;
-        }
-
         /* ── Hero: copy | samurai ────────────────────── */
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
@@ -377,19 +320,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
         </nav>
       </header>
 
-      {/* ── Feature strip ── */}
-      <div className="hp-strip">
-        <div className="hp-strip-inner">
-          {FEATURES.map(f => (
-            <label className="hp-strip-item" key={f.label}>
-              {f.detail && <span className="hp-strip-tooltip">{f.detail}</span>}
-              <span className="hp-strip-icon">{f.icon}</span>
-              <span className="hp-strip-name">{f.label}</span>
-              <input type="file" accept="application/pdf,.pdf,image/*" onChange={onFile} style={hiddenFileInput} />
-            </label>
-          ))}
-        </div>
-      </div>
 
       {/* ── Hero: copy | samurai ── */}
       <section className="hp-hero">
