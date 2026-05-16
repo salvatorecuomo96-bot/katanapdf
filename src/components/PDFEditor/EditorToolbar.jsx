@@ -58,7 +58,9 @@ export default function EditorToolbar({
         onClick={e => { e.preventDefault(); goHome(); window.location.hash = "#home"; }}
         style={{ textDecoration: "none", display: "flex", alignItems: "center" }}
       >
-        <img src="/logo.png" alt="katanapdf" style={{ height: 44, width: "auto", display: "block" }} />
+        <span style={{ fontFamily: CINZEL, fontSize: 15, letterSpacing: 3, fontWeight: 800, textTransform: "uppercase", userSelect: "none", color: INK }}>
+          katana<span style={{ color: LACQUER }}>pdf</span>
+        </span>
       </a>
 
       <div style={{ width: 1, height: 22, background: LINE, margin: "0 4px", flexShrink: 0 }} />

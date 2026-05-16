@@ -400,6 +400,30 @@ export default function PDFEditor() {
     }));
   }
 
+  function addBlankPage(afterPageNum) {
+    saveHistory();
+    const refPage = pages.find(p => p.num === afterPageNum);
+    const w = refPage ? refPage.width : 612 * SCALE;
+    const h = refPage ? refPage.height : 792 * SCALE;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    const dataUrl = canvas.toDataURL("image/png");
+    const newNum = Math.max(0, ...pages.map(p => p.num)) + 1;
+    const newPage = { num: newNum, dataUrl, width: w, height: h };
+    const newPageIdx = pages.length;
+    const insertAfterPos = pageOrder.findIndex(idx => pages[idx]?.num === afterPageNum);
+    setPages(prev => [...prev, newPage]);
+    setPageOrder(prev => {
+      const next = [...prev];
+      next.splice(insertAfterPos + 1, 0, newPageIdx);
+      return next;
+    });
+  }
+
   async function createBlankPdf() {
     snapshotCurrentTab();
     const doc = await PDFDocument.create();
@@ -1770,6 +1794,9 @@ export default function PDFEditor() {
                         <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <RotateIcon size={14} />
                         </button>
+                        <button onClick={e => { e.stopPropagation(); addBlankPage(pg.num); }} aria-label="Add blank page after" title="Add blank page after this one" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="12" y2="19"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+                        </button>
                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>X</button>
                       </div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1885,7 +1912,12 @@ export default function PDFEditor() {
                   {isGridView && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                        <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
-                       <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "2px 6px", fontSize: 10 }}>X</button>
+                       <div style={{ display: "flex", gap: 4 }}>
+                         <button onClick={e => { e.stopPropagation(); addBlankPage(pg.num); }} title="Add blank page after" style={{ ...pageBtn, padding: "2px 6px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="12" y2="19"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+                         </button>
+                         <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "2px 6px", fontSize: 10 }}>X</button>
+                       </div>
                     </div>
                   )}
                   <div data-pgwrap={pg.num} onClick={e => { 
