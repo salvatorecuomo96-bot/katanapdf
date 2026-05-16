@@ -30,9 +30,16 @@ export default function EditPopup({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const rawSize = Math.round((block.fontSize || 14) / SCALE);
-  const snapSize = FB_SIZES.reduce((prev, curr) =>
-    Math.abs(curr - rawSize) < Math.abs(prev - rawSize) ? curr : prev
-  );
+  // For OCR blocks keep the exact detected size; for normal blocks snap to the grid
+  const snapSize = block.ocr
+    ? rawSize
+    : FB_SIZES.reduce((prev, curr) =>
+        Math.abs(curr - rawSize) < Math.abs(prev - rawSize) ? curr : prev
+      );
+  // Size dropdown includes the OCR-detected size even if it's not in the standard list
+  const sizeOptions = (block.ocr && !FB_SIZES.includes(snapSize))
+    ? [...FB_SIZES, snapSize].sort((a, b) => a - b)
+    : FB_SIZES;
 
   const [format, setFormat] = useState({
     fontFamily: block.fontFamily || "Arial, sans-serif",
@@ -231,7 +238,9 @@ export default function EditPopup({
     measuredTextW = Math.max(...lines.map(line => line.length)) * cssFontSize * 0.5;
   }
 
+  const bboxMinW = block.ocr ? Math.round(block.width * zoom) : 0;
   const editorW = Math.max(
+    bboxMinW,
     text.trim() ? 70 : 90,
     Math.min(900, measuredTextW + 14)
   );
@@ -360,7 +369,7 @@ export default function EditPopup({
           </select>
 
           <select
-            value={FB_SIZES.includes(format.fontSize) ? format.fontSize : 14}
+            value={sizeOptions.includes(format.fontSize) ? format.fontSize : snapSize}
             onPointerDown={keepInsideEditor}
             onMouseDown={keepInsideEditor}
             onClick={keepInsideEditor}
@@ -379,7 +388,7 @@ export default function EditPopup({
               height: 23,
             }}
           >
-            {FB_SIZES.map(s => (
+            {sizeOptions.map(s => (
               <option key={s} value={s}>
                 {s}
               </option>

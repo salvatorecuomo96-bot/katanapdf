@@ -240,21 +240,22 @@ export default function PDFEditor() {
     return { x0, y0, x1, y1 };
   }
 
-  function _ocrGetItems(data) {
+  function _ocrGetParagraphs(data) {
+    // Returns [[line, line, ...], [line, ...]] — one sub-array per Tesseract paragraph.
+    // Preserves Tesseract's own grouping so we don't need to re-cluster.
     if (Array.isArray(data.blocks) && data.blocks.length) {
-      const out = [];
+      const paras = [];
       for (const block of data.blocks) {
         for (const para of block.paragraphs || []) {
-          for (const line of para.lines || []) {
-            out.push(line);
-          }
+          if (Array.isArray(para.lines) && para.lines.length) paras.push(para.lines);
         }
       }
-      if (out.length) return out;
+      if (paras.length) return paras;
     }
-    if (Array.isArray(data.lines) && data.lines.length) return data.lines;
-    if (Array.isArray(data.words) && data.words.length) return data.words;
-    return [];
+    // Fallback: group all lines/words, each as its own paragraph
+    const items = (Array.isArray(data.lines) && data.lines.length) ? data.lines
+      : (Array.isArray(data.words) ? data.words : []);
+    return items.map(item => [item]);
   }
 
   function _ocrRgbToHex(r, g, b) {
@@ -345,7 +346,7 @@ export default function PDFEditor() {
       for (let i = 0; i < inner.data.length; i += 4) {
         const px = [inner.data[i], inner.data[i+1], inner.data[i+2]];
         totalInner++;
-        if (_ocrColorDist(px, bgColor) > 60) fgPixels.push(px);
+        if (_ocrColorDist(px, bgColor) > 45) fgPixels.push(px);
       }
     }
 
@@ -377,30 +378,10 @@ export default function PDFEditor() {
     const ctx = canvas.getContext('2d');
     ctx.font = `${isBold ? 'bold ' : ''}${heightSize}px ${fontFamily}`;
     const measured = ctx.measureText(text).width;
-    const widthSize = measured > 0 ? heightSize * (boxW / measured) : heightSize;
-    return Math.max(8, Math.min(heightSize, widthSize * 1.02));
-  }
-
-  function groupOcrLines(items) {
-    // Group vertically-adjacent lines with similar x-start and font size into multiline blocks
-    const groups = [];
-    let current = null;
-    for (const item of items) {
-      if (!current) { current = [item]; continue; }
-      const last = current[current.length - 1];
-      const dx0 = Math.abs(item.bbox.x0 - last.bbox.x0);
-      const sizeRatio = Math.max(item.fontSize, last.fontSize) / Math.max(1, Math.min(item.fontSize, last.fontSize));
-      const vertGap = item.bbox.y0 - last.bbox.y1;
-      const avgSize = (item.fontSize + last.fontSize) / 2;
-      if (dx0 < 24 && sizeRatio < 1.25 && vertGap >= -4 && vertGap < avgSize * 1.5) {
-        current.push(item);
-      } else {
-        groups.push(current);
-        current = [item];
-      }
-    }
-    if (current) groups.push(current);
-    return groups;
+    if (measured <= 0) return heightSize;
+    const widthSize = heightSize * (boxW / measured);
+    // Allow slight upward from height-size for wide-spaced/short text, cap at 1.15×
+    return Math.max(8, Math.min(heightSize * 1.15, Math.max(heightSize * 0.4, widthSize)));
   }
 
   function _ocrPreprocess(dataUrl, width, height) {
@@ -493,47 +474,49 @@ export default function PDFEditor() {
 
         lastOCRText += "\n" + (data.text || "");
 
-        const rawLines = _ocrGetItems(data);
+        // Use Tesseract's own paragraph structure (much more reliable than re-clustering)
+        const paragraphs = _ocrGetParagraphs(data);
 
-        // Per-line: compute bbox, fit fontSize, sample style
-        const lineItems = rawLines
-          .filter(line => {
-            const text = (line.text || "").trim();
-            return text && (line.confidence == null || line.confidence > 20);
-          })
-          .map(line => {
-            const bbox = _ocrGetBBox(line);
-            const style = _ocrSampleStyle(samplingCtx, bbox, pg.width, pg.height);
-            const fontSize = fitOcrFontSize(line.text.trim(), bbox, style.fontFamily, style.isBold);
-            return { bbox, style, fontSize, text: line.text.trim() };
-          });
+        const pageBlocks = paragraphs.map((paraLines, pi) => {
+          const lineItems = paraLines
+            .filter(line => {
+              const text = (line.text || "").trim();
+              return text && (line.confidence == null || line.confidence > 20);
+            })
+            .map(line => {
+              const bbox = _ocrGetBBox(line);
+              const style = _ocrSampleStyle(samplingCtx, bbox, pg.width, pg.height);
+              const fontSize = fitOcrFontSize(line.text.trim(), bbox, style.fontFamily, style.isBold);
+              return { bbox, style, fontSize, text: line.text.trim() };
+            });
 
-        // Group adjacent lines into multiline blocks
-        const groups = groupOcrLines(lineItems);
+          if (!lineItems.length) return null;
 
-        const pageBlocks = groups.map((group, gi) => {
-          const first = group[0];
-          const last = group[group.length - 1];
+          const first = lineItems[0];
+          const last = lineItems[lineItems.length - 1];
           const style = first.style;
-          const avgFontSize = group.reduce((s, it) => s + it.fontSize, 0) / group.length;
+          const avgFontSize = lineItems.reduce((s, it) => s + it.fontSize, 0) / lineItems.length;
 
-          const gx0 = Math.min(...group.map(it => it.bbox.x0));
-          const gx1 = Math.max(...group.map(it => it.bbox.x1));
+          const gx0 = Math.min(...lineItems.map(it => it.bbox.x0));
+          const gx1 = Math.max(...lineItems.map(it => it.bbox.x1));
+          const gy0 = first.bbox.y0;
           const gy1 = last.bbox.y1;
 
-          // Per-line baselines: y0 + fontSize * 0.92 fits typed text onto the scan
-          const lineBaselines = group.map(it => it.bbox.y0 + it.fontSize * 0.92);
+          // Baseline ≈ top of ascenders + 73% of fontSize (accurate for typical fonts)
+          const lineBaselines = lineItems.map(it => it.bbox.y0 + it.fontSize * 0.73);
           const baselineY = lineBaselines[0];
-          const topY = Math.max(0, baselineY - avgFontSize * 1.02);
-          const totalHeight = Math.max(gy1 - first.bbox.y0 + OCR_H_PAD, avgFontSize * 1.25);
-          const text = group.map(it => it.text).join('\n');
+
+          // y = top of bbox minus 1 canvas px (compensates for 2px textarea padding / SCALE=2)
+          const topY = Math.max(0, gy0 - OCR_Y_PAD);
+          const totalHeight = Math.max(gy1 - gy0 + OCR_H_PAD, avgFontSize * 1.2);
+          const text = lineItems.map(it => it.text).join('\n');
 
           return {
-            id: `ocr-${pg.num}-G${gi}`,
+            id: `ocr-${pg.num}-P${pi}`,
             page: pg.num,
             text,
             x: Math.max(0, gx0 - OCR_X_PAD),
-            y: Math.max(0, topY - OCR_Y_PAD),
+            y: topY,
             width: Math.max(gx1 - gx0 + OCR_W_PAD, 10),
             height: totalHeight,
             baselineY,
@@ -547,7 +530,7 @@ export default function PDFEditor() {
             edited: false,
             ocr: true,
           };
-        });
+        }).filter(Boolean);
         newTextBlocksByPage[pg.num] = pageBlocks;
 
         await new Promise(r => setTimeout(r, 10));
