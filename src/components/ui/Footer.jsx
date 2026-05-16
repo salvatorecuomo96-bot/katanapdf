@@ -1,8 +1,6 @@
-import { CINZEL, FELL } from "../utils/constant";
+import { FELL } from "../utils/constant";
 
 const LINE = "rgba(116,86,44,0.18)";
-const LACQUER_F = "#8B1A1A";
-const INK_F = "#18130d";
 
 export default function Footer() {
   return (

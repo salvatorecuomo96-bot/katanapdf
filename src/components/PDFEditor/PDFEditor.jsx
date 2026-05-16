@@ -431,6 +431,8 @@ export default function PDFEditor() {
     const bytes = await doc.save();
     setFileName("blank.pdf");
     await loadPdfFromBytes(bytes);
+    setHasTextLayer(true);
+    setFloatingShapes([]);
     const id = makeTabId();
     setTabsList(prev => [...prev, { id, fileName: "blank.pdf" }]);
     setActiveTabId(id);
@@ -611,6 +613,38 @@ export default function PDFEditor() {
     reader.readAsDataURL(file);
   }
 
+  function drawShapeOnCanvas(ctx, shape) {
+    const { x, y, w, h, shapeType, shapeColor, shapeFill } = shape;
+    ctx.strokeStyle = shapeColor;
+    ctx.fillStyle = shapeColor;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    if (shapeType === "circle") {
+      ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI*2);
+      ctx.lineWidth = 3;
+      if (shapeFill) ctx.fill(); else ctx.stroke();
+    } else if (shapeType === "square") {
+      ctx.rect(x, y, w, h);
+      ctx.lineWidth = 3;
+      if (shapeFill) ctx.fill(); else ctx.stroke();
+    } else if (shapeType === "checkmark") {
+      ctx.moveTo(x + w*0.1, y + h*0.6); ctx.lineTo(x + w*0.38, y + h*0.85); ctx.lineTo(x + w*0.9, y + h*0.18);
+      ctx.lineWidth = Math.max(2, w*0.07); ctx.stroke();
+    } else if (shapeType === "cross") {
+      ctx.moveTo(x + w*0.12, y + h*0.12); ctx.lineTo(x + w*0.88, y + h*0.88);
+      ctx.moveTo(x + w*0.88, y + h*0.12); ctx.lineTo(x + w*0.12, y + h*0.88);
+      ctx.lineWidth = Math.max(2, w*0.07); ctx.stroke();
+    } else if (shapeType === "line") {
+      ctx.moveTo(x + w*0.05, y + h*0.5); ctx.lineTo(x + w*0.95, y + h*0.5);
+      ctx.lineWidth = Math.max(2, h*0.07); ctx.stroke();
+    } else if (shapeType === "arrow") {
+      ctx.moveTo(x + w*0.05, y + h*0.5); ctx.lineTo(x + w*0.82, y + h*0.5);
+      ctx.moveTo(x + w*0.6, y + h*0.22); ctx.lineTo(x + w*0.92, y + h*0.5); ctx.lineTo(x + w*0.6, y + h*0.78);
+      ctx.lineWidth = Math.max(2, h*0.07); ctx.stroke();
+    }
+  }
+
   function handleAddShape(pageNum, shapeType) {
     const pg = pages.find(p => p.num === pageNum);
     if (!pg) return;
@@ -670,10 +704,10 @@ export default function PDFEditor() {
     setDraggingShape({ id: shape.id });
   }
 
-  function startResizeShape(e, shape) {
+  function startResizeShape(e, shape, axis = 'se') {
     e.preventDefault();
     e.stopPropagation();
-    shapeResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: shape.w, h: shape.h };
+    shapeResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: shape.w, h: shape.h, axis };
     setResizingShape({ id: shape.id });
   }
   function handleDrawStart(e, pgNum, scale) {
@@ -1021,10 +1055,15 @@ export default function PDFEditor() {
     if (resizingShape) {
       const o = shapeResizeOrigin.current;
       if (!o) return;
-      setFloatingShapes(prev => prev.map(s => s.id === resizingShape.id
-        ? { ...s, w: Math.max(40, o.w + (e.clientX - o.mx) / zoom), h: Math.max(40, o.h + (e.clientY - o.my) / zoom) }
-        : s
-      ));
+      setFloatingShapes(prev => prev.map(s => {
+        if (s.id !== resizingShape.id) return s;
+        const axis = o.axis || 'se';
+        return {
+          ...s,
+          w: axis !== 's' ? Math.max(40, o.w + (e.clientX - o.mx) / zoom) : s.w,
+          h: axis !== 'e' ? Math.max(40, o.h + (e.clientY - o.my) / zoom) : s.h,
+        };
+      }));
     }
   }, [dragging, rotating, draggingImg, resizingImg, resizingFb, draggingShape, resizingShape, zoom]);
   const onMouseUp = useCallback(() => {
@@ -1101,16 +1140,7 @@ export default function PDFEditor() {
       });
     }
     for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
-      ctx.beginPath();
-      ctx.strokeStyle = shape.shapeColor;
-      ctx.fillStyle = shape.shapeColor;
-      ctx.lineWidth = 3;
-      if (shape.shapeType === "circle") {
-        ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
-      } else {
-        ctx.rect(shape.x, shape.y, shape.w, shape.h);
-      }
-      if (shape.shapeFill) ctx.fill(); else ctx.stroke();
+      drawShapeOnCanvas(ctx, shape);
     }
     return canvas.toDataURL("image/png");
   }
@@ -1330,22 +1360,27 @@ export default function PDFEditor() {
         // 4. Shapes
         for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
           const sc = hexToRgb(shape.shapeColor);
+          const { x: sx2, y: sy2, w: sw, h: sh } = { x: shape.x * sx, y: pdfH - (shape.y + shape.h) * sy, w: shape.w * sx, h: shape.h * sy };
           if (shape.shapeType === 'circle') {
-            pdfPage.drawEllipse({
-              x: (shape.x + shape.w / 2) * sx,
-              y: pdfH - (shape.y + shape.h / 2) * sy,
-              xScale: (shape.w / 2) * sx,
-              yScale: (shape.h / 2) * sy,
-              ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }),
-            });
+            pdfPage.drawEllipse({ x: sx2 + sw/2, y: sy2 + sh/2, xScale: sw/2, yScale: sh/2, ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }) });
+          } else if (shape.shapeType === 'square') {
+            pdfPage.drawRectangle({ x: sx2, y: sy2, width: sw, height: sh, ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }) });
           } else {
-            pdfPage.drawRectangle({
-              x: shape.x * sx,
-              y: pdfH - (shape.y + shape.h) * sy,
-              width: shape.w * sx,
-              height: shape.h * sy,
-              ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }),
-            });
+            const lw = Math.max(1, Math.min(sw, sh) * 0.07);
+            const pt = (rx, ry) => ({ x: sx2 + sw * rx, y: sy2 + sh * (1 - ry) });
+            if (shape.shapeType === 'checkmark') {
+              pdfPage.drawLine({ start: pt(0.1, 0.6), end: pt(0.38, 0.85), thickness: lw, color: sc });
+              pdfPage.drawLine({ start: pt(0.38, 0.85), end: pt(0.9, 0.18), thickness: lw, color: sc });
+            } else if (shape.shapeType === 'cross') {
+              pdfPage.drawLine({ start: pt(0.12, 0.12), end: pt(0.88, 0.88), thickness: lw, color: sc });
+              pdfPage.drawLine({ start: pt(0.88, 0.12), end: pt(0.12, 0.88), thickness: lw, color: sc });
+            } else if (shape.shapeType === 'line') {
+              pdfPage.drawLine({ start: pt(0.05, 0.5), end: pt(0.95, 0.5), thickness: lw, color: sc });
+            } else if (shape.shapeType === 'arrow') {
+              pdfPage.drawLine({ start: pt(0.05, 0.5), end: pt(0.82, 0.5), thickness: lw, color: sc });
+              pdfPage.drawLine({ start: pt(0.6, 0.22), end: pt(0.92, 0.5), thickness: lw, color: sc });
+              pdfPage.drawLine({ start: pt(0.92, 0.5), end: pt(0.6, 0.78), thickness: lw, color: sc });
+            }
           }
         }
         } catch (overlayErr) {
@@ -1416,13 +1451,7 @@ export default function PDFEditor() {
         await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); }; img.src = fi.dataUrl; });
       }
       for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
-        ctx.beginPath();
-        ctx.strokeStyle = shape.shapeColor;
-        ctx.fillStyle = shape.shapeColor;
-        ctx.lineWidth = 3;
-        if (shape.shapeType === 'circle') ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
-        else ctx.rect(shape.x, shape.y, shape.w, shape.h);
-        if (shape.shapeFill) ctx.fill(); else ctx.stroke();
+        drawShapeOnCanvas(ctx, shape);
       }
       if (displayIdx > 0) await new Promise(r => setTimeout(r, 80));
       const a = document.createElement("a");
@@ -1880,15 +1909,20 @@ export default function PDFEditor() {
                                   FILLED
                                 </label>
                               </div>
-                              <div style={{ display: "flex", gap: 8 }}>
-                                <button onClick={() => handleAddShape(pg.num, 'circle')} style={{ ...pageActionBtn, flex: 1, flexDirection: "column", gap: 4, padding: "10px 8px" }} title="Add circle">
-                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/></svg>
-                                  <span style={{ fontSize: 9, letterSpacing: 2 }}>CIRCLE</span>
-                                </button>
-                                <button onClick={() => handleAddShape(pg.num, 'square')} style={{ ...pageActionBtn, flex: 1, flexDirection: "column", gap: 4, padding: "10px 8px" }} title="Add square">
-                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/></svg>
-                                  <span style={{ fontSize: 9, letterSpacing: 2 }}>SQUARE</span>
-                                </button>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+                                {[
+                                  { type: 'circle', label: 'CIRCLE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/></svg> },
+                                  { type: 'square', label: 'SQUARE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/></svg> },
+                                  { type: 'checkmark', label: 'CHECK', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3,13 9,19 21,6"/></svg> },
+                                  { type: 'cross', label: 'CROSS', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg> },
+                                  { type: 'line', label: 'LINE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="3" y1="12" x2="21" y2="12"/></svg> },
+                                  { type: 'arrow', label: 'ARROW', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="19" y2="12"/><polyline points="14,7 21,12 14,17"/></svg> },
+                                ].map(({ type, label, svg }) => (
+                                  <button key={type} onClick={() => handleAddShape(pg.num, type)} style={{ ...pageActionBtn, flexDirection: "column", gap: 3, padding: "8px 4px" }} title={`Add ${label.toLowerCase()}`}>
+                                    {svg}
+                                    <span style={{ fontSize: 8, letterSpacing: 1.5 }}>{label}</span>
+                                  </button>
+                                ))}
                               </div>
                             </div>
                           )}
@@ -2015,7 +2049,7 @@ export default function PDFEditor() {
                           onSelect={() => setSelected(shape.id)}
                           onDeselect={() => setSelected(null)}
                           onStartDrag={e => startDragShape(e, shape)}
-                          onStartResize={e => startResizeShape(e, shape)}
+                          onStartResize={(e, axis) => startResizeShape(e, shape, axis)}
                           onDelete={() => deleteFloatingShape(shape.id)}
                           onUpdate={u => updateFloatingShape(shape.id, u)} />
                       ))}

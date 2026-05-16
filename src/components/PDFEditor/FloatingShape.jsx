@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { INK, GOLD, CINZEL } from "../utils/constant";
+
+const SHAPE_LABELS = { circle: 'CIRCLE', square: 'SQUARE', checkmark: 'CHECKMARK', cross: 'CROSS', line: 'LINE', arrow: 'ARROW' };
 
 export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStartDrag, onStartResize, onDelete, onUpdate, onDeselect }) {
   const { x, y, w, h, shapeType, shapeColor, shapeFill, z } = shape;
@@ -15,6 +16,8 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [isSel, onDeselect]);
+
+  const isLineShape = shapeType === 'checkmark' || shapeType === 'cross' || shapeType === 'line' || shapeType === 'arrow';
 
   return (
     <div
@@ -38,22 +41,24 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
         style={{ display: 'block' }}
       >
         {shapeType === 'circle' ? (
-          <ellipse
-            cx="50" cy="50" rx="47" ry="47"
-            fill={shapeFill ? shapeColor : 'none'}
-            stroke={shapeColor}
-            strokeWidth="4"
-            vectorEffect="non-scaling-stroke"
-          />
-        ) : (
-          <rect
-            x="3" y="3" width="94" height="94"
-            fill={shapeFill ? shapeColor : 'none'}
-            stroke={shapeColor}
-            strokeWidth="4"
-            vectorEffect="non-scaling-stroke"
-          />
-        )}
+          <ellipse cx="50" cy="50" rx="47" ry="47" fill={shapeFill ? shapeColor : 'none'} stroke={shapeColor} strokeWidth="4" vectorEffect="non-scaling-stroke" />
+        ) : shapeType === 'square' ? (
+          <rect x="3" y="3" width="94" height="94" fill={shapeFill ? shapeColor : 'none'} stroke={shapeColor} strokeWidth="4" vectorEffect="non-scaling-stroke" />
+        ) : shapeType === 'checkmark' ? (
+          <polyline points="10,60 38,85 90,18" fill="none" stroke={shapeColor} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        ) : shapeType === 'cross' ? (
+          <>
+            <line x1="12" y1="12" x2="88" y2="88" stroke={shapeColor} strokeWidth="8" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            <line x1="88" y1="12" x2="12" y2="88" stroke={shapeColor} strokeWidth="8" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+          </>
+        ) : shapeType === 'line' ? (
+          <line x1="5" y1="50" x2="95" y2="50" stroke={shapeColor} strokeWidth="8" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        ) : shapeType === 'arrow' ? (
+          <>
+            <line x1="5" y1="50" x2="82" y2="50" stroke={shapeColor} strokeWidth="8" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            <polyline points="60,22 92,50 60,78" fill="none" stroke={shapeColor} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          </>
+        ) : null}
       </svg>
 
       {isSel && (
@@ -75,7 +80,7 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
             >
               <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:'block'}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
             </button>
-            <span style={{ fontWeight: 700, letterSpacing: 2 }}>{shapeType === 'circle' ? 'CIRCLE' : 'SQUARE'}</span>
+            <span style={{ fontWeight: 700, letterSpacing: 2 }}>{SHAPE_LABELS[shapeType] || shapeType.toUpperCase()}</span>
             <input
               type="color"
               value={shapeColor}
@@ -84,22 +89,43 @@ export default function FloatingShape({ shape, isSel, zoom = 1, onSelect, onStar
               style={{ width: 18, height: 18, cursor: 'pointer', border: 'none', background: 'none', padding: 0, flexShrink: 0 }}
               title="Shape color"
             />
-            <span
-              onMouseDown={e => e.stopPropagation()}
-              onClick={e => { e.stopPropagation(); onUpdate({ shapeFill: !shapeFill }); }}
-              style={{ fontSize: 9, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.5)', padding: '1px 4px', borderRadius: 2 }}
-              title="Toggle fill"
-            >
-              {shapeFill ? 'FILLED' : 'OUTLINE'}
-            </span>
+            {!isLineShape && (
+              <span
+                onMouseDown={e => e.stopPropagation()}
+                onClick={e => { e.stopPropagation(); onUpdate({ shapeFill: !shapeFill }); }}
+                style={{ fontSize: 9, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.5)', padding: '1px 4px', borderRadius: 2 }}
+                title="Toggle fill"
+              >
+                {shapeFill ? 'FILLED' : 'OUTLINE'}
+              </span>
+            )}
             <span
               onMouseDown={e => e.stopPropagation()}
               onClick={e => { e.stopPropagation(); onDelete(); }}
               style={{ marginLeft: 'auto', cursor: 'pointer', fontWeight: 700 }}
             >X</span>
           </div>
+          {/* Bottom-center resize handle */}
           <div
-            onMouseDown={onStartResize}
+            onMouseDown={e => { e.stopPropagation(); onStartResize(e, 's'); }}
+            style={{
+              position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%)',
+              width: 22, height: 10, background: '#8B1A1A',
+              cursor: 's-resize', borderRadius: 2, border: '2px solid #fff',
+            }}
+          />
+          {/* Right-center resize handle */}
+          <div
+            onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'e'); }}
+            style={{
+              position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)',
+              width: 10, height: 22, background: '#8B1A1A',
+              cursor: 'e-resize', borderRadius: 2, border: '2px solid #fff',
+            }}
+          />
+          {/* Bottom-right corner resize handle */}
+          <div
+            onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'se'); }}
             style={{
               position: 'absolute', bottom: -8, right: -8,
               width: 16, height: 16, background: '#8B1A1A',
