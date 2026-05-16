@@ -41,7 +41,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
   return (
     <div
-      className={`hp${zoom4k === 1 ? ' hp-no4k' : ''}`}
+      className="hp"
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -276,44 +276,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
             linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 74%, rgba(0,0,0,0.30) 86%, rgba(0,0,0,0.06) 95%, transparent 100%),
             linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
           mask-composite: intersect;
-        }
-
-        /* ── Non-4K (laptop/desktop without 4K zoom): stronger fog ── */
-        .hp-no4k .hp-art::after {
-          background:
-            radial-gradient(ellipse 42% 36% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.74) 32%, rgba(255,252,246,0.28) 58%, transparent 78%),
-            radial-gradient(ellipse 50% 44% at 100%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.85) 28%, rgba(255,252,246,0.48) 52%, rgba(255,252,246,0.18) 70%, transparent 90%),
-            radial-gradient(ellipse 40% 34% at   0% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.70) 32%, rgba(255,252,246,0.24) 58%, transparent 78%),
-            radial-gradient(ellipse 50% 44% at 100% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.82) 28%, rgba(255,252,246,0.44) 52%, rgba(255,252,246,0.16) 70%, transparent 90%),
-            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
-            linear-gradient(to left,   rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.90) 10%, rgba(255,252,246,0.62) 22%, rgba(255,252,246,0.28) 36%, rgba(255,252,246,0.09) 50%, transparent 65%),
-            linear-gradient(to bottom, rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.62) 7%, rgba(255,252,246,0.22) 15%, transparent 24%),
-            linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
-        }
-        .hp-no4k .hp-art img {
-          opacity: 0.88;
-          -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 55%, rgba(0,0,0,0.20) 72%, rgba(0,0,0,0.05) 87%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 5%, black 14%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
-          -webkit-mask-composite: source-in;
-          mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 55%, rgba(0,0,0,0.20) 72%, rgba(0,0,0,0.05) 87%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 5%, black 14%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
-          mask-composite: intersect;
-        }
-
-        /* ── Short-screen: compact layout so features list fits ── */
-        @media (max-height: 840px) and (min-width: 961px) {
-          .hp-hero { padding: clamp(8px,1.5vh,16px) clamp(20px,3vw,48px) clamp(4px,1vh,10px); }
-          .hp-eyebrow { margin-bottom: 8px; }
-          .hp-h1 { font-size: clamp(22px, 2.6vw, 40px); margin: 0 0 10px; line-height: 1.04; }
-          .hp-sub { margin: 0 0 14px; font-size: 13px; }
-          .hp-actions { margin-bottom: 8px; gap: 8px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 36px; }
-          .hp-note { font-size: 11px; }
-          .hp-what { margin-top: 8px; }
-          .hp-what-item { padding: 5px 12px; }
-          .hp-art img { max-height: min(78vh, 700px); }
         }
 
         /* ── Drop overlay ─────────────────────────────── */
