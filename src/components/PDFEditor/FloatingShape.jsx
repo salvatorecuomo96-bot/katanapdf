@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { INK, LACQUER } from "../utils/constant";
 
 const SHAPE_LABELS = { circle: 'CIRCLE', square: 'SQUARE', checkmark: 'CHECKMARK', cross: 'CROSS', line: 'LINE', arrow: 'ARROW' };
 
@@ -25,7 +26,7 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
   // rotation=180→ toolbar below shape in page space  → appears above to viewer (page is upside-down) ✓
   // rotation=270→ toolbar right of shape in page space→ appears above to viewer ✓
   const r = ((rotation % 360) + 360) % 360;
-  const TH = 28;
+  const TH = 32;
   const toolbarWrap = r === 0
     ? { position: 'absolute', top: -TH, left: 0, right: 0, height: TH, overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }
     : r === 90
@@ -36,12 +37,12 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
 
   const toolbarContent = {
     display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6,
-    background: '#8B1A1A', padding: '4px 8px', fontSize: 10, color: '#fff',
+    background: '#fffdf8', padding: '4px 8px', fontSize: 10, color: INK,
     cursor: 'default', whiteSpace: 'nowrap', height: TH, boxSizing: 'border-box',
+    border: '1px solid rgba(116,86,44,0.25)',
+    boxShadow: '0 4px 16px rgba(40,24,8,0.12)',
     borderRadius: r === 0 ? '4px 4px 0 0' : r === 90 ? '4px 0 0 4px' : r === 180 ? '0 0 4px 4px' : '0 4px 4px 0',
-    // Counter-rotate content so it's readable regardless of page rotation
     transform: r !== 0 ? `rotate(${-rotation}deg)` : undefined,
-    // For r=0/180 stretch full width; for 90/270 let it overflow from center
     ...(r === 0 || r === 180 ? { width: '100%' } : {}),
   };
 
@@ -96,9 +97,9 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
                 type="button"
                 onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
                 title="Drag to move"
-                style={{ height: 18, border: '1px solid rgba(255,255,255,0.2)', borderRadius: 2, background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 9, cursor: 'grab', padding: '1px 4px', display: 'inline-flex', alignItems: 'center', gap: 2, userSelect: 'none', flexShrink: 0 }}
+                style={{ height: 22, border: '1px solid rgba(116,86,44,0.22)', borderRadius: 2, background: 'rgba(139,26,26,0.04)', color: INK, fontSize: 9, cursor: 'grab', padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: 2, userSelect: 'none', flexShrink: 0 }}
               >
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:'block'}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:'block'}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
               </button>
               <span style={{ fontWeight: 700, letterSpacing: 2 }}>{SHAPE_LABELS[shapeType] || shapeType.toUpperCase()}</span>
               <input
@@ -113,17 +114,18 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
                 <span
                   onMouseDown={e => e.stopPropagation()}
                   onClick={e => { e.stopPropagation(); onUpdate({ shapeFill: !shapeFill }); }}
-                  style={{ fontSize: 9, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.5)', padding: '1px 4px', borderRadius: 2 }}
+                  style={{ fontSize: 9, cursor: 'pointer', border: '1px solid rgba(116,86,44,0.25)', padding: '1px 6px', borderRadius: 2, height: 22, display: 'inline-flex', alignItems: 'center', background: shapeFill ? 'rgba(139,26,26,0.10)' : 'rgba(139,26,26,0.04)', color: INK }}
                   title="Toggle fill"
                 >
                   {shapeFill ? 'FILLED' : 'OUTLINE'}
                 </span>
               )}
-              <span
+              <button
+                type="button"
                 onMouseDown={e => e.stopPropagation()}
                 onClick={e => { e.stopPropagation(); onDelete(); }}
-                style={{ marginLeft: 'auto', cursor: 'pointer', fontWeight: 700 }}
-              >X</span>
+                style={{ marginLeft: 'auto', background: LACQUER, color: '#fff', border: `1px solid ${LACQUER}`, borderRadius: 3, padding: '1px 8px', cursor: 'pointer', fontWeight: 700, fontSize: 10, height: 22 }}
+              >×</button>
             </div>
           </div>
           {/* Bottom-center resize handle */}
