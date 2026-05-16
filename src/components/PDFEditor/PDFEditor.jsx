@@ -237,7 +237,6 @@ export default function PDFEditor() {
   }
 
   function _ocrGetItems(data) {
-    // prefer blocks (preserves line layout), then fall back
     if (Array.isArray(data.blocks) && data.blocks.length) {
       const out = [];
       for (const block of data.blocks) {
@@ -254,6 +253,112 @@ export default function PDFEditor() {
     return [];
   }
 
+  function _ocrRgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+  }
+
+  function _ocrMedianChannel(values) {
+    if (!values.length) return 128;
+    const s = [...values].sort((a, b) => a - b);
+    return s[Math.floor(s.length / 2)];
+  }
+
+  function _ocrMedianColor(pixels) {
+    // pixels: [[r,g,b], ...]
+    if (!pixels.length) return [128, 128, 128];
+    return [
+      _ocrMedianChannel(pixels.map(p => p[0])),
+      _ocrMedianChannel(pixels.map(p => p[1])),
+      _ocrMedianChannel(pixels.map(p => p[2])),
+    ];
+  }
+
+  function _ocrColorDist(a, b) {
+    return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
+  }
+
+  // Load original page image into a sampling canvas (not the preprocessed one)
+  function _ocrLoadPageCanvas(dataUrl, width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    return new Promise(resolve => {
+      img.onload = () => {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(ctx);
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  function _ocrSampleStyle(ctx, bbox, canvasWidth, canvasHeight) {
+    const { x0, y0, x1, y1 } = bbox;
+    const pad = 8;
+    const cx0 = Math.max(0, Math.floor(x0));
+    const cy0 = Math.max(0, Math.floor(y0));
+    const cx1 = Math.min(canvasWidth - 1, Math.ceil(x1));
+    const cy1 = Math.min(canvasHeight - 1, Math.ceil(y1));
+
+    // Sample background from a ring around the bbox
+    const bgPx0 = Math.max(0, cx0 - pad);
+    const bgPy0 = Math.max(0, cy0 - pad);
+    const bgPx1 = Math.min(canvasWidth - 1, cx1 + pad);
+    const bgPy1 = Math.min(canvasHeight - 1, cy1 + pad);
+
+    const bgPixels = [];
+    // top strip
+    if (bgPy0 < cy0) {
+      const strip = ctx.getImageData(bgPx0, bgPy0, bgPx1 - bgPx0 + 1, cy0 - bgPy0);
+      for (let i = 0; i < strip.data.length; i += 4) bgPixels.push([strip.data[i], strip.data[i+1], strip.data[i+2]]);
+    }
+    // bottom strip
+    if (cy1 < bgPy1) {
+      const strip = ctx.getImageData(bgPx0, cy1 + 1, bgPx1 - bgPx0 + 1, bgPy1 - cy1);
+      for (let i = 0; i < strip.data.length; i += 4) bgPixels.push([strip.data[i], strip.data[i+1], strip.data[i+2]]);
+    }
+    // left strip
+    if (bgPx0 < cx0) {
+      const strip = ctx.getImageData(bgPx0, cy0, cx0 - bgPx0, cy1 - cy0 + 1);
+      for (let i = 0; i < strip.data.length; i += 4) bgPixels.push([strip.data[i], strip.data[i+1], strip.data[i+2]]);
+    }
+    // right strip
+    if (cx1 < bgPx1) {
+      const strip = ctx.getImageData(cx1 + 1, cy0, bgPx1 - cx1, cy1 - cy0 + 1);
+      for (let i = 0; i < strip.data.length; i += 4) bgPixels.push([strip.data[i], strip.data[i+1], strip.data[i+2]]);
+    }
+
+    const bgColor = bgPixels.length >= 4 ? _ocrMedianColor(bgPixels) : [255, 255, 255];
+
+    // Sample foreground from inside the bbox — pixels that contrast strongly with bg
+    const fgPixels = [];
+    let totalInner = 0;
+    if (cx1 > cx0 && cy1 > cy0) {
+      const inner = ctx.getImageData(cx0, cy0, cx1 - cx0, cy1 - cy0);
+      for (let i = 0; i < inner.data.length; i += 4) {
+        const px = [inner.data[i], inner.data[i+1], inner.data[i+2]];
+        totalInner++;
+        if (_ocrColorDist(px, bgColor) > 60) fgPixels.push(px);
+      }
+    }
+
+    const fgColor = fgPixels.length >= 4 ? _ocrMedianColor(fgPixels) : [0, 0, 0];
+
+    // Bold guess: if foreground pixel density is high (>35% of bbox area)
+    const fgDensity = totalInner > 0 ? fgPixels.length / totalInner : 0;
+    const isBold = fgDensity > 0.35;
+
+    return {
+      color: _ocrRgbToHex(...fgColor),
+      bgColor: _ocrRgbToHex(...bgColor),
+      isBold,
+      fontFamily: "Arial, sans-serif",
+    };
+  }
+
   function _ocrPreprocess(dataUrl, width, height) {
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -262,17 +367,13 @@ export default function PDFEditor() {
     const img = new Image();
     return new Promise(resolve => {
       img.onload = () => {
-        // white background first so transparent areas become white
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
-
-        // grayscale + contrast boost via pixel manipulation
         const imageData = ctx.getImageData(0, 0, width, height);
         const d = imageData.data;
         for (let i = 0; i < d.length; i += 4) {
           const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-          // stretch contrast: push darks darker, lights lighter
           const contrast = Math.min(255, Math.max(0, (gray - 128) * 1.5 + 128));
           d[i] = d[i + 1] = d[i + 2] = contrast;
           d[i + 3] = 255;
@@ -322,7 +423,10 @@ export default function PDFEditor() {
         const pg = activePages[i];
         setOcrProgress({ page: i + 1, total: activePages.length, pct: 0 });
 
-        const processedUrl = await _ocrPreprocess(pg.dataUrl, pg.width, pg.height);
+        const [processedUrl, samplingCtx] = await Promise.all([
+          _ocrPreprocess(pg.dataUrl, pg.width, pg.height),
+          _ocrLoadPageCanvas(pg.dataUrl, pg.width, pg.height),
+        ]);
 
         const result = await worker.recognize(
           processedUrl,
@@ -343,11 +447,6 @@ export default function PDFEditor() {
         );
         const { data } = result;
 
-        console.log("OCR text:", data.text);
-        console.log("OCR lines:", data.lines?.length || 0);
-        console.log("OCR words:", data.words?.length || 0);
-        console.log("OCR blocks:", data.blocks?.length || 0);
-
         lastOCRText += "\n" + (data.text || "");
 
         const rawLines = _ocrGetItems(data);
@@ -357,10 +456,12 @@ export default function PDFEditor() {
             return text && (line.confidence == null || line.confidence > 20);
           })
           .map((line, li) => {
-            const { x0, y0, x1, y1 } = _ocrGetBBox(line);
+            const bbox = _ocrGetBBox(line);
+            const { x0, y0, x1, y1 } = bbox;
             const height = Math.max(y1 - y0, 1);
             const fontSize = Math.max(8, Math.round(height * 0.72));
             const baselineY = y1 - Math.max(2, fontSize * 0.18);
+            const style = _ocrSampleStyle(samplingCtx, bbox, pg.width, pg.height);
             return {
               id: `ocr-${pg.num}-L${li}`,
               page: pg.num,
@@ -372,11 +473,11 @@ export default function PDFEditor() {
               baselineY,
               lineBaselines: [baselineY],
               fontSize,
-              fontFamily: "Arial, sans-serif",
-              isBold: false,
+              fontFamily: style.fontFamily,
+              isBold: style.isBold,
               isItalic: false,
-              color: "#000000",
-              bgColor: "#ffffff",
+              color: style.color,
+              bgColor: style.bgColor,
               edited: false,
               ocr: true,
             };
