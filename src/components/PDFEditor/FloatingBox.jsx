@@ -397,7 +397,7 @@ export default function FloatingBox({
             type="button"
             title="Text colour"
             onClick={e => { e.stopPropagation(); setOpenPanel(o => o === 'textColor' ? null : 'textColor'); }}
-            style={{ width: 18, height: 18, borderRadius: "50%", background: fb.color || "#000000", border: "2px solid rgba(255,255,255,0.6)", cursor: "pointer", padding: 0, display: "block" }}
+            style={{ width: 18, height: 18, borderRadius: "50%", background: fb.color || "#000000", border: "1.5px solid rgba(0,0,0,0.35)", cursor: "pointer", padding: 0, display: "block" }}
           />
           {openPanel === 'textColor' && (
             <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
@@ -425,7 +425,7 @@ export default function FloatingBox({
             style={{
               width: 18, height: 18, borderRadius: "50%",
               background: fb.bgColor === "transparent" || !fb.bgColor ? "#ffffff" : fb.bgColor,
-              border: fb.bgColor === "transparent" || !fb.bgColor ? "2px dashed rgba(255,255,255,0.6)" : "2px solid rgba(255,255,255,0.6)",
+              border: fb.bgColor === "transparent" || !fb.bgColor ? "1.5px dashed rgba(0,0,0,0.35)" : "1.5px solid rgba(0,0,0,0.35)",
               cursor: "pointer", padding: 0, display: "block",
             }}
           />

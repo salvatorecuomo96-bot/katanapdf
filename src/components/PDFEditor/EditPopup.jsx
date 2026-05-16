@@ -473,7 +473,7 @@ export default function EditPopup({
               style={{
                 width: 18, height: 18, borderRadius: "50%",
                 background: format.bgColor === "transparent" || !format.bgColor ? "#ffffff" : format.bgColor,
-                border: format.bgColor === "transparent" || !format.bgColor ? "2px dashed rgba(116,86,44,0.4)" : "2px solid rgba(116,86,44,0.4)",
+                border: format.bgColor === "transparent" || !format.bgColor ? "1.5px dashed rgba(0,0,0,0.35)" : "1.5px solid rgba(0,0,0,0.35)",
                 cursor: "pointer", padding: 0, display: "block",
               }}
             />

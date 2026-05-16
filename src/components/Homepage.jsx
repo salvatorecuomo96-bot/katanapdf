@@ -17,8 +17,8 @@ function use4KZoom() {
 const FEATURES = [
   { icon: "✎", label: "Edit Text",      detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
   { icon: "＋", label: "Add Text",      detail: "Drop new text boxes anywhere on the page at any size." },
-  { icon: "⬜", label: "Add Images",    detail: "Insert photos or logos directly on top of any page." },
-  { icon: "✍", label: "Sign",           detail: "Draw, type or upload your signature and place it on any page." },
+  { icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:"100%",height:"100%"}}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><polyline points="21,15 16,10 5,21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
+  { icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:"100%",height:"100%"}}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
   { icon: "✏", label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
   { icon: "◇", label: "Shapes",         detail: "Add circles and rectangles with custom colour and fill." },
   { icon: "⇄", label: "Merge & Split", detail: "Combine multiple PDFs or split a document into separate files." },
@@ -46,7 +46,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      style={{ minHeight: "100vh", color: INK, fontFamily: FELL, zoom: zoom4k }}
+      style={{ height: `calc(100dvh / ${zoom4k})`, minHeight: 580, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL, zoom: zoom4k }}
     >
       <style>{`
         .hp {
@@ -81,12 +81,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
         /* ── Hero ─────────────────────────────────── */
         .hp-hero {
+          flex: 1; min-height: 0; overflow: hidden;
           max-width: 1240px; margin: 0 auto;
-          padding: 20px 48px 16px;
+          padding: 16px 48px 12px;
           display: grid;
           grid-template-columns: 1fr minmax(0, 380px);
           align-items: center;
           gap: 24px;
+          width: 100%; box-sizing: border-box;
         }
         .hp-copy { max-width: 580px; }
         .hp-eyebrow {
@@ -165,8 +167,8 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
         .hp-art img {
           width: 100%;
-          max-width: 360px;
-          max-height: 240px;
+          max-width: 100%;
+          max-height: min(40vh, 300px);
           object-fit: contain;
           filter: none;
           box-shadow: none;
@@ -175,19 +177,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           position: relative;
           z-index: 1;
         }
-        .hp-ukiyo-seal {
-          position: absolute; bottom: 6px; right: 6px;
-          width: 34px; height: 34px;
-          background: rgba(139,26,26,0.85);
-          color: rgba(255,253,248,0.95);
-          font-size: 17px;
-          display: flex; align-items: center; justify-content: center;
-          font-family: serif; line-height: 1;
-          border-radius: 2px;
-          box-shadow: 0 2px 6px rgba(40,24,8,0.2);
-          z-index: 2;
-        }
-
         /* ── Trust strip ─────────────────────────────── */
         .hp-trust {
           border-top: 1px solid ${LINE};
@@ -407,7 +396,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
         <div className="hp-art" aria-hidden="true">
           <img src="/samurai.png" alt="" draggable={false} />
-          <div className="hp-ukiyo-seal">波</div>
         </div>
       </section>
 
