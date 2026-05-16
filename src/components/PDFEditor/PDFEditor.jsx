@@ -566,12 +566,22 @@ export default function PDFEditor() {
     saveHistory();
     floatingIdCounter++;
     const id = `float-${floatingIdCounter}`;
-    const rotation = rotatedPages[pageNum] || 0;
+    const rot = rotatedPages[pageNum] || 0;
+    const swap = rot === 90 || rot === 270;
+    const visW = swap ? pg.height : pg.width;
+    const visH = swap ? pg.width : pg.height;
+    const visX = visW / 2;
+    const visY = Math.max(60, visH * 0.10);
+    const rad = -rot * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const dx = visX - visW / 2, dy = visY - visH / 2;
+    const pageX = pg.width / 2 + dx * cos - dy * sin;
+    const pageY = pg.height / 2 + dx * sin + dy * cos;
 
     setFloatingBoxes(prev => [...prev, {
       id, page: pageNum,
       z: 50 + floatingIdCounter,
-      x: pg.width / 2, y: 80, text: "",
+      x: pageX, y: pageY, text: "",
       fontSize: 14, fontFamily: "Arial, sans-serif",
       isBold: false, isItalic: false, color: "#000000",
       bgColor: "#ffffff",
@@ -1098,13 +1108,30 @@ export default function PDFEditor() {
   }, [onMouseMove, onMouseUp]);
 
   async function rasterizePage(pg) {
-    const canvas = document.createElement("canvas");
-    canvas.width = pg.width;
-    canvas.height = pg.height;
-    const ctx = canvas.getContext("2d");
+    const pageRotation = rotatedPages[pg.num] || 0;
+    const origW = pg.width;
+    const origH = pg.height;
+    const swap = pageRotation === 90 || pageRotation === 270;
+    const outW = swap ? origH : origW;
+    const outH = swap ? origW : origH;
+    const rad = pageRotation * Math.PI / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    // Map an unrotated page point to the output (visually rotated) canvas coordinate
+    const toOut = (px, py) => {
+      const dx = px - origW / 2;
+      const dy = py - origH / 2;
+      return [outW / 2 + dx * cos - dy * sin, outH / 2 + dx * sin + dy * cos];
+    };
+
+    // 1. Draw base page + edited text on an unrotated intermediate canvas
+    const baseCanvas = document.createElement("canvas");
+    baseCanvas.width = origW;
+    baseCanvas.height = origH;
+    const baseCtx = baseCanvas.getContext("2d");
     await new Promise(resolve => {
       const img = new Image();
-      img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
+      img.onload = () => { baseCtx.drawImage(img, 0, 0); resolve(); };
       img.src = pg.dataUrl;
     });
     const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
@@ -1113,24 +1140,35 @@ export default function PDFEditor() {
       const lh = e.fontSize * 1.22;
       const lineCount = Math.max(1, lines.length);
       const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
-      ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
+      baseCtx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
       let maxLineW = e.width;
-      for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
-      let whiteH;
-      if (useBaselines && lines.length > 1) {
-        const bs = e.lineBaselines;
-        whiteH = Math.max(e.height + 12, Math.max(...bs) - Math.min(...bs) + lh + 16);
-      } else {
-        whiteH = Math.max(e.height + 12, lineCount * lh + 14);
-      }
-      ctx.fillStyle = e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
-      ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
-      ctx.fillStyle = e.color || "#000";
-      ctx.textBaseline = "alphabetic";
-      if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
-      else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
+      for (const ln of lines) maxLineW = Math.max(maxLineW, baseCtx.measureText(ln || " ").width);
+      const whiteH = useBaselines && lines.length > 1
+        ? Math.max(e.height + 12, Math.max(...e.lineBaselines) - Math.min(...e.lineBaselines) + lh + 16)
+        : Math.max(e.height + 12, lineCount * lh + 14);
+      baseCtx.fillStyle = e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
+      baseCtx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
+      baseCtx.fillStyle = e.color || "#000";
+      baseCtx.textBaseline = "alphabetic";
+      if (useBaselines) lines.forEach((ln, i) => baseCtx.fillText(ln, e.x, e.lineBaselines[i]));
+      else lines.forEach((ln, i) => baseCtx.fillText(ln, e.x, e.baselineY + i * lh));
     }
-    // Draw all floating items sorted by z so creation order (= z value) determines layering
+
+    // 2. Create output canvas at (potentially rotated) dimensions and stamp the base onto it
+    const outCanvas = document.createElement("canvas");
+    outCanvas.width = outW;
+    outCanvas.height = outH;
+    const outCtx = outCanvas.getContext("2d");
+    outCtx.save();
+    outCtx.translate(outW / 2, outH / 2);
+    outCtx.rotate(rad);
+    outCtx.translate(-origW / 2, -origH / 2);
+    outCtx.drawImage(baseCanvas, 0, 0);
+    outCtx.restore();
+
+    // 3. Draw floating items at their visual positions on the output canvas.
+    //    Text uses only fb.angle (user-explicit rotation) — NOT the page rotation —
+    //    so it stays visually upright, matching the editor view.
     const rasterItems = [
       ...floatingBoxes.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'box' })),
       ...floatingImages.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'image' })),
@@ -1138,32 +1176,50 @@ export default function PDFEditor() {
     ].sort((a, b) => (a.z || 50) - (b.z || 50));
     for (const item of rasterItems) {
       if (item._kind === 'box') {
+        if (!item.text) continue;
+        const [visX, visY] = toOut(item.x, item.y);
         const lines = item.text.split(/\r?\n/);
         const lh = item.fontSize * 1.5;
         const halfH = lines.length * lh / 2;
-        ctx.font = `${item.isItalic ? "italic " : ""}${item.isBold ? "bold " : ""}${item.fontSize}px ${item.fontFamily}`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
+        outCtx.save();
+        outCtx.translate(visX, visY);
+        outCtx.rotate((item.angle || 0) * Math.PI / 180);
+        outCtx.font = `${item.isItalic ? "italic " : ""}${item.isBold ? "bold " : ""}${item.fontSize}px ${item.fontFamily}`;
+        outCtx.textAlign = "center";
+        outCtx.textBaseline = "top";
         if (item.bgColor && item.bgColor !== "transparent") {
           let maxW = 0;
-          for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
-          ctx.fillStyle = item.bgColor;
-          ctx.fillRect(item.x - maxW / 2 - 4, item.y - halfH - 3, maxW + 8, lines.length * lh + 6);
+          for (const ln of lines) maxW = Math.max(maxW, outCtx.measureText(ln || " ").width);
+          outCtx.fillStyle = item.bgColor;
+          outCtx.fillRect(-maxW / 2 - 4, -halfH - 3, maxW + 8, lines.length * lh + 6);
         }
-        ctx.fillStyle = item.color || "#000";
-        lines.forEach((ln, i) => ctx.fillText(ln, item.x, item.y - halfH + i * lh));
-        ctx.textAlign = "left";
+        outCtx.fillStyle = item.color || "#000";
+        lines.forEach((ln, i) => outCtx.fillText(ln, 0, -halfH + i * lh));
+        outCtx.restore();
       } else if (item._kind === 'image') {
+        const cx = item.x + item.w / 2;
+        const cy = item.y + item.h / 2;
+        const [visCX, visCY] = toOut(cx, cy);
         await new Promise(resolve => {
           const img = new Image();
-          img.onload = () => { ctx.drawImage(img, item.x, item.y, item.w, item.h); resolve(); };
+          img.onload = () => {
+            outCtx.save();
+            outCtx.translate(visCX, visCY);
+            outCtx.rotate((item.angle || 0) * Math.PI / 180);
+            outCtx.drawImage(img, -item.w / 2, -item.h / 2, item.w, item.h);
+            outCtx.restore();
+            resolve();
+          };
           img.src = item.dataUrl;
         });
       } else {
-        drawShapeOnCanvas(ctx, item);
+        const cx = item.x + item.w / 2;
+        const cy = item.y + item.h / 2;
+        const [visCX, visCY] = toOut(cx, cy);
+        drawShapeOnCanvas(outCtx, { ...item, x: visCX - item.w / 2, y: visCY - item.h / 2 });
       }
     }
-    return canvas.toDataURL("image/png");
+    return outCanvas.toDataURL("image/png");
   }
 
   async function handleDownload() {
@@ -1408,59 +1464,10 @@ export default function PDFEditor() {
     for (let displayIdx = 0; displayIdx < finalPageOrder.length; displayIdx++) {
       const pg = pages[finalPageOrder[displayIdx]];
       if (!pg) continue;
-      const rotation = rotatedPages[pg.num] || 0;
-      const canvas = document.createElement("canvas");
-      canvas.width = pg.width;
-      canvas.height = pg.height;
-      const ctx = canvas.getContext("2d");
-      await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); }; img.src = pg.dataUrl; });
-      const edits = (textBlocks[pg.num] || []).filter(w => w.edited);
-      for (const e of edits) {
-        const lines = e.text.split(/\r?\n/);
-        const lh = e.fontSize * 1.22;
-        const useBaselines = e.lineBaselines && e.lineBaselines.length === lines.length;
-        ctx.font = `${e.isItalic ? "italic " : ""}${e.isBold ? "bold " : ""}${e.fontSize}px ${e.fontFamily}`;
-        let maxLineW = e.width;
-        for (const ln of lines) maxLineW = Math.max(maxLineW, ctx.measureText(ln || " ").width);
-        const whiteH = useBaselines && lines.length > 1 ? Math.max(e.height + 12, Math.max(...e.lineBaselines) - Math.min(...e.lineBaselines) + lh + 16) : Math.max(e.height + 12, lines.length * lh + 14);
-        ctx.fillStyle = e.bgColor && e.bgColor !== "transparent" ? e.bgColor : "#fff";
-        ctx.fillRect(e.x - 2, e.y - 2, maxLineW + 14, whiteH + 8);
-        ctx.fillStyle = e.color || "#000";
-        ctx.textBaseline = "alphabetic";
-        if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
-        else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
-      }
-      const imgExportItems = [
-        ...floatingBoxes.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'box' })),
-        ...floatingImages.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'image' })),
-        ...floatingShapes.filter(s => s.page === pg.num).map(s => ({ ...s, _kind: 'shape' })),
-      ].sort((a, b) => (a.z || 50) - (b.z || 50));
-      for (const item of imgExportItems) {
-        if (item._kind === 'box') {
-          const lines = item.text.split(/\r?\n/);
-          const lh = item.fontSize * 1.5;
-          const halfH = lines.length * lh / 2;
-          ctx.font = `${item.isItalic ? "italic " : ""}${item.isBold ? "bold " : ""}${item.fontSize}px ${item.fontFamily}`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
-          if (item.bgColor && item.bgColor !== "transparent") {
-            let maxW = 0;
-            for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
-            ctx.fillStyle = item.bgColor;
-            ctx.fillRect(item.x - maxW / 2 - 4, item.y - halfH - 3, maxW + 8, lines.length * lh + 6);
-          }
-          ctx.fillStyle = item.color || "#000";
-          lines.forEach((ln, i) => ctx.fillText(ln, item.x, item.y - halfH + i * lh));
-          ctx.textAlign = "left";
-        } else if (item._kind === 'image') {
-          await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, item.x, item.y, item.w, item.h); resolve(); }; img.src = item.dataUrl; });
-        } else {
-          drawShapeOnCanvas(ctx, item);
-        }
-      }
       if (displayIdx > 0) await new Promise(r => setTimeout(r, 80));
+      const dataUrl = await rasterizePage(pg);
       const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png");
+      a.href = dataUrl;
       a.download = finalPageOrder.length === 1 ? `${baseName}.png` : `${baseName}_page_${displayIdx + 1}.png`;
       document.body.appendChild(a);
       a.click();
@@ -1479,8 +1486,12 @@ export default function PDFEditor() {
         const dataUrl = await rasterizePage(pg);
         const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
         const img = await doc.embedPng(pngBytes);
-        const p = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
-        p.drawImage(img, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+        const rot = rotatedPages[pg.num] || 0;
+        const swp = rot === 90 || rot === 270;
+        const pw = (swp ? pg.height : pg.width) / SCALE;
+        const ph = (swp ? pg.width : pg.height) / SCALE;
+        const p = doc.addPage([pw, ph]);
+        p.drawImage(img, { x: 0, y: 0, width: pw, height: ph });
       }
       const outBytes = await doc.save();
       const blob = new Blob([outBytes], { type: "application/pdf" });
@@ -1504,8 +1515,12 @@ export default function PDFEditor() {
       const dataUrl = await rasterizePage(pg);
       const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
       const img = await doc.embedPng(pngBytes);
-      const p = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
-      p.drawImage(img, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+      const rot = rotatedPages[pg.num] || 0;
+      const swp = rot === 90 || rot === 270;
+      const pw = (swp ? pg.height : pg.width) / SCALE;
+      const ph = (swp ? pg.width : pg.height) / SCALE;
+      const p = doc.addPage([pw, ph]);
+      p.drawImage(img, { x: 0, y: 0, width: pw, height: ph });
     }
     const outBytes = await doc.save();
     const blob = new Blob([outBytes], { type: "application/pdf" });
@@ -1535,13 +1550,15 @@ export default function PDFEditor() {
     for (const i of finalPageOrder) {
       const pg = pages[i];
       if (!pg) continue;
-      const rotation = rotatedPages[pg.num] || 0;
+      const rot = rotatedPages[pg.num] || 0;
+      const swap = rot === 90 || rot === 270;
+      const pw = (swap ? pg.height : pg.width) / SCALE;
+      const ph = (swap ? pg.width : pg.height) / SCALE;
       const dataUrl = await rasterizePage(pg);
       const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
       const pngImg = await doc.embedPng(pngBytes);
-      const pdfPage = doc.addPage([pg.width / SCALE, pg.height / SCALE]);
-      pdfPage.setRotation(degrees(rotation));
-      pdfPage.drawImage(pngImg, { x: 0, y: 0, width: pg.width / SCALE, height: pg.height / SCALE });
+      const pdfPage = doc.addPage([pw, ph]);
+      pdfPage.drawImage(pngImg, { x: 0, y: 0, width: pw, height: ph });
     }
     const bytes = await doc.save();
     triggerPdfDownload(bytes);
