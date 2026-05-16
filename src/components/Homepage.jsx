@@ -85,11 +85,11 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
           max-width: 1400px; margin: 0 auto;
-          padding: 12px 40px 8px;
+          padding: 12px 32px 20px;
           display: grid;
           grid-template-columns: 1fr minmax(0, 520px);
           align-items: center;
-          gap: 12px;
+          gap: 0;
           width: 100%; box-sizing: border-box;
         }
         .hp-copy { max-width: 620px; }
@@ -170,7 +170,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-art img {
           width: 100%;
           max-width: 100%;
-          max-height: min(68vh, 520px);
+          max-height: min(62vh, 480px);
           object-fit: contain;
           filter: none;
           box-shadow: none;
