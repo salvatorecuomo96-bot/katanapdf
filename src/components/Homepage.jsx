@@ -81,7 +81,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
         /* ── Hero: centered stage ───────────────────── */
         .hp-hero {
-          flex: 1; min-height: 0; overflow: hidden;
+          flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
           display: flex; align-items: stretch; justify-content: center;
           padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(8px,2vh,20px);
           box-sizing: border-box;
@@ -244,7 +244,8 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           display: flex; flex-direction: column;
           justify-content: flex-end;
           align-items: flex-end;
-          min-width: 0; overflow: hidden;
+          min-width: 0;
+          /* no overflow:hidden — that created a hard container boundary line on laptop */
         }
         .hp-art-inner {
           display: inline-flex;
@@ -260,18 +261,19 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           inset: 0;
           pointer-events: none;
           background:
-            /* large corner blobs — break the 4 straight corners into organic shapes */
-            radial-gradient(ellipse 52% 48% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.82) 30%, rgba(255,252,246,0.38) 58%, transparent 78%),
-            radial-gradient(ellipse 44% 42% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.74) 30%, rgba(255,252,246,0.28) 58%, transparent 78%),
-            radial-gradient(ellipse 48% 46% at   0% 100%, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.78) 30%, rgba(255,252,246,0.32) 58%, transparent 78%),
-            radial-gradient(ellipse 40% 40% at 100% 100%, rgba(255,252,246,0.95) 0%, rgba(255,252,246,0.68) 30%, rgba(255,252,246,0.24) 58%, transparent 78%),
-            /* left — heaviest, the sidebar hard edge must fully dissolve */
-            linear-gradient(to right,  rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.85) 10%, rgba(255,252,246,0.48) 22%, rgba(255,252,246,0.14) 33%, transparent 46%),
-            /* right — samurai robe edge must dissolve */
-            linear-gradient(to left,   rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.76) 9%,  rgba(255,252,246,0.36) 20%, rgba(255,252,246,0.10) 30%, transparent 42%),
-            /* top and bottom */
-            linear-gradient(to bottom, rgba(255,252,246,0.94) 0%, rgba(255,252,246,0.60) 8%,  rgba(255,252,246,0.20) 17%, transparent 28%),
-            linear-gradient(to top,    rgba(255,252,246,0.90) 0%, rgba(255,252,246,0.54) 7%,  rgba(255,252,246,0.16) 15%, transparent 25%);
+            /* corner blobs — break straight corners */
+            radial-gradient(ellipse 34% 30% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 35%, rgba(255,252,246,0.22) 58%, transparent 78%),
+            radial-gradient(ellipse 28% 26% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 35%, rgba(255,252,246,0.16) 58%, transparent 78%),
+            radial-gradient(ellipse 32% 28% at   0% 100%, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.64) 35%, rgba(255,252,246,0.18) 58%, transparent 78%),
+            radial-gradient(ellipse 26% 24% at 100% 100%, rgba(255,252,246,0.95) 0%, rgba(255,252,246,0.54) 35%, rgba(255,252,246,0.14) 58%, transparent 78%),
+            /* left — fast initial spike, then taper so sidebar stays legible */
+            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
+            /* right — same strategy */
+            linear-gradient(to left,   rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.56) 6%, rgba(255,252,246,0.18) 14%, rgba(255,252,246,0.05) 22%, transparent 32%),
+            /* top — light, keep nav bar legible */
+            linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.30) 4%, rgba(255,252,246,0.08) 9%,  transparent 16%),
+            /* bottom */
+            linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
         }
         .hp-art img {
           display: block;
@@ -280,14 +282,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           max-height: min(82vh, 800px);
           object-fit: contain;
           mix-blend-mode: multiply;
-          /* wide side fades — edges fully transparent, centre fully visible */
+          /* 20% fade from each side — fully transparent at the edges */
           -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.5) 12%, black 26%, black 78%, rgba(0,0,0,0.5) 90%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 6%,  black 14%, black 88%, rgba(0,0,0,0.6) 95%, transparent 100%);
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 80%, rgba(0,0,0,0.4) 92%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
           -webkit-mask-composite: source-in;
           mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.5) 12%, black 26%, black 78%, rgba(0,0,0,0.5) 90%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 6%,  black 14%, black 88%, rgba(0,0,0,0.6) 95%, transparent 100%);
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 80%, rgba(0,0,0,0.4) 92%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
           mask-composite: intersect;
         }
 
