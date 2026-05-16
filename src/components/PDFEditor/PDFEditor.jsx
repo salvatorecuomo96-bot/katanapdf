@@ -115,6 +115,10 @@ export default function PDFEditor() {
   const [showSupportPrompt, setShowSupportPrompt] = useState(false);
   const [floatingShapes, setFloatingShapes] = useState([]);
   const [dragOverImagePage, setDragOverImagePage] = useState(null);
+  const [ocrState, setOcrState] = useState(null); // null | 'running' | 'done' | 'error'
+  const [ocrProgress, setOcrProgress] = useState({ page: 0, total: 0, pct: 0 });
+  const [ocrError, setOcrError] = useState('');
+  const ocrCancelRef = useRef(false);
   const [shapePanelPage, setShapePanelPage] = useState(null);
   const [shapePanelColor, setShapePanelColor] = useState('#000000');
   const [shapePanelFill, setShapePanelFill] = useState(false);
@@ -215,7 +219,111 @@ export default function PDFEditor() {
     );
     setHasTextLayer(totalWords > 0);
     setTextLayerNoticeDismissed(false);
+    setOcrState(null);
+    setOcrProgress({ page: 0, total: 0, pct: 0 });
+    setOcrError('');
+    ocrCancelRef.current = false;
     return { pageData, words };
+  }
+
+  async function loadTesseract() {
+    if (window.Tesseract?.createWorker) return window.Tesseract;
+    return new Promise((resolve, reject) => {
+      // Remove any prior failed attempt before retrying
+      document.querySelector('script[data-katanapdf-tesseract]')?.remove();
+      const script = document.createElement('script');
+      script.setAttribute('data-katanapdf-tesseract', '1');
+      script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js';
+      script.onload = () => window.Tesseract?.createWorker
+        ? resolve(window.Tesseract)
+        : reject(new Error('Tesseract loaded but createWorker missing'));
+      script.onerror = () => reject(new Error('Could not load Tesseract.js from CDN'));
+      document.head.appendChild(script);
+    });
+  }
+
+  async function handleActivateOCR() {
+    const { pages: livePages, deletedPages: liveDel, pageOrder: liveOrder } = liveStateRef.current;
+    const activePages = liveOrder
+      .map(i => livePages[i])
+      .filter(pg => pg && !liveDel.has(pg.num));
+    if (!activePages.length) return;
+
+    ocrCancelRef.current = false;
+    setOcrError('');
+    setOcrState('running');
+    setOcrProgress({ page: 0, total: activePages.length, pct: 0 });
+
+    let worker;
+    try {
+      const { createWorker } = await loadTesseract();
+      worker = await createWorker('eng', 1, {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            setOcrProgress(p => ({ ...p, pct: Math.round(m.progress * 100) }));
+          }
+        },
+      });
+
+      saveHistory();
+      const allNewFBs = [];
+
+      for (let i = 0; i < activePages.length; i++) {
+        if (ocrCancelRef.current) {
+          await worker.terminate();
+          setOcrState(null);
+          return;
+        }
+        const pg = activePages[i];
+        setOcrProgress({ page: i + 1, total: activePages.length, pct: 0 });
+
+        const { data } = await worker.recognize(pg.dataUrl);
+
+        const pageFBs = (data.lines || [])
+          .filter(line => line.text.trim() && line.confidence > 30)
+          .map((line, li) => {
+            floatingIdCounter++;
+            const cx = (line.bbox.x0 + line.bbox.x1) / 2;
+            const cy = (line.bbox.y0 + line.bbox.y1) / 2;
+            const fontSize = Math.max(Math.round((line.bbox.y1 - line.bbox.y0) * 0.72), 8);
+            return {
+              id: `ocr-${pg.num}-L${li}-${floatingIdCounter}`,
+              page: pg.num,
+              z: 50 + floatingIdCounter,
+              x: cx,
+              y: cy,
+              text: line.text.trim(),
+              fontSize,
+              fontFamily: "Times New Roman, serif",
+              isBold: false,
+              isItalic: false,
+              color: "#000000",
+              bgColor: "transparent",
+              angle: 0,
+            };
+          });
+        allNewFBs.push(...pageFBs);
+
+        // Yield so the UI can update between pages
+        await new Promise(r => setTimeout(r, 10));
+      }
+
+      await worker.terminate();
+
+      setFloatingBoxes(prev => [...prev, ...allNewFBs]);
+      setHasTextLayer(true);
+      setOcrState('done');
+    } catch (err) {
+      const msg = err?.message || String(err);
+      console.error("OCR error:", msg);
+      if (worker) { try { await worker.terminate(); } catch (_) {} }
+      setOcrError(msg);
+      setOcrState('error');
+    }
+  }
+
+  function handleCancelOCR() {
+    ocrCancelRef.current = true;
   }
 
   useEffect(() => {
@@ -1813,6 +1921,12 @@ export default function PDFEditor() {
                 isEncrypted={isEncrypted}
                 encryptionNoticeDismissed={encryptionNoticeDismissed}
                 setEncryptionNoticeDismissed={setEncryptionNoticeDismissed}
+                ocrState={ocrState}
+                ocrProgress={ocrProgress}
+                ocrError={ocrError}
+                onActivateOCR={handleActivateOCR}
+                onCancelOCR={handleCancelOCR}
+                onDismissOCRDone={() => setOcrState(null)}
               />
 
               <div ref={containerRef} className="main-scroll-area" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: "#f0ece3", display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>

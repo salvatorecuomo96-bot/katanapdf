@@ -109,17 +109,18 @@ export default function PageSidebar({
                  borderBottom: dragOverPageNum === pg.num ? `4px solid ${LACQUER}` : "none",
                  transition: 'opacity 0.2s'
                }}>
-            <div style={{ 
+            <div style={{
               position: 'relative', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: `1px solid ${GOLD}`, cursor: 'pointer',
-              aspectRatio: swap ? `${pg.height} / ${pg.width}` : `${pg.width} / ${pg.height}`,
+              aspectRatio: `${pg.width} / ${pg.height}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
             }}>
-              <img src={pg.dataUrl} alt={`Page ${i+1}`} 
-                style={{ 
-                  transform: `rotate(${rotation}deg)`, 
-                  width: swap ? 'auto' : '100%', 
-                  height: swap ? '100%' : 'auto',
-                  display: 'block' 
+              <img src={pg.dataUrl} alt={`Page ${i+1}`}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  transform: rotation
+                    ? `rotate(${rotation}deg)${swap ? ` scale(${(Math.min(pg.width, pg.height) / Math.max(pg.width, pg.height)).toFixed(4)})` : ''}`
+                    : undefined,
                 }} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 }}>

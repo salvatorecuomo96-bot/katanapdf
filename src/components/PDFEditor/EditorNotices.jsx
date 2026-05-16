@@ -1,5 +1,28 @@
 import { LACQUER, INK, CINZEL, FELL } from "../utils/constant";
 
+const BTN = {
+  fontFamily: CINZEL,
+  fontSize: 11,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  background: LACQUER,
+  color: "#fff",
+  border: "none",
+  borderRadius: 3,
+  padding: "5px 14px",
+  cursor: "pointer",
+  marginTop: 8,
+  display: "inline-block",
+};
+
+const BTN_GHOST = {
+  ...BTN,
+  background: "transparent",
+  color: LACQUER,
+  border: `1px solid rgba(139,26,26,0.4)`,
+  marginLeft: 8,
+};
+
 function NoticeBox({ title, children, onDismiss, ariaLabel }) {
   return (
     <div
@@ -47,23 +70,25 @@ function NoticeBox({ title, children, onDismiss, ariaLabel }) {
         </div>
       </div>
 
-      <button
-        onClick={onDismiss}
-        aria-label={ariaLabel || "Dismiss notice"}
-        style={{
-          flex: "0 0 auto",
-          background: "transparent",
-          border: "none",
-          color: LACQUER,
-          fontFamily: CINZEL,
-          fontSize: 14,
-          cursor: "pointer",
-          padding: "0 4px",
-          fontWeight: 700,
-        }}
-      >
-        X
-      </button>
+      {onDismiss && (
+        <button
+          onClick={onDismiss}
+          aria-label={ariaLabel || "Dismiss notice"}
+          style={{
+            flex: "0 0 auto",
+            background: "transparent",
+            border: "none",
+            color: LACQUER,
+            fontFamily: CINZEL,
+            fontSize: 14,
+            cursor: "pointer",
+            padding: "0 4px",
+            fontWeight: 700,
+          }}
+        >
+          X
+        </button>
+      )}
     </div>
   );
 }
@@ -76,9 +101,21 @@ export default function EditorNotices({
   isEncrypted,
   encryptionNoticeDismissed,
   setEncryptionNoticeDismissed,
+  ocrState,
+  ocrProgress,
+  ocrError,
+  onActivateOCR,
+  onCancelOCR,
+  onDismissOCRDone,
 }) {
   if (pages.length === 0) return null;
-  if ((!isEncrypted || encryptionNoticeDismissed) && (hasTextLayer || textLayerNoticeDismissed)) {
+
+  const hasOCRNotice = ocrState === 'running' || ocrState === 'done';
+  if (
+    !hasOCRNotice &&
+    (!isEncrypted || encryptionNoticeDismissed) &&
+    (hasTextLayer || textLayerNoticeDismissed)
+  ) {
     return null;
   }
 
@@ -101,14 +138,46 @@ export default function EditorNotices({
         </NoticeBox>
       )}
 
-      {!hasTextLayer && !textLayerNoticeDismissed && (
+      {ocrState === 'running' && (
         <NoticeBox
-          title="No editable text in this PDF"
-          onDismiss={() => setTextLayerNoticeDismissed(true)}
-          ariaLabel="Dismiss no editable text notice"
+          title="Reading text…"
+          onDismiss={onCancelOCR}
+          ariaLabel="Cancel OCR"
         >
-          This PDF doesn't have a selectable text layer - it's likely a scanned image or printed from a browser. You can't edit the existing text, but you can still{" "}
-          <em>add new text and images</em> on top using the buttons on each page.
+          Reading page {ocrProgress.page} of {ocrProgress.total}
+          {ocrProgress.pct > 0 ? ` — ${ocrProgress.pct}%` : "…"}
+          <button onClick={onCancelOCR} style={BTN_GHOST}>Cancel</button>
+        </NoticeBox>
+      )}
+
+      {ocrState === 'done' && (
+        <NoticeBox
+          title="OCR Complete"
+          onDismiss={onDismissOCRDone}
+          ariaLabel="Dismiss OCR complete notice"
+        >
+          OCR complete. Click any detected text area to edit it.
+        </NoticeBox>
+      )}
+
+      {!hasTextLayer && !textLayerNoticeDismissed && ocrState !== 'running' && ocrState !== 'done' && (
+        <NoticeBox
+          title="Scanned PDF"
+          onDismiss={() => setTextLayerNoticeDismissed(true)}
+          ariaLabel="Dismiss scanned PDF notice"
+        >
+          {ocrState === 'error' ? (
+            <>
+              OCR failed.{ocrError ? ` (${ocrError})` : ' Try a clearer scan or a smaller file.'}{" "}
+              <button onClick={onActivateOCR} style={BTN}>Try again</button>
+            </>
+          ) : (
+            <>
+              This looks like a scanned PDF. Activate OCR to detect editable text.
+              <br />
+              <button onClick={onActivateOCR} style={BTN}>Activate OCR</button>
+            </>
+          )}
         </NoticeBox>
       )}
     </div>

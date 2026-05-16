@@ -15,16 +15,16 @@ export default function DownloadSupportPrompt({ visible, onClose }) {
       border: `1px solid ${GOLD}`,
       borderRadius: 6,
       boxShadow: "0 6px 24px rgba(40,24,8,0.14)",
-      padding: "12px 14px 0",
       width: 260,
+      overflow: "hidden",
       boxSizing: "border-box",
       fontFamily: FELL,
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
+      <div style={{ padding: "12px 14px 8px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
         <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: INK, fontFamily: FELL }}>
           Thank you for using{" "}
           <strong style={{ fontFamily: CINZEL, letterSpacing: 1, fontSize: 11, color: LACQUER }}>KATANAPDF</strong>.
-          {" "}If it saved you time, consider supporting with a nigiri.
+          {" "}If it saved you time, consider supporting.
         </p>
         <button
           onClick={onClose}
@@ -40,7 +40,7 @@ export default function DownloadSupportPrompt({ visible, onClose }) {
         href="https://ko-fi.com/salvatorecuomo96"
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: "block", lineHeight: 0, margin: "0 -14px", width: "calc(100% + 28px)" }}
+        style={{ display: "block", lineHeight: 0 }}
         aria-label="Support KATANAPDF on Ko-fi"
       >
         <img
@@ -49,8 +49,9 @@ export default function DownloadSupportPrompt({ visible, onClose }) {
           style={{
             display: "block",
             width: "100%",
-            height: "auto",
-            borderRadius: "0 0 6px 6px",
+            height: 62,
+            objectFit: "cover",
+            objectPosition: "center center",
             opacity: 0.95,
             transition: "opacity 0.15s",
           }}
