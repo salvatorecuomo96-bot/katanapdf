@@ -247,11 +247,26 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           min-width: 0; overflow: hidden;
         }
         .hp-art-inner {
-          display: inline-flex;
-          align-items: flex-end;
-          justify-content: flex-end;
-          box-shadow: 0 0 60px 20px rgba(139,26,26,0.08);
-        }
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  box-shadow: none;
+  background: transparent;
+}
+
+.hp-art img {
+  display: block;
+  width: clamp(300px, 52vw, 880px);
+  height: auto;
+  max-height: min(82vh, 800px);
+  object-fit: contain;
+  mix-blend-mode: multiply;
+
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, black 8%, black 94%, transparent 100%);
+  mask-image:
+    linear-gradient(to right, transparent 0%, black 8%, black 94%, transparent 100%);
+}
         .hp-art img {
           display: block;
           width: clamp(300px, 52vw, 880px);
