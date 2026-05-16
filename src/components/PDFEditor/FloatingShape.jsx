@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { INK, LACQUER } from "../utils/constant";
+import { useEffect, useState } from "react";
+import { DRAW_COLORS, GOLD, INK, LACQUER, PARCHMENT } from "../utils/constant";
 
 const SHAPE_LABELS = { circle: 'CIRCLE', square: 'SQUARE', checkmark: 'CHECKMARK', cross: 'CROSS', line: 'LINE', arrow: 'ARROW' };
 
@@ -18,6 +18,7 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
     return () => window.removeEventListener("keydown", handler);
   }, [isSel, onDeselect]);
 
+  const [colorOpen, setColorOpen] = useState(false);
   const isLineShape = shapeType === 'checkmark' || shapeType === 'cross' || shapeType === 'line' || shapeType === 'arrow';
 
   // Toolbar positioning: place it at the visual "above" edge for the viewer based on page rotation.
@@ -102,14 +103,28 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,display:'block'}}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
               </button>
               <span style={{ fontWeight: 700, letterSpacing: 2 }}>{SHAPE_LABELS[shapeType] || shapeType.toUpperCase()}</span>
-              <input
-                type="color"
-                value={shapeColor}
-                onChange={e => onUpdate({ shapeColor: e.target.value })}
-                onMouseDown={e => e.stopPropagation()}
-                style={{ width: 18, height: 18, cursor: 'pointer', border: 'none', background: 'none', padding: 0, flexShrink: 0 }}
-                title="Shape color"
-              />
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  type="button"
+                  title="Shape colour"
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={e => { e.stopPropagation(); setColorOpen(o => !o); }}
+                  style={{ width: 18, height: 18, borderRadius: '50%', background: shapeColor, border: '1.5px solid rgba(0,0,0,0.35)', cursor: 'pointer', padding: 0, display: 'block' }}
+                />
+                {colorOpen && (
+                  <div onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                    {DRAW_COLORS.map(c => (
+                      <button key={c} type="button" onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); onUpdate({ shapeColor: c }); setColorOpen(false); }}
+                        style={{ width: 20, height: 20, background: c, border: shapeColor === c ? `2px solid ${LACQUER}` : '1px solid rgba(0,0,0,0.2)', borderRadius: 3, cursor: 'pointer', padding: 0 }} />
+                    ))}
+                    <label title="Custom" onMouseDown={e => e.stopPropagation()} style={{ width: 20, height: 20, border: '1px solid rgba(0,0,0,0.2)', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', position: 'relative', overflow: 'hidden' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                      <input type="color" value={shapeColor} onMouseDown={e => e.stopPropagation()} onChange={e => { e.stopPropagation(); onUpdate({ shapeColor: e.target.value }); }} onBlur={() => setColorOpen(false)}
+                        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+                    </label>
+                  </div>
+                )}
+              </div>
               {!isLineShape && (
                 <span
                   onMouseDown={e => e.stopPropagation()}

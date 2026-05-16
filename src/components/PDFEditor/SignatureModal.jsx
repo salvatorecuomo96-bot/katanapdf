@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CINZEL, FELL, INK, LACQUER, pageBtn } from "../utils/constant";
+import { CINZEL, DRAW_COLORS, FELL, GOLD, INK, LACQUER, pageBtn, PARCHMENT } from "../utils/constant";
 
 const LINE = "rgba(116,86,44,0.18)";
 
@@ -12,6 +12,7 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
   const [typeText, setTypeText] = useState("");
   const [selectedSignFont, setSelectedSignFont] = useState("Whisper");
   const [uploadDataUrl, setUploadDataUrl] = useState(null);
+  const [sigColorOpen, setSigColorOpen] = useState(false);
 
   useEffect(() => {
     if (signTab !== "draw") return;
@@ -205,8 +206,26 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
         <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", gap: 12 }}>
             <button onClick={handleClear} style={{ ...pageBtn, padding: "8px 16px" }}>Clear</button>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 32, height: 32, borderRadius: "4px", border: `1px solid ${LINE}`, background: "transparent", cursor: "pointer", padding: 0 }} aria-label="Signature Color" title="Signature Color" />
+            <div style={{ position: "relative" }}>
+              <button
+                type="button"
+                title="Ink colour"
+                onClick={() => setSigColorOpen(o => !o)}
+                style={{ width: 32, height: 32, borderRadius: 4, background: color, border: "1.5px solid rgba(0,0,0,0.3)", cursor: "pointer", padding: 0, display: "block" }}
+              />
+              {sigColorOpen && (
+                <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                  {DRAW_COLORS.map(c => (
+                    <button key={c} type="button" onClick={() => { setColor(c); setSigColorOpen(false); }}
+                      style={{ width: 22, height: 22, background: c, border: color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                  ))}
+                  <label title="Custom" style={{ width: 22, height: 22, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    <input type="color" value={color} onChange={e => setColor(e.target.value)} onBlur={() => setSigColorOpen(false)}
+                      style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                  </label>
+                </div>
+              )}
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>

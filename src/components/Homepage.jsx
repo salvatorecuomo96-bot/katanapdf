@@ -260,9 +260,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           inset: 0;
           pointer-events: none;
           background:
-            radial-gradient(ellipse 62% 90% at 0% 50%,  rgba(255,252,246,0.93) 0%, rgba(255,252,246,0.55) 30%, transparent 65%),
-            radial-gradient(ellipse 84% 44% at 50% 110%, rgba(255,252,246,0.88) 0%, rgba(255,252,246,0.45) 35%, transparent 65%),
-            radial-gradient(ellipse 44% 55% at 106% 8%,  rgba(255,252,246,0.50) 0%, transparent 68%);
+            /* corner blobs — make edges organic, not straight */
+            radial-gradient(ellipse 28% 28% at   0%   0%, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.70) 35%, transparent 70%),
+            radial-gradient(ellipse 22% 22% at 100%   0%, rgba(255,252,246,0.92) 0%, rgba(255,252,246,0.55) 35%, transparent 70%),
+            radial-gradient(ellipse 26% 26% at   0% 100%, rgba(255,252,246,0.95) 0%, rgba(255,252,246,0.62) 35%, transparent 70%),
+            radial-gradient(ellipse 20% 20% at 100% 100%, rgba(255,252,246,0.88) 0%, rgba(255,252,246,0.48) 35%, transparent 70%),
+            /* thin perimeter strips — just enough to hide the hard border line */
+            linear-gradient(to right,  rgba(255,252,246,0.94) 0%, rgba(255,252,246,0.48) 5%, transparent 13%),
+            linear-gradient(to left,   rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.36) 4%, transparent 11%),
+            linear-gradient(to bottom, rgba(255,252,246,0.88) 0%, rgba(255,252,246,0.42) 4%, transparent 11%),
+            linear-gradient(to top,    rgba(255,252,246,0.85) 0%, rgba(255,252,246,0.38) 3%, transparent  9%);
         }
         .hp-art img {
           display: block;
@@ -271,13 +278,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           max-height: min(82vh, 800px);
           object-fit: contain;
           mix-blend-mode: multiply;
+          /* tight edge fades only — interior stays 100% visible */
           -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, black 14%, black 80%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, black  5%, black 60%, transparent 100%);
+            linear-gradient(to right,  transparent 0%, black 7%, black 93%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, black 5%, black 94%, transparent 100%);
           -webkit-mask-composite: source-in;
           mask-image:
-            linear-gradient(to right,  transparent 0%, black 14%, black 80%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, black  5%, black 60%, transparent 100%);
+            linear-gradient(to right,  transparent 0%, black 7%, black 93%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, black 5%, black 94%, transparent 100%);
           mask-composite: intersect;
         }
 
