@@ -322,6 +322,19 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
+        /* ── Short-screen (720p laptops) ─────────────── */
+        @media (max-height: 780px) {
+          .hp-badge { padding: 6px 12px; gap: 2px; }
+          .hp-badge-icon { font-size: 13px; }
+          .hp-section { padding-top: 10px; }
+          .hp-section-last { padding-bottom: 10px; }
+          .hp-heading { margin-bottom: 8px; }
+          .hp-feat { padding: 7px 10px; }
+          .hp-feat-icon { width: 22px; height: 22px; margin-bottom: 4px; font-size: 11px; }
+          .hp-hero { padding-top: 6px; padding-bottom: 10px; }
+          .hp-art img { max-height: min(44vh, 340px); }
+        }
+
         /* ── Responsive ─────────────────────────────── */
         @media (max-width: 960px) {
           .hp-hero {
