@@ -79,19 +79,30 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Hero: copy | samurai ────────────────────── */
+        /* ── Hero: centered stage ───────────────────── */
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
-          width: 100%; box-sizing: border-box;
-          padding: 0 36px 0 48px;
-          display: grid;
-          grid-template-columns: minmax(0, 380px) 1fr;
-          gap: 0 48px;
-          align-items: center;
+          display: flex; align-items: stretch; justify-content: center;
+          padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(8px,2vh,20px);
+          box-sizing: border-box;
         }
 
-        /* ── Copy (left) ─────────────────────────────── */
-        .hp-copy { max-width: 380px; }
+        /* Stage: the one balanced composition, centered */
+        .hp-stage {
+          width: 100%; max-width: 1300px;
+          display: grid;
+          grid-template-columns: minmax(0, 400px) 1fr;
+          column-gap: 24px;
+          align-items: stretch;
+        }
+
+        /* ── Copy: top-left of stage ────────────────── */
+        .hp-copy {
+          display: flex; flex-direction: column;
+          justify-content: flex-start;
+          padding-top: clamp(4px, 1.5vh, 32px);
+          max-width: 420px;
+        }
         .hp-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 3.5px;
@@ -228,35 +239,33 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
         }
         .hp-what-item:hover .hp-what-tooltip { visibility: visible; opacity: 1; }
 
-        /* ── Samurai art (right, fills hero) ─────────── */
+        /* ── Samurai art: bottom-right of stage ─────── */
         .hp-art {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          align-self: stretch;
-          padding: 12px 0;
+          display: flex; flex-direction: column;
+          justify-content: flex-end;
+          align-items: flex-end;
+          min-width: 0; overflow: hidden;
         }
         .hp-art-inner {
           display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: none;
-          box-shadow: 0 0 40px 12px rgba(139,26,26,0.1);
+          align-items: flex-end;
+          justify-content: flex-end;
+          box-shadow: 0 0 60px 20px rgba(139,26,26,0.08);
         }
         .hp-art img {
           display: block;
-          width: auto;
-          max-width: 100%;
-          max-height: min(84vh, 820px);
+          width: clamp(300px, 52vw, 880px);
+          height: auto;
+          max-height: min(82vh, 800px);
           object-fit: contain;
           mix-blend-mode: multiply;
           -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, black 12%, black 88%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, black  6%, black 94%, transparent 100%);
+            linear-gradient(to right,  transparent 0%, black 8%, black 94%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, black  4%, black 100%);
           -webkit-mask-composite: source-in;
           mask-image:
-            linear-gradient(to right,  transparent 0%, black 12%, black 88%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, black  6%, black 94%, transparent 100%);
+            linear-gradient(to right,  transparent 0%, black 8%, black 94%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, black  4%, black 100%);
           mask-composite: intersect;
         }
 
@@ -278,32 +287,26 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
         /* ── Short-screen (720p) ─────────────────────── */
         @media (max-height: 780px) {
-          .hp-art img { max-height: min(80vh, 640px); }
-          .hp-strip-item { padding: 7px 11px; }
-          .hp-hero { padding: 0 28px 0 36px; gap: 0 32px; }
+          .hp-art img { max-height: min(80vh, 680px); }
         }
 
-        /* ── Responsive ─────────────────────────────── */
+        /* ── Responsive: tablet ─────────────────────── */
         @media (max-width: 960px) {
-          .hp-strip-inner { flex-wrap: wrap; border-left: none; }
-          .hp-strip-item { border: 1px solid ${LINE}; border-radius: 3px; margin: 4px; padding: 7px 10px; }
-          .hp-hero {
-            grid-template-columns: 1fr;
-            padding: 16px 28px 12px;
-            align-items: start; overflow-y: auto;
-          }
-          .hp-art { order: -1; }
-          .hp-art img { max-height: 220px; max-width: min(70vw, 280px); }
-          .hp-copy { max-width: 100%; }
+          .hp-hero { overflow-y: auto; align-items: flex-start; padding: 0; }
+          .hp-stage { grid-template-columns: 1fr; grid-template-rows: auto auto; column-gap: 0; }
+          .hp-copy { max-width: 100%; padding: 20px 28px 12px; }
+          .hp-art { align-items: center; padding: 0 28px 20px; }
+          .hp-art img { width: min(75vw, 380px); max-height: 280px; }
         }
 
+        /* ── Responsive: mobile ─────────────────────── */
         @media (max-width: 580px) {
           .hp-header { padding: 0 16px; }
           .hp-logo { width: min(160px,44vw); }
           .hp-nav a { padding: 0 8px; font-size: 8px; letter-spacing: 1.5px; }
-          .hp-strip { padding: 0 12px; }
-          .hp-hero { padding: 16px 18px; }
-          .hp-art img { max-height: 160px; max-width: min(80vw, 220px); }
+          .hp-copy { padding: 16px 18px 10px; }
+          .hp-art { padding: 0 18px 16px; }
+          .hp-art img { width: min(82vw, 300px); max-height: 220px; }
           .hp-h1 { font-size: clamp(24px,10vw,36px); }
           .hp-sub { font-size: 13px; }
           .hp-actions { flex-direction: column; align-items: stretch; }
@@ -331,10 +334,11 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
       {/* ── Hero: copy | samurai ── */}
       <section className="hp-hero">
+      <div className="hp-stage">
         <div className="hp-copy">
           <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
           <h1 className="hp-h1">
-            Free PDF Editor<em>.</em><br />
+            Free PDF Editor.<br />
             <em>Runs in your Browser<em>.</em></em>
           </h1>
           <p className="hp-sub">
@@ -389,6 +393,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
             <img src="/samurai.png" alt="" draggable={false} />
           </div>
         </div>
+      </div>
       </section>
 
       <Footer />

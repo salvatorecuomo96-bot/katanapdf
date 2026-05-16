@@ -700,14 +700,14 @@ export default function PDFEditor() {
     e.stopPropagation();
     saveHistory();
     setSelected(shape.id);
-    shapeDragOrigin.current = { mx: e.clientX, my: e.clientY, x: shape.x, y: shape.y };
+    shapeDragOrigin.current = { mx: e.clientX, my: e.clientY, x: shape.x, y: shape.y, rotation: rotatedPages[shape.page] || 0 };
     setDraggingShape({ id: shape.id });
   }
 
   function startResizeShape(e, shape, axis = 'se') {
     e.preventDefault();
     e.stopPropagation();
-    shapeResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: shape.w, h: shape.h, axis };
+    shapeResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: shape.w, h: shape.h, axis, rotation: rotatedPages[shape.page] || 0 };
     setResizingShape({ id: shape.id });
   }
   function handleDrawStart(e, pgNum, scale) {
@@ -1045,21 +1045,35 @@ export default function PDFEditor() {
     if (draggingShape) {
       const o = shapeDragOrigin.current;
       if (!o) return;
+      const dx = e.clientX - o.mx;
+      const dy = e.clientY - o.my;
+      const rad = (o.rotation || 0) * Math.PI / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const localDx = (dx * cos + dy * sin) / zoom;
+      const localDy = (-dx * sin + dy * cos) / zoom;
       setFloatingShapes(prev => prev.map(s => s.id === draggingShape.id
-        ? { ...s, x: Math.max(0, o.x + (e.clientX - o.mx) / zoom), y: Math.max(0, o.y + (e.clientY - o.my) / zoom) }
+        ? { ...s, x: Math.max(0, o.x + localDx), y: Math.max(0, o.y + localDy) }
         : s
       ));
     }
     if (resizingShape) {
       const o = shapeResizeOrigin.current;
       if (!o) return;
+      const dx = e.clientX - o.mx;
+      const dy = e.clientY - o.my;
+      const rad = (o.rotation || 0) * Math.PI / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const localDx = (dx * cos + dy * sin) / zoom;
+      const localDy = (-dx * sin + dy * cos) / zoom;
       setFloatingShapes(prev => prev.map(s => {
         if (s.id !== resizingShape.id) return s;
         const axis = o.axis || 'se';
         return {
           ...s,
-          w: axis !== 's' ? Math.max(40, o.w + (e.clientX - o.mx) / zoom) : s.w,
-          h: axis !== 'e' ? Math.max(40, o.h + (e.clientY - o.my) / zoom) : s.h,
+          w: axis !== 's' ? Math.max(40, o.w + localDx) : s.w,
+          h: axis !== 'e' ? Math.max(40, o.h + localDy) : s.h,
         };
       }));
     }
@@ -1116,32 +1130,38 @@ export default function PDFEditor() {
       if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
       else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
     }
-    for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-      const lines = fb.text.split(/\r?\n/);
-      const lh = fb.fontSize * 1.5;
-      const halfH = lines.length * lh / 2;
-      ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      if (fb.bgColor && fb.bgColor !== "transparent") {
-        let maxW = 0;
-        for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
-        ctx.fillStyle = fb.bgColor;
-        ctx.fillRect(fb.x - maxW / 2 - 4, fb.y - halfH - 3, maxW + 8, lines.length * lh + 6);
+    // Draw all floating items sorted by z so creation order (= z value) determines layering
+    const rasterItems = [
+      ...floatingBoxes.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'box' })),
+      ...floatingImages.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'image' })),
+      ...floatingShapes.filter(s => s.page === pg.num).map(s => ({ ...s, _kind: 'shape' })),
+    ].sort((a, b) => (a.z || 50) - (b.z || 50));
+    for (const item of rasterItems) {
+      if (item._kind === 'box') {
+        const lines = item.text.split(/\r?\n/);
+        const lh = item.fontSize * 1.5;
+        const halfH = lines.length * lh / 2;
+        ctx.font = `${item.isItalic ? "italic " : ""}${item.isBold ? "bold " : ""}${item.fontSize}px ${item.fontFamily}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        if (item.bgColor && item.bgColor !== "transparent") {
+          let maxW = 0;
+          for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
+          ctx.fillStyle = item.bgColor;
+          ctx.fillRect(item.x - maxW / 2 - 4, item.y - halfH - 3, maxW + 8, lines.length * lh + 6);
+        }
+        ctx.fillStyle = item.color || "#000";
+        lines.forEach((ln, i) => ctx.fillText(ln, item.x, item.y - halfH + i * lh));
+        ctx.textAlign = "left";
+      } else if (item._kind === 'image') {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.onload = () => { ctx.drawImage(img, item.x, item.y, item.w, item.h); resolve(); };
+          img.src = item.dataUrl;
+        });
+      } else {
+        drawShapeOnCanvas(ctx, item);
       }
-      ctx.fillStyle = fb.color || "#000";
-      lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y - halfH + i * lh));
-      ctx.textAlign = "left";
-    }
-    for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-      await new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); };
-        img.src = fi.dataUrl;
-      });
-    }
-    for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
-      drawShapeOnCanvas(ctx, shape);
     }
     return canvas.toDataURL("image/png");
   }
@@ -1277,102 +1297,85 @@ export default function PDFEditor() {
           }
         }
 
-        // 2. New floating text boxes
-        // fb.x/fb.y are the CENTER of the box in canvas pixels (FloatingBox uses translate(-50%,-50%))
-        for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-          const text = fb.text || "";
-          if (!text) continue;
-          const font = pickPdfLibFont(fonts, fb.fontFamily, fb.isBold, fb.isItalic);
-          const fs = fb.fontSize * sy;
-          const lhCanvas = fb.fontSize * 1.5;
-          const lines = text.split(/\r?\n/);
-          const color = hexToRgb(fb.color || "#000000");
-          // fb.y is center-y; compute top-y in canvas pixels
-          const halfH = lines.length * lhCanvas / 2;
-          const topYCanvas = fb.y - halfH;
-
-          if (fb.bgColor && fb.bgColor !== "transparent") {
-            let maxLineW = 0;
-            for (const ln of lines) {
-              try {
-                maxLineW = Math.max(maxLineW, font.widthOfTextAtSize(ln || " ", fs));
-              } catch {
-                maxLineW = Math.max(maxLineW, (ln || " ").length * fs * 0.6);
-              }
-            }
-            const padX = 4 * sx;
-            const padY = 3 * sy;
-            const bgW = maxLineW + padX * 2;
-            const bgH = lines.length * lhCanvas * sy + padY * 2;
-            const bgX = fb.x * sx - maxLineW / 2 - padX;
-            const bgY = pdfH - (topYCanvas + lines.length * lhCanvas) * sy - padY;
-            pdfPage.drawRectangle({ x: bgX, y: bgY, width: bgW, height: bgH, color: hexToRgb(fb.bgColor) });
-          }
-
-          lines.forEach((ln, i) => {
-            if (!ln) return;
-            const baselineCanvas = topYCanvas + i * lhCanvas + fb.fontSize * 0.85;
-            const yPdf = pdfH - baselineCanvas * sy;
-            try {
-              const lw = font.widthOfTextAtSize(ln, fs);
-              pdfPage.drawText(ln, { x: fb.x * sx - lw / 2, y: yPdf, size: fs, font, color });
-            } catch { /* ignore */ }
-          });
-        }
-
-        // 3. Floating images
-        for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-          if (fi.isHighlight && fi.hlRect) {
-            const r = fi.hlRect;
-            pdfPage.drawRectangle({
-              x: r.x * sx,
-              y: pdfH - (r.y + r.h) * sy,
-              width: r.w * sx,
-              height: r.h * sy,
-              color: hexToRgb(r.color),
-              opacity: 0.4,
-              borderWidth: 0,
-            });
-            continue;
-          }
+        // Pre-embed floating images for this page (async must happen before the sorted loop)
+        const pdfEmbeddedImgs = new Map();
+        for (const fi of floatingImages.filter(f => f.page === pg.num && !(f.isHighlight && f.hlRect))) {
           const isJpg = /^data:image\/jpe?g/i.test(fi.dataUrl);
           const data = await (await fetch(fi.dataUrl)).arrayBuffer();
           let img;
-          try {
-            img = isJpg ? await doc.embedJpg(data) : await doc.embedPng(data);
-          } catch {
-            try { img = await doc.embedPng(data); } catch { continue; }
-          }
-          const x = fi.x * sx;
-          const w = fi.w * sx;
-          const h = fi.h * sy;
-          const yPdf = pdfH - (fi.y + fi.h) * sy;
-          pdfPage.drawImage(img, { x: x, y: yPdf, width: w, height: h, rotate: degrees(fi.angle || 0) });
+          try { img = isJpg ? await doc.embedJpg(data) : await doc.embedPng(data); }
+          catch { try { img = await doc.embedPng(data); } catch { continue; } }
+          pdfEmbeddedImgs.set(fi.id, img);
         }
 
-        // 4. Shapes
-        for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
-          const sc = hexToRgb(shape.shapeColor);
-          const { x: sx2, y: sy2, w: sw, h: sh } = { x: shape.x * sx, y: pdfH - (shape.y + shape.h) * sy, w: shape.w * sx, h: shape.h * sy };
-          if (shape.shapeType === 'circle') {
-            pdfPage.drawEllipse({ x: sx2 + sw/2, y: sy2 + sh/2, xScale: sw/2, yScale: sh/2, ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }) });
-          } else if (shape.shapeType === 'square') {
-            pdfPage.drawRectangle({ x: sx2, y: sy2, width: sw, height: sh, ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }) });
+        // Draw all floating items in z-sorted order (creation order) so layering matches the editor
+        // fb.x/fb.y are the CENTER of the box in canvas pixels (FloatingBox uses translate(-50%,-50%))
+        const pdfItems = [
+          ...floatingBoxes.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'box' })),
+          ...floatingImages.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'image' })),
+          ...floatingShapes.filter(s => s.page === pg.num).map(s => ({ ...s, _kind: 'shape' })),
+        ].sort((a, b) => (a.z || 50) - (b.z || 50));
+
+        for (const item of pdfItems) {
+          if (item._kind === 'box') {
+            const fb = item;
+            const text = fb.text || "";
+            if (!text) continue;
+            const font = pickPdfLibFont(fonts, fb.fontFamily, fb.isBold, fb.isItalic);
+            const fs = fb.fontSize * sy;
+            const lhCanvas = fb.fontSize * 1.5;
+            const lines = text.split(/\r?\n/);
+            const color = hexToRgb(fb.color || "#000000");
+            const halfH = lines.length * lhCanvas / 2;
+            const topYCanvas = fb.y - halfH;
+            if (fb.bgColor && fb.bgColor !== "transparent") {
+              let maxLineW = 0;
+              for (const ln of lines) {
+                try { maxLineW = Math.max(maxLineW, font.widthOfTextAtSize(ln || " ", fs)); }
+                catch { maxLineW = Math.max(maxLineW, (ln || " ").length * fs * 0.6); }
+              }
+              const padX = 4 * sx, padY = 3 * sy;
+              pdfPage.drawRectangle({ x: fb.x * sx - maxLineW / 2 - padX, y: pdfH - (topYCanvas + lines.length * lhCanvas) * sy - padY, width: maxLineW + padX * 2, height: lines.length * lhCanvas * sy + padY * 2, color: hexToRgb(fb.bgColor) });
+            }
+            lines.forEach((ln, i) => {
+              if (!ln) return;
+              const yPdf = pdfH - (topYCanvas + i * lhCanvas + fb.fontSize * 0.85) * sy;
+              try { const lw = font.widthOfTextAtSize(ln, fs); pdfPage.drawText(ln, { x: fb.x * sx - lw / 2, y: yPdf, size: fs, font, color }); } catch { /* ignore */ }
+            });
+          } else if (item._kind === 'image') {
+            const fi = item;
+            if (fi.isHighlight && fi.hlRect) {
+              const r = fi.hlRect;
+              pdfPage.drawRectangle({ x: r.x * sx, y: pdfH - (r.y + r.h) * sy, width: r.w * sx, height: r.h * sy, color: hexToRgb(r.color), opacity: 0.4, borderWidth: 0 });
+            } else {
+              const img = pdfEmbeddedImgs.get(fi.id);
+              if (!img) continue;
+              pdfPage.drawImage(img, { x: fi.x * sx, y: pdfH - (fi.y + fi.h) * sy, width: fi.w * sx, height: fi.h * sy, rotate: degrees(fi.angle || 0) });
+            }
           } else {
-            const lw = Math.max(1, Math.min(sw, sh) * 0.07);
-            const pt = (rx, ry) => ({ x: sx2 + sw * rx, y: sy2 + sh * (1 - ry) });
-            if (shape.shapeType === 'checkmark') {
-              pdfPage.drawLine({ start: pt(0.1, 0.6), end: pt(0.38, 0.85), thickness: lw, color: sc });
-              pdfPage.drawLine({ start: pt(0.38, 0.85), end: pt(0.9, 0.18), thickness: lw, color: sc });
-            } else if (shape.shapeType === 'cross') {
-              pdfPage.drawLine({ start: pt(0.12, 0.12), end: pt(0.88, 0.88), thickness: lw, color: sc });
-              pdfPage.drawLine({ start: pt(0.88, 0.12), end: pt(0.12, 0.88), thickness: lw, color: sc });
-            } else if (shape.shapeType === 'line') {
-              pdfPage.drawLine({ start: pt(0.05, 0.5), end: pt(0.95, 0.5), thickness: lw, color: sc });
-            } else if (shape.shapeType === 'arrow') {
-              pdfPage.drawLine({ start: pt(0.05, 0.5), end: pt(0.82, 0.5), thickness: lw, color: sc });
-              pdfPage.drawLine({ start: pt(0.6, 0.22), end: pt(0.92, 0.5), thickness: lw, color: sc });
-              pdfPage.drawLine({ start: pt(0.92, 0.5), end: pt(0.6, 0.78), thickness: lw, color: sc });
+            const shape = item;
+            const sc = hexToRgb(shape.shapeColor);
+            const { x: sx2, y: sy2, w: sw, h: sh } = { x: shape.x * sx, y: pdfH - (shape.y + shape.h) * sy, w: shape.w * sx, h: shape.h * sy };
+            if (shape.shapeType === 'circle') {
+              pdfPage.drawEllipse({ x: sx2 + sw/2, y: sy2 + sh/2, xScale: sw/2, yScale: sh/2, ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }) });
+            } else if (shape.shapeType === 'square') {
+              pdfPage.drawRectangle({ x: sx2, y: sy2, width: sw, height: sh, ...(shape.shapeFill ? { color: sc } : { borderColor: sc, borderWidth: 1.5 }) });
+            } else {
+              const lw = Math.max(1, Math.min(sw, sh) * 0.07);
+              const pt = (rx, ry) => ({ x: sx2 + sw * rx, y: sy2 + sh * (1 - ry) });
+              if (shape.shapeType === 'checkmark') {
+                pdfPage.drawLine({ start: pt(0.1, 0.6), end: pt(0.38, 0.85), thickness: lw, color: sc });
+                pdfPage.drawLine({ start: pt(0.38, 0.85), end: pt(0.9, 0.18), thickness: lw, color: sc });
+              } else if (shape.shapeType === 'cross') {
+                pdfPage.drawLine({ start: pt(0.12, 0.12), end: pt(0.88, 0.88), thickness: lw, color: sc });
+                pdfPage.drawLine({ start: pt(0.88, 0.12), end: pt(0.12, 0.88), thickness: lw, color: sc });
+              } else if (shape.shapeType === 'line') {
+                pdfPage.drawLine({ start: pt(0.05, 0.5), end: pt(0.95, 0.5), thickness: lw, color: sc });
+              } else if (shape.shapeType === 'arrow') {
+                pdfPage.drawLine({ start: pt(0.05, 0.5), end: pt(0.82, 0.5), thickness: lw, color: sc });
+                pdfPage.drawLine({ start: pt(0.6, 0.22), end: pt(0.92, 0.5), thickness: lw, color: sc });
+                pdfPage.drawLine({ start: pt(0.92, 0.5), end: pt(0.6, 0.78), thickness: lw, color: sc });
+              }
             }
           }
         }
@@ -1427,28 +1430,33 @@ export default function PDFEditor() {
         if (useBaselines) lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.lineBaselines[i]));
         else lines.forEach((ln, i) => ctx.fillText(ln, e.x, e.baselineY + i * lh));
       }
-      for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
-        const lines = fb.text.split(/\r?\n/);
-        const lh = fb.fontSize * 1.5;
-        const halfH = lines.length * lh / 2;
-        ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        if (fb.bgColor && fb.bgColor !== "transparent") {
-          let maxW = 0;
-          for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
-          ctx.fillStyle = fb.bgColor;
-          ctx.fillRect(fb.x - maxW / 2 - 4, fb.y - halfH - 3, maxW + 8, lines.length * lh + 6);
+      const imgExportItems = [
+        ...floatingBoxes.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'box' })),
+        ...floatingImages.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'image' })),
+        ...floatingShapes.filter(s => s.page === pg.num).map(s => ({ ...s, _kind: 'shape' })),
+      ].sort((a, b) => (a.z || 50) - (b.z || 50));
+      for (const item of imgExportItems) {
+        if (item._kind === 'box') {
+          const lines = item.text.split(/\r?\n/);
+          const lh = item.fontSize * 1.5;
+          const halfH = lines.length * lh / 2;
+          ctx.font = `${item.isItalic ? "italic " : ""}${item.isBold ? "bold " : ""}${item.fontSize}px ${item.fontFamily}`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          if (item.bgColor && item.bgColor !== "transparent") {
+            let maxW = 0;
+            for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
+            ctx.fillStyle = item.bgColor;
+            ctx.fillRect(item.x - maxW / 2 - 4, item.y - halfH - 3, maxW + 8, lines.length * lh + 6);
+          }
+          ctx.fillStyle = item.color || "#000";
+          lines.forEach((ln, i) => ctx.fillText(ln, item.x, item.y - halfH + i * lh));
+          ctx.textAlign = "left";
+        } else if (item._kind === 'image') {
+          await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, item.x, item.y, item.w, item.h); resolve(); }; img.src = item.dataUrl; });
+        } else {
+          drawShapeOnCanvas(ctx, item);
         }
-        ctx.fillStyle = fb.color || "#000";
-        lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y - halfH + i * lh));
-        ctx.textAlign = "left";
-      }
-      for (const fi of floatingImages.filter(f => f.page === pg.num)) {
-        await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); }; img.src = fi.dataUrl; });
-      }
-      for (const shape of floatingShapes.filter(s => s.page === pg.num)) {
-        drawShapeOnCanvas(ctx, shape);
       }
       if (displayIdx > 0) await new Promise(r => setTimeout(r, 80));
       const a = document.createElement("a");
@@ -2042,7 +2050,7 @@ export default function PDFEditor() {
                           onDelete={() => deleteFloatingImage(fi.id)} />
                       ))}
                       {!isGridView && floatingShapes.filter(s => s.page === pg.num).map(shape => (
-                        <FloatingShape key={shape.id} shape={shape} isSel={selected === shape.id} zoom={scale}
+                        <FloatingShape key={shape.id} shape={shape} isSel={selected === shape.id} zoom={scale} rotation={rotation}
                           onSelect={() => setSelected(shape.id)}
                           onDeselect={() => setSelected(null)}
                           onStartDrag={e => startDragShape(e, shape)}
