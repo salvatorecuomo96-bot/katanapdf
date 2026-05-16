@@ -308,6 +308,43 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
+        /* ── Laptop (961–1400px): compact + stronger right fog ─── */
+        @media (min-width: 961px) and (max-width: 1400px) {
+          .hp-hero { padding: clamp(10px,1.8vh,20px) clamp(20px,3vw,48px) clamp(6px,1.2vh,14px); }
+          .hp-eyebrow { margin-bottom: 8px; }
+          .hp-h1 { font-size: clamp(22px, 2.6vw, 40px); margin: 0 0 10px; line-height: 1.04; }
+          .hp-sub { margin: 0 0 16px; font-size: 13.5px; }
+          .hp-actions { margin-bottom: 10px; gap: 8px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 38px; }
+          .hp-note { font-size: 12px; }
+          .hp-what { margin-top: 10px; }
+          .hp-what-item { padding: 6px 12px; }
+          .hp-art img {
+            width: clamp(260px, 44vw, 700px);
+            max-height: min(76vh, 680px);
+            opacity: 0.92;
+            -webkit-mask-image:
+              linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 58%, rgba(0,0,0,0.22) 74%, rgba(0,0,0,0.06) 89%, transparent 100%),
+              linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 5%, black 13%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
+            -webkit-mask-composite: source-in;
+            mask-image:
+              linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 58%, rgba(0,0,0,0.22) 74%, rgba(0,0,0,0.06) 89%, transparent 100%),
+              linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 5%, black 13%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
+            mask-composite: intersect;
+          }
+          .hp-art-inner::after {
+            background:
+              radial-gradient(ellipse 40% 34% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.72) 32%, rgba(255,252,246,0.26) 58%, transparent 78%),
+              radial-gradient(ellipse 50% 44% at 100%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.82) 28%, rgba(255,252,246,0.44) 52%, rgba(255,252,246,0.16) 70%, transparent 88%),
+              radial-gradient(ellipse 38% 32% at   0% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 32%, rgba(255,252,246,0.22) 58%, transparent 78%),
+              radial-gradient(ellipse 50% 42% at 100% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.80) 28%, rgba(255,252,246,0.42) 52%, rgba(255,252,246,0.14) 70%, transparent 88%),
+              linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
+              linear-gradient(to left,   rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.85) 9%, rgba(255,252,246,0.56) 20%, rgba(255,252,246,0.24) 32%, rgba(255,252,246,0.08) 44%, transparent 58%),
+              linear-gradient(to bottom, rgba(255,252,246,0.94) 0%, rgba(255,252,246,0.56) 6%, rgba(255,252,246,0.18) 13%, transparent 20%),
+              linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
+          }
+        }
+
         /* ── Short-screen (720p) ─────────────────────── */
         @media (max-height: 780px) {
           .hp-art img { max-height: min(80vh, 680px); }

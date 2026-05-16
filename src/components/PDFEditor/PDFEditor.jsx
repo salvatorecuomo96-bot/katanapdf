@@ -12,6 +12,7 @@ import EditorNotices from "./EditorNotices";
 import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
 import FloatingShape from "./FloatingShape";
+import DownloadSupportPrompt from "./DownloadSupportPrompt";
 import { GridIcon, RotateIcon } from "./PageSidebar";
 import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../utils/pdfLoadUtils";
 import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
@@ -111,7 +112,9 @@ export default function PDFEditor() {
   const [drawWidth, setDrawWidth] = useState(6);
   const [drawTool, setDrawTool] = useState('pencil');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showSupportPrompt, setShowSupportPrompt] = useState(false);
   const [floatingShapes, setFloatingShapes] = useState([]);
+  const [dragOverImagePage, setDragOverImagePage] = useState(null);
   const [shapePanelPage, setShapePanelPage] = useState(null);
   const [shapePanelColor, setShapePanelColor] = useState('#000000');
   const [shapePanelFill, setShapePanelFill] = useState(false);
@@ -119,6 +122,7 @@ export default function PDFEditor() {
   const [draggingShape, setDraggingShape] = useState(null);
   const [resizingShape, setResizingShape] = useState(null);
   const pendingEditRef = useRef(null);
+  const focusedPageNumRef = useRef(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const imgDragOrigin = useRef(null);
   const imgResizeOrigin = useRef(null);
@@ -246,6 +250,45 @@ export default function PDFEditor() {
       rotatedPages, deletedPages,
     };
   });
+
+  // Paste images from clipboard (Ctrl+V or right-click → Paste)
+  useEffect(() => {
+    const handlePaste = (e) => {
+      if (!liveStateRef.current.pages?.length) return;
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.contentEditable === 'true') return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (!file) continue;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            const { pages } = liveStateRef.current;
+            const pageNum = focusedPageNumRef.current || pages[0]?.num;
+            if (!pageNum) return;
+            const pg = pages.find(p => p.num === pageNum);
+            saveHistory();
+            floatingIdCounter++;
+            setFloatingImages(prev => [...prev, {
+              id: `paste-${floatingIdCounter}`,
+              page: pageNum,
+              z: 50 + floatingIdCounter,
+              x: Math.max(0, (pg?.width || 600) / 2 - 100),
+              y: Math.max(0, (pg?.height || 800) / 2 - 75),
+              w: 200, h: 150,
+              dataUrl: ev.target.result,
+            }]);
+          };
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, []);
 
   // Warn on browser refresh/tab-close when a PDF is open
   useEffect(() => {
@@ -1473,6 +1516,7 @@ export default function PDFEditor() {
       a.click();
       document.body.removeChild(a);
     }
+    triggerSupportPrompt();
   }
 
   // Split modal: download each group as a separate PDF
@@ -1503,6 +1547,7 @@ export default function PDFEditor() {
       URL.revokeObjectURL(url);
       if (gi < groups.length - 1) await new Promise(r => setTimeout(r, 120));
     }
+    triggerSupportPrompt();
   }
 
   // Split modal: download selected pages as a single PDF
@@ -1530,6 +1575,11 @@ export default function PDFEditor() {
     a.download = `${baseName}_pages.pdf`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    triggerSupportPrompt();
+  }
+
+  function triggerSupportPrompt() {
+    setShowSupportPrompt(true);
   }
 
   function triggerPdfDownload(bytes) {
@@ -1542,6 +1592,7 @@ export default function PDFEditor() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    triggerSupportPrompt();
   }
 
   async function handleDownloadCanvasFallback() {
@@ -1786,10 +1837,17 @@ export default function PDFEditor() {
                            e.preventDefault();
                            e.dataTransfer.dropEffect = "move";
                            setDragOverPageNum(pg.num);
+                           return;
+                         }
+                         if (e.dataTransfer.types.includes('Files')) {
+                           e.preventDefault();
+                           e.dataTransfer.dropEffect = "copy";
+                           setDragOverImagePage(pg.num);
                          }
                        }}
                        onDragLeave={() => {
                          if (dragOverPageNum === pg.num) setDragOverPageNum(null);
+                         if (dragOverImagePage === pg.num) setDragOverImagePage(null);
                        }}
                        onDrop={e => {
                          if (isGridView && draggedPageNum !== null) {
@@ -1797,17 +1855,41 @@ export default function PDFEditor() {
                            movePageTo(draggedPageNum, displayIdx);
                            setDraggedPageNum(null);
                            setDragOverPageNum(null);
+                           return;
+                         }
+                         if (e.dataTransfer.files?.length) {
+                           e.preventDefault();
+                           setDragOverImagePage(null);
+                           const file = e.dataTransfer.files[0];
+                           if (!file.type.startsWith('image/')) return;
+                           const reader = new FileReader();
+                           reader.onload = ev => {
+                             saveHistory();
+                             floatingIdCounter++;
+                             setFloatingImages(prev => [...prev, {
+                               id: `drop-${floatingIdCounter}`,
+                               page: pg.num,
+                               z: 50 + floatingIdCounter,
+                               x: Math.max(0, (pg.width || 600) / 2 - 100),
+                               y: Math.max(0, (pg.height || 800) / 2 - 75),
+                               w: 200, h: 150,
+                               dataUrl: ev.target.result,
+                             }]);
+                           };
+                           reader.readAsDataURL(file);
                          }
                        }}
                        onDragEnd={() => {
                          setDraggedPageNum(null);
                          setDragOverPageNum(null);
+                         setDragOverImagePage(null);
                        }}
                        style={{
                          opacity: draggedPageNum === pg.num ? 0.5 : 1,
-                         border: dragOverPageNum === pg.num ? `2px dashed ${LACQUER}` : "2px solid transparent",
+                         border: (dragOverPageNum === pg.num || dragOverImagePage === pg.num) ? `2px dashed ${LACQUER}` : "2px solid transparent",
                          padding: isGridView ? 4 : 0,
-                         boxSizing: "border-box"
+                         boxSizing: "border-box",
+                         borderRadius: dragOverImagePage === pg.num ? 4 : 0,
                        }}>
                   {!isGridView && (
                     <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: dispW, maxWidth: "100%", flexWrap: "wrap", gap: 8 }}>
@@ -1986,8 +2068,9 @@ export default function PDFEditor() {
                        </div>
                     </div>
                   )}
-                  <div data-pgwrap={pg.num} onClick={e => { 
-                    e.stopPropagation(); 
+                  <div data-pgwrap={pg.num} onClick={e => {
+                    e.stopPropagation();
+                    focusedPageNumRef.current = pg.num;
                     if (isGridView) {
                       setIsGridView(false);
                       setTimeout(() => {
@@ -1996,8 +2079,8 @@ export default function PDFEditor() {
                         if (container && el) container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
                       }, 50);
                     } else {
-                      setSelected(null); 
-                      setActivePopup(null); 
+                      setSelected(null);
+                      setActivePopup(null);
                     }
                   }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "100%", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "visible", cursor: isGridView ? "pointer" : "default" }}>
                     <div style={{
@@ -2138,6 +2221,11 @@ export default function PDFEditor() {
           </div>
         </div>
       )}
+
+      <DownloadSupportPrompt
+        visible={showSupportPrompt}
+        onClose={() => setShowSupportPrompt(false)}
+      />
     </div>
   );
 }
