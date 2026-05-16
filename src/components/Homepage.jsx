@@ -5,7 +5,6 @@ import { CINZEL, FELL, LACQUER, hiddenFileInput } from "./utils/constant";
 const RED   = "#8B1A1A";
 const INK   = "#18130d";
 const MUTED = "rgba(24,19,13,0.58)";
-const GOLD  = "rgba(180,138,64,0.38)";
 const LINE  = "rgba(116,86,44,0.18)";
 
 function use4KZoom() {
@@ -17,8 +16,8 @@ function use4KZoom() {
 const FEATURES = [
   { icon: "✎", label: "Edit Text",       detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
   { icon: "＋", label: "Add Text",       detail: "Drop new text boxes anywhere on the page at any size." },
-  { icon: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
-  { icon: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.2"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
+  { icon: (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
+  { icon: (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.4"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
   { icon: "✏", label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
   { icon: "◇", label: "Shapes",          detail: "Add circles and rectangles with custom colour and fill." },
   { icon: "⇄", label: "Merge & Split",  detail: "Combine multiple PDFs or split a document into separate files." },
@@ -46,7 +45,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      style={{ height: `calc(100dvh / ${zoom4k})`, minHeight: 580, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL, zoom: zoom4k }}
+      style={{ height: `calc(100dvh / ${zoom4k})`, minHeight: 560, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL, zoom: zoom4k }}
     >
       <style>{`
         .hp {
@@ -64,6 +63,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           height: 60px;
           display: flex; align-items: center;
           padding: 0 36px;
+          flex-shrink: 0;
         }
         .hp-header-spacer { flex: 1; }
         .hp-logo { width: min(200px,44vw); height: auto; display: block; }
@@ -81,18 +81,19 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Hero ─────────────────────────────────── */
+        /* ── Hero: 3-column ─────────────────────────── */
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
           width: 100%; box-sizing: border-box;
-          padding: 10px 32px 24px;
+          padding: 0 36px;
           display: grid;
-          grid-template-columns: minmax(0, 580px) minmax(0, 580px);
-          justify-content: center;
+          grid-template-columns: minmax(0, 360px) 1fr minmax(0, 200px);
+          gap: 0 36px;
           align-items: center;
-          gap: 0;
         }
-        .hp-copy { max-width: 580px; }
+
+        /* ── Copy (left) ─────────────────────────────── */
+        .hp-copy { max-width: 360px; }
         .hp-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 3.5px;
@@ -105,7 +106,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         }
         .hp-h1 {
           font-family: ${FELL};
-          font-size: clamp(28px, 3.2vw, 52px);
+          font-size: clamp(28px, 3vw, 52px);
           line-height: 1.06; letter-spacing: -0.8px;
           color: ${INK}; font-weight: 600;
           margin: 0 0 14px;
@@ -114,7 +115,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-sub {
           font-size: 15px; line-height: 1.62;
           color: ${MUTED}; margin: 0 0 22px;
-          max-width: 480px;
+          max-width: 420px;
         }
         .hp-actions {
           display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -145,12 +146,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           font-size: 13px; color: ${MUTED}; font-style: italic;
         }
 
-        /* ── Samurai art ────────────────────────────── */
+        /* ── Samurai art (center) ────────────────────── */
         .hp-art {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 16px;
+          align-self: stretch;
+          padding: 16px 0;
         }
         .hp-art-inner {
           display: inline-flex;
@@ -161,149 +163,76 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           overflow: hidden;
         }
         .hp-art img {
-          width: 100%;
+          display: block;
+          width: auto;
           max-width: 100%;
-          max-height: min(67vh, 480px);
+          max-height: min(82vh, 720px);
           object-fit: contain;
-          display: block;
-        }
-        /* ── Trust strip ─────────────────────────────── */
-        .hp-trust {
-          border-top: 1px solid ${LINE};
-          border-bottom: 1px solid ${LINE};
-          background: rgba(255,253,248,0.55);
-          backdrop-filter: blur(4px);
-        }
-        .hp-trust-inner {
-          max-width: 1000px; margin: 0 auto;
-          display: grid; grid-template-columns: repeat(4,1fr);
-        }
-        .hp-badge {
-          padding: 10px 16px;
-          border-right: 1px solid ${LINE};
-          display: flex; flex-direction: column; align-items: center;
-          text-align: center; gap: 4px;
-        }
-        .hp-badge:last-child { border-right: none; }
-        .hp-badge-icon { font-size: 16px; line-height: 1; }
-        .hp-badge-label {
-          font-family: ${CINZEL}; font-size: 9px; letter-spacing: 1.5px;
-          text-transform: uppercase; font-weight: 800; color: ${INK};
-        }
-        .hp-badge-sub {
-          font-size: 11px; color: ${MUTED}; line-height: 1.35;
         }
 
-        /* ── Sections ─────────────────────────────────── */
-        .hp-section {
-          max-width: 1100px; margin: 0 auto; padding: 18px 42px 0;
-        }
-        .hp-section-last { padding-bottom: 18px; }
-        .hp-heading {
-          text-align: center; margin: 0 0 14px;
-        }
-        .hp-heading span {
-          font-family: ${CINZEL}; font-size: 9px; letter-spacing: 4px;
-          text-transform: uppercase; font-weight: 800; color: ${RED};
-        }
-        .hp-heading-bar {
-          width: 28px; height: 2px; background: ${RED};
-          border-radius: 2px; margin: 6px auto 0;
-        }
-
-        /* ── Feature cards ────────────────────────────── */
-        .hp-features {
-          display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
-          overflow: visible;
-        }
-        .hp-feat {
-          background: rgba(255,253,248,0.78);
+        /* ── Feature sidebar (right) ─────────────────── */
+        .hp-feats-side {
+          display: flex; flex-direction: column;
           border: 1px solid ${LINE};
-          border-radius: 4px;
-          padding: 10px 12px 10px;
+          border-radius: 5px;
+          overflow: visible;
+          background: rgba(255,253,248,0.7);
+          backdrop-filter: blur(6px);
+          box-shadow: 0 4px 18px rgba(40,24,8,0.06);
+        }
+        .hp-feats-item {
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 13px;
+          border-bottom: 1px solid ${LINE};
           position: relative;
-          box-shadow: 0 8px 24px rgba(40,24,8,0.05);
+          cursor: default;
+          transition: background 0.12s;
         }
-        .hp-feat::after {
+        .hp-feats-item:last-child { border-bottom: none; }
+        .hp-feats-item:hover { background: rgba(139,26,26,0.04); }
+        .hp-feats-item::before {
           content: ""; position: absolute;
-          top: 0; left: 0; right: 0; height: 2px;
-          background: ${RED};
+          left: 0; top: 0; bottom: 0; width: 2px;
+          background: ${RED}; opacity: 0;
+          transition: opacity 0.12s;
         }
-        .hp-feat-icon {
-          width: 26px; height: 26px;
-          background: rgba(139,26,26,0.06);
-          border: 1px solid rgba(139,26,26,0.15);
-          border-radius: 3px;
+        .hp-feats-item:hover::before { opacity: 1; }
+        .hp-feats-icon {
+          width: 20px; height: 20px;
           display: flex; align-items: center; justify-content: center;
-          font-size: 12px; color: ${RED};
-          margin-bottom: 6px;
+          font-size: 13px; color: ${RED};
+          flex-shrink: 0;
         }
-        .hp-feat-label {
-          display: block;
-          font-family: ${CINZEL}; font-size: 8.5px;
-          letter-spacing: 1.4px; text-transform: uppercase;
-          font-weight: 800; color: ${INK};
+        .hp-feats-name {
+          font-family: ${CINZEL}; font-size: 7.5px; letter-spacing: 1.2px;
+          text-transform: uppercase; font-weight: 800; color: ${INK};
+          line-height: 1.3;
         }
-        .hp-feat-tooltip {
+        /* Tooltip for right-rail items — pops to the left */
+        .hp-feats-item .hp-feat-tooltip {
           visibility: hidden; opacity: 0;
-          position: absolute; bottom: calc(100% + 8px); left: 50%;
-          transform: translateX(-50%);
+          position: absolute;
+          right: calc(100% + 10px); left: auto;
+          top: 50%; bottom: auto;
+          transform: translateY(-50%);
           background: ${INK}; color: rgba(255,253,248,0.92);
           font-size: 11px; line-height: 1.45;
           padding: 7px 11px; border-radius: 4px;
-          width: 180px; text-align: center;
+          width: 190px; text-align: left;
           pointer-events: none; z-index: 200;
           transition: opacity 0.15s;
           white-space: normal;
         }
-        .hp-feat-tooltip::after {
+        .hp-feats-item .hp-feat-tooltip::after {
           content: ""; position: absolute;
-          top: 100%; left: 50%; transform: translateX(-50%);
+          top: 50%; right: -10px; left: auto;
+          transform: translateY(-50%);
           border: 5px solid transparent;
-          border-top-color: ${INK};
+          border-left-color: ${INK};
+          border-top-color: transparent;
         }
-        .hp-feat:hover .hp-feat-tooltip {
+        .hp-feats-item:hover .hp-feat-tooltip {
           visibility: visible; opacity: 1;
-        }
-
-        /* ── Steps ─────────────────────────────────── */
-        .hp-steps { display: flex; flex-direction: column; gap: 10px; }
-        .hp-step {
-          display: grid; grid-template-columns: 52px 1fr;
-          gap: 20px; align-items: center;
-          background: rgba(255,253,248,0.72);
-          border: 1px solid ${LINE}; border-radius: 4px;
-          padding: 18px 22px;
-          box-shadow: 0 8px 22px rgba(40,24,8,0.04);
-        }
-        .hp-step-num {
-          font-family: ${CINZEL}; font-size: 34px;
-          color: rgba(139,26,26,0.2); font-weight: 800;
-          line-height: 1; text-align: center;
-        }
-        .hp-step-text { font-size: 15.5px; line-height: 1.58; color: ${INK}; }
-
-        /* ── FAQ ─────────────────────────────────── */
-        .hp-faq-wrap {
-          background: rgba(255,253,248,0.72);
-          border: 1px solid ${LINE}; border-radius: 5px; overflow: hidden;
-          box-shadow: 0 12px 30px rgba(40,24,8,0.05);
-        }
-        .hp-faq-item { border-bottom: 1px solid ${LINE}; }
-        .hp-faq-item:last-child { border-bottom: none; }
-        .hp-faq-summary {
-          cursor: pointer; list-style: none;
-          font-family: ${CINZEL}; font-size: 11px; letter-spacing: 1.5px;
-          text-transform: uppercase; font-weight: 800; color: ${INK};
-          padding: 18px 24px;
-          display: flex; justify-content: space-between; align-items: center;
-          user-select: none;
-        }
-        .hp-faq-summary::-webkit-details-marker { display: none; }
-        .hp-faq-plus { color: ${RED}; font-size: 20px; flex-shrink: 0; margin-left: 16px; font-weight: 300; }
-        .hp-faq-answer {
-          margin: 0; padding: 0 24px 18px;
-          font-size: 15px; line-height: 1.68; color: ${MUTED};
         }
 
         /* ── Drop overlay ─────────────────────────────── */
@@ -324,15 +253,10 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
         /* ── Short-screen (720p laptops) ─────────────── */
         @media (max-height: 780px) {
-          .hp-badge { padding: 6px 12px; gap: 2px; }
-          .hp-badge-icon { font-size: 13px; }
-          .hp-section { padding-top: 10px; }
-          .hp-section-last { padding-bottom: 10px; }
-          .hp-heading { margin-bottom: 8px; }
-          .hp-feat { padding: 7px 10px; }
-          .hp-feat-icon { width: 22px; height: 22px; margin-bottom: 4px; font-size: 11px; }
-          .hp-hero { padding-top: 6px; padding-bottom: 10px; }
-          .hp-art img { max-height: min(44vh, 340px); }
+          .hp-art img { max-height: min(78vh, 580px); }
+          .hp-hero { padding: 0 28px; gap: 0 24px; }
+          .hp-feats-item { padding: 7px 11px; }
+          .hp-feats-name { font-size: 7px; }
         }
 
         /* ── Responsive ─────────────────────────────── */
@@ -340,38 +264,40 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           .hp-hero {
             grid-template-columns: 1fr;
             padding: 20px 28px 16px;
+            align-items: start;
+            overflow-y: auto;
           }
-          .hp-art { order: -1; }
-          .hp-art img { max-width: min(70vw, 280px); max-height: 180px; }
+          .hp-art { order: -1; padding: 0; }
+          .hp-art img { max-height: 220px; max-width: min(70vw, 280px); }
           .hp-copy { max-width: 100%; }
-          .hp-trust-inner { grid-template-columns: repeat(2,1fr); }
-          .hp-badge:nth-child(2) { border-right: none; }
-          .hp-badge:nth-child(1),
-          .hp-badge:nth-child(2) { border-bottom: 1px solid ${LINE}; }
-          .hp-features { grid-template-columns: repeat(2,1fr); }
-          .hp-section { padding-left: 28px; padding-right: 28px; }
+          .hp-feats-side { order: 2; flex-direction: row; flex-wrap: wrap; border-radius: 4px; }
+          .hp-feats-item { flex: 1 1 45%; border-right: 1px solid ${LINE}; border-bottom: 1px solid ${LINE}; }
+          .hp-feats-item:nth-child(even) { border-right: none; }
+          .hp-feats-item .hp-feat-tooltip {
+            right: auto; left: 50%; top: auto; bottom: calc(100% + 8px);
+            transform: translateX(-50%);
+            width: 160px; text-align: center;
+          }
+          .hp-feats-item .hp-feat-tooltip::after {
+            right: auto; left: 50%; top: 100%; bottom: auto;
+            transform: translateX(-50%);
+            border-left-color: transparent;
+            border-top-color: ${INK};
+          }
         }
 
         @media (max-width: 580px) {
           .hp-header { height: 60px; padding: 0 16px; }
           .hp-logo { width: min(160px,44vw); }
           .hp-nav a { padding: 0 8px; font-size: 8px; letter-spacing: 1.5px; }
-          .hp-hero { padding: 28px 18px 32px; }
-          .hp-art img { max-width: min(80vw, 220px); max-height: 140px; }
+          .hp-hero { padding: 20px 18px 24px; gap: 16px 0; }
+          .hp-art img { max-height: 160px; max-width: min(80vw, 220px); }
           .hp-h1 { font-size: clamp(24px,10vw,36px); letter-spacing: -0.5px; }
           .hp-sub { font-size: 13px; }
           .hp-actions { flex-direction: column; align-items: stretch; gap: 10px; }
           .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 50px; }
-          .hp-trust-inner { grid-template-columns: 1fr; }
-          .hp-badge { border-right: none; border-bottom: 1px solid ${LINE}; }
-          .hp-badge:last-child { border-bottom: none; }
-          .hp-features { grid-template-columns: repeat(2,1fr); gap: 6px; }
-          .hp-section { padding-left: 14px; padding-right: 14px; padding-top: 14px; }
-          .hp-step { grid-template-columns: 38px 1fr; padding: 14px 16px; }
-          .hp-step-num { font-size: 26px; }
-          .hp-step-text { font-size: 14px; }
-          .hp-faq-summary { font-size: 10px; padding: 16px 18px; letter-spacing: 1px; }
-          .hp-faq-answer { padding: 0 18px 16px; font-size: 14px; }
+          .hp-feats-item { flex: 1 1 100%; }
+          .hp-feats-item:nth-child(even) { border-right: none; }
         }
       `}</style>
 
@@ -393,8 +319,10 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         </nav>
       </header>
 
-      {/* ── Hero ── */}
+      {/* ── Hero: copy | samurai | features ── */}
       <section className="hp-hero">
+
+        {/* Left — copy */}
         <div className="hp-copy">
           <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
           <h1 className="hp-h1">
@@ -416,46 +344,24 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           <p className="hp-note">or drag a file anywhere on this page</p>
         </div>
 
+        {/* Center — samurai */}
         <div className="hp-art" aria-hidden="true">
           <div className="hp-art-inner">
             <img src="/samurai.png" alt="" draggable={false} />
           </div>
         </div>
-      </section>
 
-      {/* ── Trust badges ── */}
-      <div className="hp-trust">
-        <div className="hp-trust-inner">
-          {[
-            ["⚔", "100% Free",    "Every feature, no paid tier."],
-            ["⛩", "No Upload",    "Your file stays in your browser."],
-            ["◎", "No Sign-Up",   "No email. No account. Ever."],
-            ["✦", "No Watermark", "Export clean, unbranded PDFs."],
-          ].map(([icon, label, sub]) => (
-            <div className="hp-badge" key={label}>
-              <span className="hp-badge-icon">{icon}</span>
-              <span className="hp-badge-label">{label}</span>
-              <span className="hp-badge-sub">{sub}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Features ── */}
-      <section className="hp-section hp-section-last">
-        <div className="hp-heading">
-          <span>What you can do</span>
-          <div className="hp-heading-bar" />
-        </div>
-        <div className="hp-features">
+        {/* Right — feature list */}
+        <nav className="hp-feats-side" aria-label="Features">
           {FEATURES.map(f => (
-            <div className="hp-feat" key={f.label}>
+            <div className="hp-feats-item" key={f.label}>
               {f.detail && <span className="hp-feat-tooltip">{f.detail}</span>}
-              <div className="hp-feat-icon">{f.icon}</div>
-              <span className="hp-feat-label">{f.label}</span>
+              <div className="hp-feats-icon">{f.icon}</div>
+              <span className="hp-feats-name">{f.label}</span>
             </div>
           ))}
-        </div>
+        </nav>
+
       </section>
 
       <Footer />
