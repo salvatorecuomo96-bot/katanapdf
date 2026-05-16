@@ -16,10 +16,9 @@ function use4KZoom() {
 const FEATURES = [
   { icon: "✎", label: "Edit Text",       detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
   { icon: "＋", label: "Add Text",       detail: "Drop new text boxes anywhere on the page at any size." },
-  { icon: (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
-  { icon: (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.4"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
+  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
+  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.4"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
   { icon: "✏", label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
-  { icon: "◇", label: "Shapes",          detail: "Add circles and rectangles with custom colour and fill." },
   { icon: "⇄", label: "Merge & Split",  detail: "Combine multiple PDFs or split a document into separate files." },
   { icon: "⊞", label: "Reorder Pages",  detail: "Drag pages into any order, rotate or delete them instantly." },
 ];
@@ -31,7 +30,7 @@ const NAV = [
   ["Terms",   "#terms"],
 ];
 
-export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, onToggleDark }) {
+export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
   const [dragOver, setDragOver] = useState(false);
   const zoom4k = use4KZoom();
 
@@ -45,7 +44,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      style={{ height: `calc(100dvh / ${zoom4k})`, minHeight: 560, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL, zoom: zoom4k }}
+      style={{ height: `calc(100dvh / ${zoom4k})`, minHeight: 520, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL, zoom: zoom4k }}
     >
       <style>{`
         .hp {
@@ -60,16 +59,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           background: rgba(255,253,248,0.92);
           backdrop-filter: blur(10px);
           border-bottom: 1px solid ${LINE};
-          height: 60px;
+          height: 60px; flex-shrink: 0;
           display: flex; align-items: center;
           padding: 0 36px;
-          flex-shrink: 0;
         }
         .hp-header-spacer { flex: 1; }
         .hp-logo { width: min(200px,44vw); height: auto; display: block; }
         .hp-nav {
-          flex: 1;
-          display: flex; align-items: center; gap: 0; justify-content: flex-end;
+          flex: 1; display: flex; align-items: center; justify-content: flex-end;
         }
         .hp-nav a {
           font-family: ${CINZEL}; font-size: 9px; letter-spacing: 2.5px;
@@ -81,24 +78,81 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Hero: 3-column ─────────────────────────── */
+        /* ── Feature strip (horizontal, above hero) ─── */
+        .hp-strip {
+          flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          border-bottom: 1px solid ${LINE};
+          background: rgba(255,253,248,0.7);
+          backdrop-filter: blur(6px);
+          padding: 0 36px;
+          overflow: hidden;
+        }
+        .hp-strip-inner {
+          display: flex; align-items: stretch;
+          border-left: 1px solid ${LINE};
+        }
+        .hp-strip-item {
+          display: flex; align-items: center; gap: 7px;
+          padding: 9px 14px;
+          border-right: 1px solid ${LINE};
+          position: relative; cursor: pointer;
+          transition: background 0.12s, color 0.12s;
+          white-space: nowrap;
+          user-select: none;
+        }
+        .hp-strip-item:hover { background: rgba(139,26,26,0.06); }
+        .hp-strip-item:hover .hp-strip-name { color: ${RED}; }
+        .hp-strip-item:hover .hp-strip-icon { color: ${RED}; }
+        .hp-strip-icon {
+          font-size: 12px; color: ${RED};
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .hp-strip-name {
+          font-family: ${CINZEL}; font-size: 7.5px; letter-spacing: 1.3px;
+          text-transform: uppercase; font-weight: 800; color: ${INK};
+        }
+        /* tooltip drops down */
+        .hp-strip-tooltip {
+          visibility: hidden; opacity: 0;
+          position: absolute; top: calc(100% + 8px); left: 50%;
+          transform: translateX(-50%);
+          background: ${INK}; color: rgba(255,253,248,0.92);
+          font-size: 11px; line-height: 1.45; font-family: ${FELL};
+          padding: 7px 11px; border-radius: 4px;
+          width: 190px; text-align: center;
+          pointer-events: none; z-index: 300;
+          transition: opacity 0.15s; white-space: normal;
+        }
+        .hp-strip-tooltip::after {
+          content: ""; position: absolute;
+          bottom: 100%; left: 50%; transform: translateX(-50%);
+          border: 5px solid transparent;
+          border-bottom-color: ${INK};
+        }
+        .hp-strip-item:hover .hp-strip-tooltip {
+          visibility: visible; opacity: 1;
+        }
+
+        /* ── Hero: copy | samurai ────────────────────── */
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
           width: 100%; box-sizing: border-box;
-          padding: 0 36px;
+          padding: 0 36px 0 48px;
           display: grid;
-          grid-template-columns: minmax(0, 360px) 1fr minmax(0, 200px);
-          gap: 0 36px;
+          grid-template-columns: minmax(0, 380px) 1fr;
+          gap: 0 48px;
           align-items: center;
         }
 
         /* ── Copy (left) ─────────────────────────────── */
-        .hp-copy { max-width: 360px; }
+        .hp-copy { max-width: 380px; }
         .hp-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 3.5px;
           text-transform: uppercase; color: ${RED}; font-weight: 700;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
         .hp-eyebrow::before, .hp-eyebrow::after {
           content: ""; display: inline-block;
@@ -106,7 +160,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         }
         .hp-h1 {
           font-family: ${FELL};
-          font-size: clamp(28px, 3vw, 52px);
+          font-size: clamp(28px, 3vw, 54px);
           line-height: 1.06; letter-spacing: -0.8px;
           color: ${INK}; font-weight: 600;
           margin: 0 0 14px;
@@ -114,16 +168,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-h1 em { font-style: normal; color: ${RED}; }
         .hp-sub {
           font-size: 15px; line-height: 1.62;
-          color: ${MUTED}; margin: 0 0 22px;
-          max-width: 420px;
+          color: ${MUTED}; margin: 0 0 24px;
+          max-width: 400px;
         }
         .hp-actions {
           display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
         .hp-btn-primary {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 40px; padding: 0 26px;
+          height: 42px; padding: 0 28px;
           background: ${RED}; color: #fff;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 2px;
           text-transform: uppercase; font-weight: 800;
@@ -134,7 +188,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 38px rgba(139,26,26,0.28); }
         .hp-btn-secondary {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 40px; padding: 0 22px;
+          height: 42px; padding: 0 22px;
           background: transparent; color: ${RED};
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 2px;
           text-transform: uppercase; font-weight: 800;
@@ -142,17 +196,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           transition: border-color .13s, background .13s;
         }
         .hp-btn-secondary:hover { border-color: ${RED}; background: rgba(139,26,26,0.04); }
-        .hp-note {
-          font-size: 13px; color: ${MUTED}; font-style: italic;
-        }
+        .hp-note { font-size: 13px; color: ${MUTED}; font-style: italic; }
 
-        /* ── Samurai art (center) ────────────────────── */
+        /* ── Samurai art (right, fills hero) ─────────── */
         .hp-art {
           display: flex;
           align-items: center;
           justify-content: center;
           align-self: stretch;
-          padding: 16px 0;
+          padding: 12px 0;
         }
         .hp-art-inner {
           display: inline-flex;
@@ -166,73 +218,8 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           display: block;
           width: auto;
           max-width: 100%;
-          max-height: min(82vh, 720px);
+          max-height: min(84vh, 820px);
           object-fit: contain;
-        }
-
-        /* ── Feature sidebar (right) ─────────────────── */
-        .hp-feats-side {
-          display: flex; flex-direction: column;
-          border: 1px solid ${LINE};
-          border-radius: 5px;
-          overflow: visible;
-          background: rgba(255,253,248,0.7);
-          backdrop-filter: blur(6px);
-          box-shadow: 0 4px 18px rgba(40,24,8,0.06);
-        }
-        .hp-feats-item {
-          display: flex; align-items: center; gap: 10px;
-          padding: 10px 13px;
-          border-bottom: 1px solid ${LINE};
-          position: relative;
-          cursor: default;
-          transition: background 0.12s;
-        }
-        .hp-feats-item:last-child { border-bottom: none; }
-        .hp-feats-item:hover { background: rgba(139,26,26,0.04); }
-        .hp-feats-item::before {
-          content: ""; position: absolute;
-          left: 0; top: 0; bottom: 0; width: 2px;
-          background: ${RED}; opacity: 0;
-          transition: opacity 0.12s;
-        }
-        .hp-feats-item:hover::before { opacity: 1; }
-        .hp-feats-icon {
-          width: 20px; height: 20px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 13px; color: ${RED};
-          flex-shrink: 0;
-        }
-        .hp-feats-name {
-          font-family: ${CINZEL}; font-size: 7.5px; letter-spacing: 1.2px;
-          text-transform: uppercase; font-weight: 800; color: ${INK};
-          line-height: 1.3;
-        }
-        /* Tooltip for right-rail items — pops to the left */
-        .hp-feats-item .hp-feat-tooltip {
-          visibility: hidden; opacity: 0;
-          position: absolute;
-          right: calc(100% + 10px); left: auto;
-          top: 50%; bottom: auto;
-          transform: translateY(-50%);
-          background: ${INK}; color: rgba(255,253,248,0.92);
-          font-size: 11px; line-height: 1.45;
-          padding: 7px 11px; border-radius: 4px;
-          width: 190px; text-align: left;
-          pointer-events: none; z-index: 200;
-          transition: opacity 0.15s;
-          white-space: normal;
-        }
-        .hp-feats-item .hp-feat-tooltip::after {
-          content: ""; position: absolute;
-          top: 50%; right: -10px; left: auto;
-          transform: translateY(-50%);
-          border: 5px solid transparent;
-          border-left-color: ${INK};
-          border-top-color: transparent;
-        }
-        .hp-feats-item:hover .hp-feat-tooltip {
-          visibility: visible; opacity: 1;
         }
 
         /* ── Drop overlay ─────────────────────────────── */
@@ -251,57 +238,41 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
-        /* ── Short-screen (720p laptops) ─────────────── */
+        /* ── Short-screen (720p) ─────────────────────── */
         @media (max-height: 780px) {
-          .hp-art img { max-height: min(78vh, 580px); }
-          .hp-hero { padding: 0 28px; gap: 0 24px; }
-          .hp-feats-item { padding: 7px 11px; }
-          .hp-feats-name { font-size: 7px; }
+          .hp-art img { max-height: min(80vh, 640px); }
+          .hp-strip-item { padding: 7px 11px; }
+          .hp-hero { padding: 0 28px 0 36px; gap: 0 32px; }
         }
 
         /* ── Responsive ─────────────────────────────── */
         @media (max-width: 960px) {
+          .hp-strip-inner { flex-wrap: wrap; border-left: none; }
+          .hp-strip-item { border: 1px solid ${LINE}; border-radius: 3px; margin: 4px; padding: 7px 10px; }
           .hp-hero {
             grid-template-columns: 1fr;
-            padding: 20px 28px 16px;
-            align-items: start;
-            overflow-y: auto;
+            padding: 16px 28px 12px;
+            align-items: start; overflow-y: auto;
           }
-          .hp-art { order: -1; padding: 0; }
+          .hp-art { order: -1; }
           .hp-art img { max-height: 220px; max-width: min(70vw, 280px); }
           .hp-copy { max-width: 100%; }
-          .hp-feats-side { order: 2; flex-direction: row; flex-wrap: wrap; border-radius: 4px; }
-          .hp-feats-item { flex: 1 1 45%; border-right: 1px solid ${LINE}; border-bottom: 1px solid ${LINE}; }
-          .hp-feats-item:nth-child(even) { border-right: none; }
-          .hp-feats-item .hp-feat-tooltip {
-            right: auto; left: 50%; top: auto; bottom: calc(100% + 8px);
-            transform: translateX(-50%);
-            width: 160px; text-align: center;
-          }
-          .hp-feats-item .hp-feat-tooltip::after {
-            right: auto; left: 50%; top: 100%; bottom: auto;
-            transform: translateX(-50%);
-            border-left-color: transparent;
-            border-top-color: ${INK};
-          }
         }
 
         @media (max-width: 580px) {
-          .hp-header { height: 60px; padding: 0 16px; }
+          .hp-header { padding: 0 16px; }
           .hp-logo { width: min(160px,44vw); }
           .hp-nav a { padding: 0 8px; font-size: 8px; letter-spacing: 1.5px; }
-          .hp-hero { padding: 20px 18px 24px; gap: 16px 0; }
+          .hp-strip { padding: 0 12px; }
+          .hp-hero { padding: 16px 18px; }
           .hp-art img { max-height: 160px; max-width: min(80vw, 220px); }
-          .hp-h1 { font-size: clamp(24px,10vw,36px); letter-spacing: -0.5px; }
+          .hp-h1 { font-size: clamp(24px,10vw,36px); }
           .hp-sub { font-size: 13px; }
-          .hp-actions { flex-direction: column; align-items: stretch; gap: 10px; }
+          .hp-actions { flex-direction: column; align-items: stretch; }
           .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 50px; }
-          .hp-feats-item { flex: 1 1 100%; }
-          .hp-feats-item:nth-child(even) { border-right: none; }
         }
       `}</style>
 
-      {/* Drop overlay */}
       {dragOver && (
         <div className="hp-drop">
           <div className="hp-drop-box">Drop your PDF or image here</div>
@@ -319,10 +290,22 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         </nav>
       </header>
 
-      {/* ── Hero: copy | samurai | features ── */}
-      <section className="hp-hero">
+      {/* ── Feature strip ── */}
+      <div className="hp-strip">
+        <div className="hp-strip-inner">
+          {FEATURES.map(f => (
+            <label className="hp-strip-item" key={f.label}>
+              {f.detail && <span className="hp-strip-tooltip">{f.detail}</span>}
+              <span className="hp-strip-icon">{f.icon}</span>
+              <span className="hp-strip-name">{f.label}</span>
+              <input type="file" accept="application/pdf,.pdf,image/*" onChange={onFile} style={hiddenFileInput} />
+            </label>
+          ))}
+        </div>
+      </div>
 
-        {/* Left — copy */}
+      {/* ── Hero: copy | samurai ── */}
+      <section className="hp-hero">
         <div className="hp-copy">
           <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
           <h1 className="hp-h1">
@@ -344,24 +327,11 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           <p className="hp-note">or drag a file anywhere on this page</p>
         </div>
 
-        {/* Center — samurai */}
         <div className="hp-art" aria-hidden="true">
           <div className="hp-art-inner">
             <img src="/samurai.png" alt="" draggable={false} />
           </div>
         </div>
-
-        {/* Right — feature list */}
-        <nav className="hp-feats-side" aria-label="Features">
-          {FEATURES.map(f => (
-            <div className="hp-feats-item" key={f.label}>
-              {f.detail && <span className="hp-feat-tooltip">{f.detail}</span>}
-              <div className="hp-feats-icon">{f.icon}</div>
-              <span className="hp-feats-name">{f.label}</span>
-            </div>
-          ))}
-        </nav>
-
       </section>
 
       <Footer />
