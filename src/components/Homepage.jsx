@@ -84,15 +84,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         /* ── Hero ─────────────────────────────────── */
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
-          max-width: 1400px; margin: 0 auto;
+          width: 100%; box-sizing: border-box;
           padding: 12px 32px 20px;
           display: grid;
-          grid-template-columns: 1fr minmax(0, 520px);
+          grid-template-columns: minmax(0, 580px) minmax(0, 520px);
+          justify-content: center;
           align-items: center;
           gap: 0;
-          width: 100%; box-sizing: border-box;
         }
-        .hp-copy { max-width: 580px; margin-left: auto; }
+        .hp-copy { max-width: 580px; }
         .hp-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 3.5px;
