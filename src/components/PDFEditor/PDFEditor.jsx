@@ -108,6 +108,10 @@ export default function PDFEditor() {
   const [dragOverPageNum, setDragOverPageNum] = useState(null);
   const [drawMode, setDrawMode] = useState(false);
   const [drawPanelOpen, setDrawPanelOpen] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [areaSelection, setAreaSelection] = useState(null);
+  // { pageNum, x0, y0, x1, y1, live } — coords in page pixels (before scale)
+  const selDragRef = useRef(null);
   const [drawColor, setDrawColor] = useState('#e53e3e');
   const [drawWidth, setDrawWidth] = useState(6);
   const [drawTool, setDrawTool] = useState('pencil');
@@ -359,6 +363,46 @@ export default function PDFEditor() {
     };
   }
 
+  const OCR_X_PAD = 1;
+  const OCR_Y_PAD = 1;
+  const OCR_W_PAD = 4;
+  const OCR_H_PAD = 4;
+
+  function fitOcrFontSize(text, bbox, fontFamily, isBold) {
+    const boxW = bbox.x1 - bbox.x0;
+    const boxH = bbox.y1 - bbox.y0;
+    const heightSize = Math.max(8, boxH * 0.78);
+    if (!text.trim()) return heightSize;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = `${isBold ? 'bold ' : ''}${heightSize}px ${fontFamily}`;
+    const measured = ctx.measureText(text).width;
+    const widthSize = measured > 0 ? heightSize * (boxW / measured) : heightSize;
+    return Math.max(8, Math.min(heightSize, widthSize * 1.02));
+  }
+
+  function groupOcrLines(items) {
+    // Group vertically-adjacent lines with similar x-start and font size into multiline blocks
+    const groups = [];
+    let current = null;
+    for (const item of items) {
+      if (!current) { current = [item]; continue; }
+      const last = current[current.length - 1];
+      const dx0 = Math.abs(item.bbox.x0 - last.bbox.x0);
+      const sizeRatio = Math.max(item.fontSize, last.fontSize) / Math.max(1, Math.min(item.fontSize, last.fontSize));
+      const vertGap = item.bbox.y0 - last.bbox.y1;
+      const avgSize = (item.fontSize + last.fontSize) / 2;
+      if (dx0 < 24 && sizeRatio < 1.25 && vertGap >= -4 && vertGap < avgSize * 1.5) {
+        current.push(item);
+      } else {
+        groups.push(current);
+        current = [item];
+      }
+    }
+    if (current) groups.push(current);
+    return groups;
+  }
+
   function _ocrPreprocess(dataUrl, width, height) {
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -450,38 +494,60 @@ export default function PDFEditor() {
         lastOCRText += "\n" + (data.text || "");
 
         const rawLines = _ocrGetItems(data);
-        const pageBlocks = rawLines
+
+        // Per-line: compute bbox, fit fontSize, sample style
+        const lineItems = rawLines
           .filter(line => {
             const text = (line.text || "").trim();
             return text && (line.confidence == null || line.confidence > 20);
           })
-          .map((line, li) => {
+          .map(line => {
             const bbox = _ocrGetBBox(line);
-            const { x0, y0, x1, y1 } = bbox;
-            const height = Math.max(y1 - y0, 1);
-            const fontSize = Math.max(8, Math.round(height * 0.72));
-            const baselineY = y1 - Math.max(2, fontSize * 0.18);
             const style = _ocrSampleStyle(samplingCtx, bbox, pg.width, pg.height);
-            return {
-              id: `ocr-${pg.num}-L${li}`,
-              page: pg.num,
-              text: line.text.trim(),
-              x: x0,
-              y: y0,
-              width: Math.max(x1 - x0, 10),
-              height,
-              baselineY,
-              lineBaselines: [baselineY],
-              fontSize,
-              fontFamily: style.fontFamily,
-              isBold: style.isBold,
-              isItalic: false,
-              color: style.color,
-              bgColor: style.bgColor,
-              edited: false,
-              ocr: true,
-            };
+            const fontSize = fitOcrFontSize(line.text.trim(), bbox, style.fontFamily, style.isBold);
+            return { bbox, style, fontSize, text: line.text.trim() };
           });
+
+        // Group adjacent lines into multiline blocks
+        const groups = groupOcrLines(lineItems);
+
+        const pageBlocks = groups.map((group, gi) => {
+          const first = group[0];
+          const last = group[group.length - 1];
+          const style = first.style;
+          const avgFontSize = group.reduce((s, it) => s + it.fontSize, 0) / group.length;
+
+          const gx0 = Math.min(...group.map(it => it.bbox.x0));
+          const gx1 = Math.max(...group.map(it => it.bbox.x1));
+          const gy1 = last.bbox.y1;
+
+          // Per-line baselines: y0 + fontSize * 0.92 fits typed text onto the scan
+          const lineBaselines = group.map(it => it.bbox.y0 + it.fontSize * 0.92);
+          const baselineY = lineBaselines[0];
+          const topY = Math.max(0, baselineY - avgFontSize * 1.02);
+          const totalHeight = Math.max(gy1 - first.bbox.y0 + OCR_H_PAD, avgFontSize * 1.25);
+          const text = group.map(it => it.text).join('\n');
+
+          return {
+            id: `ocr-${pg.num}-G${gi}`,
+            page: pg.num,
+            text,
+            x: Math.max(0, gx0 - OCR_X_PAD),
+            y: Math.max(0, topY - OCR_Y_PAD),
+            width: Math.max(gx1 - gx0 + OCR_W_PAD, 10),
+            height: totalHeight,
+            baselineY,
+            lineBaselines,
+            fontSize: avgFontSize,
+            fontFamily: style.fontFamily,
+            isBold: style.isBold,
+            isItalic: false,
+            color: style.color,
+            bgColor: style.bgColor,
+            edited: false,
+            ocr: true,
+          };
+        });
         newTextBlocksByPage[pg.num] = pageBlocks;
 
         await new Promise(r => setTimeout(r, 10));
@@ -602,6 +668,18 @@ export default function PDFEditor() {
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
   }, []);
+
+  // Escape clears area selection / exits select mode
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'Escape') {
+        if (areaSelection) { setAreaSelection(null); return; }
+        if (selectMode) setSelectMode(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [areaSelection, selectMode]);
 
   // Warn on browser refresh/tab-close when a PDF is open
   useEffect(() => {
@@ -1076,6 +1154,93 @@ export default function PDFEditor() {
     shapeResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: shape.w, h: shape.h, axis, rotation: rotatedPages[shape.page] || 0 };
     setResizingShape({ id: shape.id });
   }
+  function handleSelMouseDown(e, pgNum, scale) {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
+    selDragRef.current = { pageNum: pgNum, startX: x, startY: y, curX: x, curY: y };
+    setAreaSelection(null);
+  }
+
+  function handleSelMouseMove(e, pgNum, scale) {
+    if (!selDragRef.current || selDragRef.current.pageNum !== pgNum) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
+    selDragRef.current.curX = x;
+    selDragRef.current.curY = y;
+    const { startX, startY } = selDragRef.current;
+    setAreaSelection({
+      pageNum: pgNum,
+      x0: Math.min(startX, x), y0: Math.min(startY, y),
+      x1: Math.max(startX, x), y1: Math.max(startY, y),
+      live: true,
+    });
+  }
+
+  function handleSelMouseUp(e, pgNum, scale) {
+    if (!selDragRef.current || selDragRef.current.pageNum !== pgNum) return;
+    const { startX, startY, curX, curY } = selDragRef.current;
+    selDragRef.current = null;
+    const x0 = Math.min(startX, curX), y0 = Math.min(startY, curY);
+    const x1 = Math.max(startX, curX), y1 = Math.max(startY, curY);
+    if (x1 - x0 < 4 || y1 - y0 < 4) { setAreaSelection(null); return; }
+    setAreaSelection({ pageNum: pgNum, x0, y0, x1, y1, live: false });
+  }
+
+  async function copySelectedArea() {
+    if (!areaSelection) return;
+    const { pageNum, x0, y0, x1, y1 } = areaSelection;
+    const pg = pages.find(p => p.num === pageNum);
+    if (!pg) return;
+    const w = Math.max(1, Math.round(x1 - x0));
+    const h = Math.max(1, Math.round(y1 - y0));
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    await new Promise(res => { img.onload = res; img.src = pg.dataUrl; });
+    ctx.drawImage(img, Math.round(x0), Math.round(y0), w, h, 0, 0, w, h);
+    return new Promise(res => {
+      canvas.toBlob(blob => {
+        try {
+          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        } catch (_) {
+          const url = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = url; a.download = 'selection.png'; a.click();
+        }
+        res();
+      }, 'image/png');
+    });
+  }
+
+  async function eraseSelectedArea(fillColor = '#ffffff') {
+    if (!areaSelection) return;
+    const { pageNum, x0, y0, x1, y1 } = areaSelection;
+    const pg = pages.find(p => p.num === pageNum);
+    if (!pg) return;
+    saveHistory();
+    const canvas = document.createElement('canvas');
+    canvas.width = pg.width; canvas.height = pg.height;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    await new Promise(res => { img.onload = res; img.src = pg.dataUrl; });
+    ctx.drawImage(img, 0, 0);
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(Math.floor(x0), Math.floor(y0), Math.ceil(x1 - x0), Math.ceil(y1 - y0));
+    const newDataUrl = canvas.toDataURL('image/png');
+    setPages(prev => prev.map(p => p.num === pageNum ? { ...p, dataUrl: newDataUrl } : p));
+    setAreaSelection(null);
+  }
+
+  async function cutSelectedArea() {
+    await copySelectedArea();
+    await eraseSelectedArea('#ffffff');
+  }
+
   function handleDrawStart(e, pgNum, scale) {
     if (!drawMode) return;
     e.preventDefault();
@@ -2358,9 +2523,24 @@ export default function PDFEditor() {
                           )}
                         </div>
 
+                        {/* Select area */}
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            const next = !selectMode;
+                            setSelectMode(next);
+                            if (next) { setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelected(null); setActivePopup(null); setAreaSelection(null); }
+                          }}
+                          style={{ ...pageActionBtn, background: selectMode ? 'rgba(139,26,26,0.12)' : 'transparent', outline: selectMode ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
+                          title="Select area (copy / cut / erase)"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" strokeDasharray="2 1"/><rect x="14" y="3" width="7" height="7" strokeDasharray="2 1"/><rect x="3" y="14" width="7" height="7" strokeDasharray="2 1"/><rect x="14" y="14" width="7" height="7" strokeDasharray="2 1"/></svg>
+                          <span className="page-action-label">Select</span>
+                        </button>
+
                         {/* Add Text */}
                         <button
-                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); addFloatingBox(pg.num); }}
+                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelectMode(false); setAreaSelection(null); addFloatingBox(pg.num); }}
                           style={pageActionBtn} title="Add text box"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
@@ -2423,6 +2603,62 @@ export default function PDFEditor() {
                           onMouseUp={() => handleDrawEnd(pg.num, pg)}
                           onMouseLeave={() => handleDrawEnd(pg.num, pg)}
                         />
+                      )}
+                      {/* Area selection overlay */}
+                      {!isGridView && selectMode && (
+                        <div
+                          style={{ position: 'absolute', left: 0, top: 0, width: pg.width * scale, height: pg.height * scale, zIndex: 2500, cursor: 'crosshair' }}
+                          onMouseDown={e => handleSelMouseDown(e, pg.num, scale)}
+                          onMouseMove={e => handleSelMouseMove(e, pg.num, scale)}
+                          onMouseUp={e => handleSelMouseUp(e, pg.num, scale)}
+                          onMouseLeave={e => handleSelMouseUp(e, pg.num, scale)}
+                        >
+                          {areaSelection?.pageNum === pg.num && (
+                            <div style={{
+                              position: 'absolute',
+                              left: areaSelection.x0 * scale,
+                              top: areaSelection.y0 * scale,
+                              width: (areaSelection.x1 - areaSelection.x0) * scale,
+                              height: (areaSelection.y1 - areaSelection.y0) * scale,
+                              border: '2px dashed rgba(139,26,26,0.85)',
+                              background: 'rgba(139,26,26,0.06)',
+                              boxSizing: 'border-box',
+                              pointerEvents: 'none',
+                            }} />
+                          )}
+                        </div>
+                      )}
+                      {/* Area selection action popup */}
+                      {!isGridView && areaSelection?.pageNum === pg.num && !areaSelection.live && (
+                        <div
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            position: 'absolute',
+                            left: areaSelection.x0 * scale,
+                            top: (areaSelection.y1 * scale) + 6,
+                            zIndex: 4000,
+                            display: 'flex', gap: 4,
+                            background: '#fffdf8',
+                            border: `1px solid rgba(116,86,44,0.25)`,
+                            borderRadius: 4, padding: '5px 8px',
+                            boxShadow: '0 4px 16px rgba(40,24,8,0.14)',
+                          }}
+                        >
+                          {[
+                            { label: 'Copy', title: 'Copy area as image', fn: () => copySelectedArea() },
+                            { label: 'Cut', title: 'Copy and erase area', fn: () => cutSelectedArea() },
+                            { label: 'Erase', title: 'Fill area with white', fn: () => eraseSelectedArea('#ffffff') },
+                            { label: '✕', title: 'Cancel selection', fn: () => setAreaSelection(null) },
+                          ].map(({ label, title, fn }) => (
+                            <button key={label} onClick={fn} title={title} style={{
+                              fontFamily: CINZEL, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase',
+                              background: label === '✕' ? 'transparent' : LACQUER,
+                              color: label === '✕' ? LACQUER : '#fff',
+                              border: label === '✕' ? `1px solid rgba(139,26,26,0.35)` : 'none',
+                              borderRadius: 3, padding: '4px 10px', cursor: 'pointer',
+                            }}>{label}</button>
+                          ))}
+                        </div>
                       )}
                       {!isGridView && (textBlocks[pg.num] || []).map(tb => {
                         const isOpen = activePopup?.blockId === tb.id;
