@@ -805,8 +805,6 @@ export default function PDFEditor() {
       isDrawStroke: true,
       ...(hlRect ? { isHighlight: true, hlRect } : {}),
     }]);
-    setDrawMode(false);
-    setDrawPanelOpen(false);
   }
 
   function handleInsertSignature(dataUrl) {
@@ -1120,17 +1118,20 @@ export default function PDFEditor() {
     }
     for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
       const lines = fb.text.split(/\r?\n/);
+      const lh = fb.fontSize * 1.5;
+      const halfH = lines.length * lh / 2;
       ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
+      ctx.textAlign = "center";
       ctx.textBaseline = "top";
       if (fb.bgColor && fb.bgColor !== "transparent") {
         let maxW = 0;
         for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
-        const lh = fb.fontSize * 1.5;
         ctx.fillStyle = fb.bgColor;
-        ctx.fillRect(fb.x - 4, fb.y - 3, maxW + 8, lines.length * lh + 6);
+        ctx.fillRect(fb.x - maxW / 2 - 4, fb.y - halfH - 3, maxW + 8, lines.length * lh + 6);
       }
       ctx.fillStyle = fb.color || "#000";
-      lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
+      lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y - halfH + i * lh));
+      ctx.textAlign = "left";
     }
     for (const fi of floatingImages.filter(f => f.page === pg.num)) {
       await new Promise(resolve => {
@@ -1277,6 +1278,7 @@ export default function PDFEditor() {
         }
 
         // 2. New floating text boxes
+        // fb.x/fb.y are the CENTER of the box in canvas pixels (FloatingBox uses translate(-50%,-50%))
         for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
           const text = fb.text || "";
           if (!text) continue;
@@ -1285,44 +1287,35 @@ export default function PDFEditor() {
           const lhCanvas = fb.fontSize * 1.5;
           const lines = text.split(/\r?\n/);
           const color = hexToRgb(fb.color || "#000000");
+          // fb.y is center-y; compute top-y in canvas pixels
+          const halfH = lines.length * lhCanvas / 2;
+          const topYCanvas = fb.y - halfH;
 
           if (fb.bgColor && fb.bgColor !== "transparent") {
             let maxLineW = 0;
-
             for (const ln of lines) {
               try {
-                maxLineW = Math.max(
-                  maxLineW,
-                  font.widthOfTextAtSize(ln || " ", fs)
-                );
+                maxLineW = Math.max(maxLineW, font.widthOfTextAtSize(ln || " ", fs));
               } catch {
                 maxLineW = Math.max(maxLineW, (ln || " ").length * fs * 0.6);
               }
             }
-
             const padX = 4 * sx;
             const padY = 3 * sy;
             const bgW = maxLineW + padX * 2;
             const bgH = lines.length * lhCanvas * sy + padY * 2;
-            const bgX = fb.x * sx - padX;
-            const bgY = pdfH - (fb.y + lines.length * lhCanvas) * sy - padY;
-
-            pdfPage.drawRectangle({
-              x: bgX,
-              y: bgY,
-              width: bgW,
-              height: bgH,
-              color: hexToRgb(fb.bgColor),
-            });
+            const bgX = fb.x * sx - maxLineW / 2 - padX;
+            const bgY = pdfH - (topYCanvas + lines.length * lhCanvas) * sy - padY;
+            pdfPage.drawRectangle({ x: bgX, y: bgY, width: bgW, height: bgH, color: hexToRgb(fb.bgColor) });
           }
 
           lines.forEach((ln, i) => {
             if (!ln) return;
-            // baseline ~ y_top + fontSize (alphabetic)
-            const baselineCanvas = fb.y + i * lhCanvas + fb.fontSize * 0.85;
+            const baselineCanvas = topYCanvas + i * lhCanvas + fb.fontSize * 0.85;
             const yPdf = pdfH - baselineCanvas * sy;
             try {
-              pdfPage.drawText(ln, { x: fb.x * sx, y: yPdf, size: fs, font, color });
+              const lw = font.widthOfTextAtSize(ln, fs);
+              pdfPage.drawText(ln, { x: fb.x * sx - lw / 2, y: yPdf, size: fs, font, color });
             } catch { /* ignore */ }
           });
         }
@@ -1436,16 +1429,20 @@ export default function PDFEditor() {
       }
       for (const fb of floatingBoxes.filter(f => f.page === pg.num)) {
         const lines = fb.text.split(/\r?\n/);
+        const lh = fb.fontSize * 1.5;
+        const halfH = lines.length * lh / 2;
         ctx.font = `${fb.isItalic ? "italic " : ""}${fb.isBold ? "bold " : ""}${fb.fontSize}px ${fb.fontFamily}`;
+        ctx.textAlign = "center";
         ctx.textBaseline = "top";
         if (fb.bgColor && fb.bgColor !== "transparent") {
           let maxW = 0;
           for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln || " ").width);
           ctx.fillStyle = fb.bgColor;
-          ctx.fillRect(fb.x - 4, fb.y - 3, maxW + 8, lines.length * fb.fontSize * 1.5 + 6);
+          ctx.fillRect(fb.x - maxW / 2 - 4, fb.y - halfH - 3, maxW + 8, lines.length * lh + 6);
         }
         ctx.fillStyle = fb.color || "#000";
-        lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y + i * fb.fontSize * 1.5));
+        lines.forEach((ln, i) => ctx.fillText(ln, fb.x, fb.y - halfH + i * lh));
+        ctx.textAlign = "left";
       }
       for (const fi of floatingImages.filter(f => f.page === pg.num)) {
         await new Promise(resolve => { const img = new Image(); img.onload = () => { ctx.drawImage(img, fi.x, fi.y, fi.w, fi.h); resolve(); }; img.src = fi.dataUrl; });

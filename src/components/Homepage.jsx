@@ -15,14 +15,14 @@ function use4KZoom() {
 }
 
 const FEATURES = [
-  { icon: "✎", label: "Edit Text",      detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
-  { icon: "＋", label: "Add Text",      detail: "Drop new text boxes anywhere on the page at any size." },
+  { icon: "✎", label: "Edit Text",       detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
+  { icon: "＋", label: "Add Text",       detail: "Drop new text boxes anywhere on the page at any size." },
   { icon: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
   { icon: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.2"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
   { icon: "✏", label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
-  { icon: "◇", label: "Shapes",         detail: "Add circles and rectangles with custom colour and fill." },
-  { icon: "⇄", label: "Merge & Split", detail: "Combine multiple PDFs or split a document into separate files." },
-  { icon: "⊞", label: "Reorder Pages", detail: "Drag pages into any order, rotate or delete them instantly." },
+  { icon: "◇", label: "Shapes",          detail: "Add circles and rectangles with custom colour and fill." },
+  { icon: "⇄", label: "Merge & Split",  detail: "Combine multiple PDFs or split a document into separate files." },
+  { icon: "⊞", label: "Reorder Pages",  detail: "Drag pages into any order, rotate or delete them instantly." },
 ];
 
 const NAV = [
@@ -214,13 +214,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         /* ── Feature cards ────────────────────────────── */
         .hp-features {
           display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
+          overflow: visible;
         }
         .hp-feat {
           background: rgba(255,253,248,0.78);
           border: 1px solid ${LINE};
           border-radius: 4px;
           padding: 10px 12px 10px;
-          position: relative; overflow: hidden;
+          position: relative;
           box-shadow: 0 8px 24px rgba(40,24,8,0.05);
         }
         .hp-feat::after {
@@ -241,11 +242,28 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           display: block;
           font-family: ${CINZEL}; font-size: 8.5px;
           letter-spacing: 1.4px; text-transform: uppercase;
-          font-weight: 800; color: ${INK}; margin-bottom: 4px;
+          font-weight: 800; color: ${INK};
         }
-        .hp-feat-detail {
-          display: block; font-size: 10.5px;
-          color: ${MUTED}; line-height: 1.42;
+        .hp-feat-tooltip {
+          visibility: hidden; opacity: 0;
+          position: absolute; bottom: calc(100% + 8px); left: 50%;
+          transform: translateX(-50%);
+          background: ${INK}; color: rgba(255,253,248,0.92);
+          font-size: 11px; line-height: 1.45;
+          padding: 7px 11px; border-radius: 4px;
+          width: 180px; text-align: center;
+          pointer-events: none; z-index: 200;
+          transition: opacity 0.15s;
+          white-space: normal;
+        }
+        .hp-feat-tooltip::after {
+          content: ""; position: absolute;
+          top: 100%; left: 50%; transform: translateX(-50%);
+          border: 5px solid transparent;
+          border-top-color: ${INK};
+        }
+        .hp-feat:hover .hp-feat-tooltip {
+          visibility: visible; opacity: 1;
         }
 
         /* ── Steps ─────────────────────────────────── */
@@ -419,9 +437,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         <div className="hp-features">
           {FEATURES.map(f => (
             <div className="hp-feat" key={f.label}>
+              {f.detail && <span className="hp-feat-tooltip">{f.detail}</span>}
               <div className="hp-feat-icon">{f.icon}</div>
               <span className="hp-feat-label">{f.label}</span>
-              <span className="hp-feat-detail">{f.detail}</span>
             </div>
           ))}
         </div>
