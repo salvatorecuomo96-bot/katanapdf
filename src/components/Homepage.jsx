@@ -41,7 +41,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
 
   return (
     <div
-      className="hp"
+      className={`hp${zoom4k === 1 ? ' hp-no4k' : ''}`}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -242,54 +242,78 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
         /* ── Samurai art: bottom-right of stage ─────── */
         .hp-art {
           display: flex; flex-direction: column;
-          justify-content: flex-end;
-          align-items: flex-end;
-          min-width: 0;
-          /* no overflow:hidden — that created a hard container boundary line on laptop */
+          justify-content: flex-end; align-items: flex-end;
+          min-width: 0; position: relative;
+        }
+        /* Fog lives on .hp-art (full column width) so it covers the gap
+           between the image edge and the column edge — no hard line */
+        .hp-art::after {
+          content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+          background:
+            radial-gradient(ellipse 32% 30% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 35%, rgba(255,252,246,0.22) 58%, transparent 78%),
+            radial-gradient(ellipse 30% 28% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 32%, rgba(255,252,246,0.18) 58%, transparent 78%),
+            radial-gradient(ellipse 30% 28% at   0% 100%, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.64) 35%, rgba(255,252,246,0.18) 58%, transparent 78%),
+            radial-gradient(ellipse 28% 26% at 100% 100%, rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.56) 32%, rgba(255,252,246,0.16) 58%, transparent 78%),
+            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
+            linear-gradient(to left,   rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 7%, rgba(255,252,246,0.24) 16%, rgba(255,252,246,0.07) 26%, transparent 36%),
+            linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.30) 4%, rgba(255,252,246,0.08) 9%,  transparent 16%),
+            linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
         }
         .hp-art-inner {
-          display: inline-flex;
-          align-items: flex-end;
-          justify-content: flex-end;
-          position: relative;
-          box-shadow: none;
-          background: transparent;
-        }
-        .hp-art-inner::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            /* corner blobs — break straight corners */
-            radial-gradient(ellipse 34% 30% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 35%, rgba(255,252,246,0.22) 58%, transparent 78%),
-            radial-gradient(ellipse 34% 30% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.64) 32%, rgba(255,252,246,0.20) 58%, transparent 78%),
-            radial-gradient(ellipse 32% 28% at   0% 100%, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.64) 35%, rgba(255,252,246,0.18) 58%, transparent 78%),
-            radial-gradient(ellipse 32% 28% at 100% 100%, rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.60) 32%, rgba(255,252,246,0.18) 58%, transparent 78%),
-            /* left — fast initial spike, then taper so sidebar stays legible */
-            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
-            /* right — slightly more than left */
-            linear-gradient(to left,   rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.64) 7%, rgba(255,252,246,0.28) 16%, rgba(255,252,246,0.08) 26%, transparent 38%),
-            /* top — light, keep nav bar legible */
-            linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.30) 4%, rgba(255,252,246,0.08) 9%,  transparent 16%),
-            /* bottom */
-            linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
+          display: inline-flex; align-items: flex-end; justify-content: flex-end;
+          position: relative; box-shadow: none; background: transparent;
         }
         .hp-art img {
           display: block;
           width: clamp(300px, 52vw, 880px);
-          height: auto;
-          max-height: min(82vh, 800px);
-          object-fit: contain;
-          mix-blend-mode: multiply;
+          height: auto; max-height: min(82vh, 800px);
+          object-fit: contain; mix-blend-mode: multiply;
           -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 72%, rgba(0,0,0,0.35) 84%, rgba(0,0,0,0.08) 94%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 74%, rgba(0,0,0,0.30) 86%, rgba(0,0,0,0.06) 95%, transparent 100%),
             linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
           -webkit-mask-composite: source-in;
           mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 72%, rgba(0,0,0,0.35) 84%, rgba(0,0,0,0.08) 94%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 74%, rgba(0,0,0,0.30) 86%, rgba(0,0,0,0.06) 95%, transparent 100%),
             linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
           mask-composite: intersect;
+        }
+
+        /* ── Non-4K (laptop/desktop without 4K zoom): stronger fog ── */
+        .hp-no4k .hp-art::after {
+          background:
+            radial-gradient(ellipse 42% 36% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.74) 32%, rgba(255,252,246,0.28) 58%, transparent 78%),
+            radial-gradient(ellipse 50% 44% at 100%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.85) 28%, rgba(255,252,246,0.48) 52%, rgba(255,252,246,0.18) 70%, transparent 90%),
+            radial-gradient(ellipse 40% 34% at   0% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.70) 32%, rgba(255,252,246,0.24) 58%, transparent 78%),
+            radial-gradient(ellipse 50% 44% at 100% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.82) 28%, rgba(255,252,246,0.44) 52%, rgba(255,252,246,0.16) 70%, transparent 90%),
+            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
+            linear-gradient(to left,   rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.90) 10%, rgba(255,252,246,0.62) 22%, rgba(255,252,246,0.28) 36%, rgba(255,252,246,0.09) 50%, transparent 65%),
+            linear-gradient(to bottom, rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.62) 7%, rgba(255,252,246,0.22) 15%, transparent 24%),
+            linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
+        }
+        .hp-no4k .hp-art img {
+          opacity: 0.88;
+          -webkit-mask-image:
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 55%, rgba(0,0,0,0.20) 72%, rgba(0,0,0,0.05) 87%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 5%, black 14%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
+          -webkit-mask-composite: source-in;
+          mask-image:
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 55%, rgba(0,0,0,0.20) 72%, rgba(0,0,0,0.05) 87%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 5%, black 14%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
+          mask-composite: intersect;
+        }
+
+        /* ── Short-screen: compact layout so features list fits ── */
+        @media (max-height: 840px) and (min-width: 961px) {
+          .hp-hero { padding: clamp(8px,1.5vh,16px) clamp(20px,3vw,48px) clamp(4px,1vh,10px); }
+          .hp-eyebrow { margin-bottom: 8px; }
+          .hp-h1 { font-size: clamp(22px, 2.6vw, 40px); margin: 0 0 10px; line-height: 1.04; }
+          .hp-sub { margin: 0 0 14px; font-size: 13px; }
+          .hp-actions { margin-bottom: 8px; gap: 8px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 36px; }
+          .hp-note { font-size: 11px; }
+          .hp-what { margin-top: 8px; }
+          .hp-what-item { padding: 5px 12px; }
+          .hp-art img { max-height: min(78vh, 700px); }
         }
 
         /* ── Drop overlay ─────────────────────────────── */
@@ -306,43 +330,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           font-family: ${CINZEL}; font-size: 14px;
           letter-spacing: 4px; text-transform: uppercase;
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
-        }
-
-        /* ── Laptop (961–1400px): compact + stronger right fog ─── */
-        @media (min-width: 961px) and (max-width: 1400px) {
-          .hp-hero { padding: clamp(10px,1.8vh,20px) clamp(20px,3vw,48px) clamp(6px,1.2vh,14px); }
-          .hp-eyebrow { margin-bottom: 8px; }
-          .hp-h1 { font-size: clamp(22px, 2.6vw, 40px); margin: 0 0 10px; line-height: 1.04; }
-          .hp-sub { margin: 0 0 16px; font-size: 13.5px; }
-          .hp-actions { margin-bottom: 10px; gap: 8px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 38px; }
-          .hp-note { font-size: 12px; }
-          .hp-what { margin-top: 10px; }
-          .hp-what-item { padding: 6px 12px; }
-          .hp-art img {
-            width: clamp(260px, 44vw, 700px);
-            max-height: min(76vh, 680px);
-            opacity: 0.92;
-            -webkit-mask-image:
-              linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 58%, rgba(0,0,0,0.22) 74%, rgba(0,0,0,0.06) 89%, transparent 100%),
-              linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 5%, black 13%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
-            -webkit-mask-composite: source-in;
-            mask-image:
-              linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 18%, black 58%, rgba(0,0,0,0.22) 74%, rgba(0,0,0,0.06) 89%, transparent 100%),
-              linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 5%, black 13%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
-            mask-composite: intersect;
-          }
-          .hp-art-inner::after {
-            background:
-              radial-gradient(ellipse 40% 34% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.72) 32%, rgba(255,252,246,0.26) 58%, transparent 78%),
-              radial-gradient(ellipse 50% 44% at 100%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.82) 28%, rgba(255,252,246,0.44) 52%, rgba(255,252,246,0.16) 70%, transparent 88%),
-              radial-gradient(ellipse 38% 32% at   0% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 32%, rgba(255,252,246,0.22) 58%, transparent 78%),
-              radial-gradient(ellipse 50% 42% at 100% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.80) 28%, rgba(255,252,246,0.42) 52%, rgba(255,252,246,0.14) 70%, transparent 88%),
-              linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
-              linear-gradient(to left,   rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.85) 9%, rgba(255,252,246,0.56) 20%, rgba(255,252,246,0.24) 32%, rgba(255,252,246,0.08) 44%, transparent 58%),
-              linear-gradient(to bottom, rgba(255,252,246,0.94) 0%, rgba(255,252,246,0.56) 6%, rgba(255,252,246,0.18) 13%, transparent 20%),
-              linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
-          }
         }
 
         /* ── Short-screen (720p) ─────────────────────── */
