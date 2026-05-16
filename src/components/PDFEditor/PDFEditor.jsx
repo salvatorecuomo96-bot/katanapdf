@@ -226,22 +226,6 @@ export default function PDFEditor() {
     return { pageData, words };
   }
 
-  async function loadTesseract() {
-    if (window.Tesseract?.createWorker) return window.Tesseract;
-    return new Promise((resolve, reject) => {
-      // Remove any prior failed attempt before retrying
-      document.querySelector('script[data-katanapdf-tesseract]')?.remove();
-      const script = document.createElement('script');
-      script.setAttribute('data-katanapdf-tesseract', '1');
-      script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js';
-      script.onload = () => window.Tesseract?.createWorker
-        ? resolve(window.Tesseract)
-        : reject(new Error('Tesseract loaded but createWorker missing'));
-      script.onerror = () => reject(new Error('Could not load Tesseract.js from CDN'));
-      document.head.appendChild(script);
-    });
-  }
-
   async function handleActivateOCR() {
     const { pages: livePages, deletedPages: liveDel, pageOrder: liveOrder } = liveStateRef.current;
     const activePages = liveOrder
@@ -256,7 +240,7 @@ export default function PDFEditor() {
 
     let worker;
     try {
-      const { createWorker } = await loadTesseract();
+      const { createWorker } = await import("tesseract.js");
       worker = await createWorker('eng', 1, {
         logger: m => {
           if (m.status === 'recognizing text') {
@@ -266,7 +250,7 @@ export default function PDFEditor() {
       });
 
       saveHistory();
-      const allNewFBs = [];
+      const newTextBlocksByPage = {};
 
       for (let i = 0; i < activePages.length; i++) {
         if (ocrCancelRef.current) {
@@ -279,30 +263,35 @@ export default function PDFEditor() {
 
         const { data } = await worker.recognize(pg.dataUrl);
 
-        const pageFBs = (data.lines || [])
-          .filter(line => line.text.trim() && line.confidence > 30)
+        const rawLines = (data.lines && data.lines.length > 0) ? data.lines : (data.words || []);
+        const pageBlocks = rawLines
+          .filter(line => line.text.trim() && (line.confidence == null || line.confidence > 30))
           .map((line, li) => {
-            floatingIdCounter++;
-            const cx = (line.bbox.x0 + line.bbox.x1) / 2;
-            const cy = (line.bbox.y0 + line.bbox.y1) / 2;
-            const fontSize = Math.max(Math.round((line.bbox.y1 - line.bbox.y0) * 0.72), 8);
+            const { x0, y0, x1, y1 } = line.bbox;
+            const height = y1 - y0;
+            const fontSize = Math.max(8, Math.round(height * 0.72));
+            const baselineY = y1 - Math.max(2, fontSize * 0.18);
             return {
-              id: `ocr-${pg.num}-L${li}-${floatingIdCounter}`,
+              id: `ocr-${pg.num}-L${li}`,
               page: pg.num,
-              z: 50 + floatingIdCounter,
-              x: cx,
-              y: cy,
               text: line.text.trim(),
+              x: x0,
+              y: y0,
+              width: x1 - x0,
+              height,
+              baselineY,
+              lineBaselines: [baselineY],
               fontSize,
-              fontFamily: "Times New Roman, serif",
+              fontFamily: "Arial, sans-serif",
               isBold: false,
               isItalic: false,
               color: "#000000",
               bgColor: "transparent",
-              angle: 0,
+              edited: false,
+              ocr: true,
             };
           });
-        allNewFBs.push(...pageFBs);
+        newTextBlocksByPage[pg.num] = pageBlocks;
 
         // Yield so the UI can update between pages
         await new Promise(r => setTimeout(r, 10));
@@ -310,8 +299,23 @@ export default function PDFEditor() {
 
       await worker.terminate();
 
-      setFloatingBoxes(prev => [...prev, ...allNewFBs]);
+      const totalFound = Object.values(newTextBlocksByPage).reduce((s, arr) => s + arr.length, 0);
+      if (totalFound === 0) {
+        setOcrError("No readable text was found.");
+        setOcrState('error');
+        return;
+      }
+
+      setTextBlocks(prev => {
+        const next = { ...prev };
+        for (const [pageNum, blocks] of Object.entries(newTextBlocksByPage)) {
+          const existing = next[pageNum] || [];
+          next[pageNum] = [...existing.filter(b => !b.ocr), ...blocks];
+        }
+        return next;
+      });
       setHasTextLayer(true);
+      setTextLayerNoticeDismissed(true);
       setOcrState('done');
     } catch (err) {
       const msg = err?.message || String(err);
