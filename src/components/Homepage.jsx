@@ -85,9 +85,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
           width: 100%; box-sizing: border-box;
-          padding: 12px 32px 20px;
+          padding: 10px 32px 24px;
           display: grid;
-          grid-template-columns: minmax(0, 580px) minmax(0, 520px);
+          grid-template-columns: minmax(0, 580px) minmax(0, 580px);
           justify-content: center;
           align-items: center;
           gap: 0;
@@ -147,37 +147,25 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
         /* ── Samurai art ────────────────────────────── */
         .hp-art {
-          position: relative;
-          display: flex; align-items: center; justify-content: center;
-        }
-        /* ── Samurai art ────────────────────────────── */
-        .hp-art {
-          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: transparent;
-          box-shadow: none;
+          padding: 16px;
+        }
+        .hp-art-inner {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           border: none;
-          padding: 0;
+          box-shadow: 0 0 40px 12px rgba(139,26,26,0.1);
+          overflow: hidden;
         }
-
-        .hp-art::before {
-          display: none;
-          content: none;
-        }
-
         .hp-art img {
           width: 100%;
           max-width: 100%;
-          max-height: min(62vh, 480px);
+          max-height: min(67vh, 480px);
           object-fit: contain;
-          filter: none;
-          box-shadow: none;
-          background: transparent;
-          border: none;
-          position: relative;
-          z-index: 1;
+          display: block;
         }
         /* ── Trust strip ─────────────────────────────── */
         .hp-trust {
@@ -398,7 +386,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         </div>
 
         <div className="hp-art" aria-hidden="true">
-          <img src="/samurai.png" alt="" draggable={false} />
+          <div className="hp-art-inner">
+            <img src="/samurai.png" alt="" draggable={false} />
+          </div>
         </div>
       </section>
 
