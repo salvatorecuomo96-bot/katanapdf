@@ -242,7 +242,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           justify-content: center;
           border: none;
           box-shadow: 0 0 40px 12px rgba(139,26,26,0.1);
-          overflow: hidden;
         }
         .hp-art img {
           display: block;
@@ -250,6 +249,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           max-width: 100%;
           max-height: min(84vh, 820px);
           object-fit: contain;
+          mix-blend-mode: multiply;
+          -webkit-mask-image:
+            linear-gradient(to right,  transparent 0%, black 12%, black 88%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, black  6%, black 94%, transparent 100%);
+          -webkit-mask-composite: source-in;
+          mask-image:
+            linear-gradient(to right,  transparent 0%, black 12%, black 88%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, black  6%, black 94%, transparent 100%);
+          mask-composite: intersect;
         }
 
         /* ── Drop overlay ─────────────────────────────── */
