@@ -17,8 +17,8 @@ function use4KZoom() {
 const FEATURES = [
   { icon: "✎", label: "Edit Text",      detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
   { icon: "＋", label: "Add Text",      detail: "Drop new text boxes anywhere on the page at any size." },
-  { icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:"100%",height:"100%"}}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><polyline points="21,15 16,10 5,21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
-  { icon: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:"100%",height:"100%"}}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
+  { icon: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
+  { icon: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.2"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
   { icon: "✏", label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
   { icon: "◇", label: "Shapes",         detail: "Add circles and rectangles with custom colour and fill." },
   { icon: "⇄", label: "Merge & Split", detail: "Combine multiple PDFs or split a document into separate files." },
@@ -62,11 +62,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           backdrop-filter: blur(10px);
           border-bottom: 1px solid ${LINE};
           height: 60px;
-          display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+          display: flex; align-items: center;
           padding: 0 36px;
         }
+        .hp-header-spacer { flex: 1; }
         .hp-logo { width: min(200px,44vw); height: auto; display: block; }
         .hp-nav {
+          flex: 1;
           display: flex; align-items: center; gap: 0; justify-content: flex-end;
         }
         .hp-nav a {
@@ -363,7 +365,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
 
       {/* ── Header ── */}
       <header className="hp-header">
-        <div />
+        <div className="hp-header-spacer" />
         <img src="/logo.png" alt="katanapdf" className="hp-logo" />
         <nav className="hp-nav">
           {NAV.map(([label, href]) => (
