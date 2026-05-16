@@ -294,6 +294,20 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
+        /* ── Short-screen: compact layout so list fits without scrolling ── */
+        @media (max-height: 840px) and (min-width: 961px) {
+          .hp-hero { padding: clamp(8px,1.5vh,16px) clamp(20px,3vw,48px) clamp(4px,1vh,10px); }
+          .hp-eyebrow { margin-bottom: 8px; }
+          .hp-h1 { font-size: clamp(22px, 2.6vw, 40px); margin: 0 0 10px; line-height: 1.04; }
+          .hp-sub { margin: 0 0 14px; font-size: 13px; }
+          .hp-actions { margin-bottom: 8px; gap: 8px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 36px; }
+          .hp-note { font-size: 11px; }
+          .hp-what { margin-top: 8px; }
+          .hp-what-item { padding: 5px 12px; }
+          .hp-art img { max-height: min(78vh, 700px); }
+        }
+
         /* ── Short-screen (720p) ─────────────────────── */
         @media (max-height: 780px) {
           .hp-art img { max-height: min(80vh, 680px); }

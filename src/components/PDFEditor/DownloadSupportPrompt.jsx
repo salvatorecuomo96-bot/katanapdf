@@ -15,12 +15,12 @@ export default function DownloadSupportPrompt({ visible, onClose }) {
       border: `1px solid ${GOLD}`,
       borderRadius: 6,
       boxShadow: "0 6px 24px rgba(40,24,8,0.14)",
-      padding: "12px 14px 10px",
+      padding: "12px 14px 0",
       width: 260,
       boxSizing: "border-box",
       fontFamily: FELL,
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
         <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: INK, fontFamily: FELL }}>
           Thank you for using{" "}
           <strong style={{ fontFamily: CINZEL, letterSpacing: 1, fontSize: 11, color: LACQUER }}>KATANAPDF</strong>.
@@ -40,7 +40,7 @@ export default function DownloadSupportPrompt({ visible, onClose }) {
         href="https://ko-fi.com/salvatorecuomo96"
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: "block" }}
+        style={{ display: "block", lineHeight: 0, margin: "0 -14px", width: "calc(100% + 28px)" }}
         aria-label="Support KATANAPDF on Ko-fi"
       >
         <img
@@ -50,12 +50,12 @@ export default function DownloadSupportPrompt({ visible, onClose }) {
             display: "block",
             width: "100%",
             height: "auto",
-            borderRadius: 4,
-            opacity: 0.93,
-            transition: "opacity 0.15s, transform 0.15s",
+            borderRadius: "0 0 6px 6px",
+            opacity: 0.95,
+            transition: "opacity 0.15s",
           }}
-          onMouseOver={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-          onMouseOut={e => { e.currentTarget.style.opacity = "0.93"; e.currentTarget.style.transform = ""; }}
+          onMouseOver={e => { e.currentTarget.style.opacity = "1"; }}
+          onMouseOut={e => { e.currentTarget.style.opacity = "0.95"; }}
         />
       </a>
     </div>
