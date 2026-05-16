@@ -84,15 +84,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         /* ── Hero ─────────────────────────────────── */
         .hp-hero {
           flex: 1; min-height: 0; overflow: hidden;
-          max-width: 1240px; margin: 0 auto;
-          padding: 16px 48px 12px;
+          max-width: 1400px; margin: 0 auto;
+          padding: 12px 40px 8px;
           display: grid;
-          grid-template-columns: 1fr minmax(0, 380px);
+          grid-template-columns: 1fr minmax(0, 520px);
           align-items: center;
-          gap: 24px;
+          gap: 12px;
           width: 100%; box-sizing: border-box;
         }
-        .hp-copy { max-width: 580px; }
+        .hp-copy { max-width: 620px; }
         .hp-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 3.5px;
@@ -105,16 +105,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         }
         .hp-h1 {
           font-family: ${FELL};
-          font-size: clamp(24px, 2.6vw, 38px);
+          font-size: clamp(28px, 3.2vw, 52px);
           line-height: 1.06; letter-spacing: -0.8px;
           color: ${INK}; font-weight: 600;
-          margin: 0 0 12px;
+          margin: 0 0 14px;
         }
         .hp-h1 em { font-style: normal; color: ${RED}; }
         .hp-sub {
-          font-size: 14px; line-height: 1.62;
-          color: ${MUTED}; margin: 0 0 20px;
-          max-width: 440px;
+          font-size: 15px; line-height: 1.62;
+          color: ${MUTED}; margin: 0 0 22px;
+          max-width: 480px;
         }
         .hp-actions {
           display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -170,7 +170,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
         .hp-art img {
           width: 100%;
           max-width: 100%;
-          max-height: min(40vh, 300px);
+          max-height: min(68vh, 520px);
           object-fit: contain;
           filter: none;
           box-shadow: none;
