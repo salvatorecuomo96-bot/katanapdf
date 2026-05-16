@@ -92,7 +92,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, isDark, on
           gap: 0;
           width: 100%; box-sizing: border-box;
         }
-        .hp-copy { max-width: 620px; }
+        .hp-copy { max-width: 580px; margin-left: auto; }
         .hp-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           font-family: ${CINZEL}; font-size: 10px; letter-spacing: 3.5px;
