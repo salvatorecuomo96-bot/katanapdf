@@ -2215,9 +2215,6 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
       const mod = e.ctrlKey || e.metaKey;
       if (!mod) return;
       const key = e.key.toLowerCase();
-      if (key === 'c' && areaSelection) { e.preventDefault(); await copySelectedArea(); return; }
-      if (key === 'x' && areaSelection) { e.preventDefault(); await cutSelectedArea(); return; }
-      if (key === 'v' && internalClipboardRef.current?.type === 'area-image') { e.preventDefault(); pasteSelectedArea(); return; }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -2547,12 +2544,6 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
 
                       {sep}
 
-                      {/* Select area */}
-                      <button
-                        onClick={e => { e.stopPropagation(); const next = !selectMode; setSelectMode(next); if (next) { setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelected(null); setActivePopup(null); setAreaSelection(null); } }}
-                        style={{ ...(selectMode ? tbActive : tb), fontSize: 16, lineHeight: 1 }} title="Select" aria-label="Select area"
-                      >↖</button>
-
                       {/* Sign */}
                       <button onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelectMode(false); setAreaSelection(null); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }} style={tb} title="Sign" aria-label="Add signature">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "rotate(180deg)" }}>
@@ -2693,61 +2684,6 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                           onTouchEnd={() => handleDrawEnd(pg.num, pg)}
                           onTouchCancel={() => handleDrawEnd(pg.num, pg)}
                         />
-                      )}
-                      {/* Area selection overlay */}
-                      {!isGridView && selectMode && (
-                        <div
-                          style={{ position: 'absolute', left: 0, top: 0, width: pg.width * scale, height: pg.height * scale, zIndex: 2500, cursor: 'crosshair' }}
-                          onMouseDown={e => handleSelMouseDown(e, pg.num, scale)}
-                          onMouseMove={e => handleSelMouseMove(e, pg.num, scale)}
-                          onMouseUp={e => handleSelMouseUp(e, pg.num, scale)}
-                          onMouseLeave={e => handleSelMouseUp(e, pg.num, scale)}
-                        >
-                          {areaSelection?.pageNum === pg.num && (
-                            <div style={{
-                              position: 'absolute',
-                              left: areaSelection.x0 * scale,
-                              top: areaSelection.y0 * scale,
-                              width: (areaSelection.x1 - areaSelection.x0) * scale,
-                              height: (areaSelection.y1 - areaSelection.y0) * scale,
-                              border: '2px dashed rgba(139,26,26,0.85)',
-                              background: 'rgba(139,26,26,0.06)',
-                              boxSizing: 'border-box',
-                              pointerEvents: 'none',
-                            }} />
-                          )}
-                        </div>
-                      )}
-                      {/* Area selection action popup */}
-                      {!isGridView && areaSelection?.pageNum === pg.num && !areaSelection.live && (
-                        <div
-                          onClick={e => e.stopPropagation()}
-                          style={{
-                            position: 'absolute',
-                            left: areaSelection.x0 * scale,
-                            top: (areaSelection.y1 * scale) + 6,
-                            zIndex: 4000,
-                            display: 'flex', gap: 4,
-                            background: '#fffdf8',
-                            border: `1px solid rgba(116,86,44,0.25)`,
-                            borderRadius: 4, padding: '5px 8px',
-                            boxShadow: '0 4px 16px rgba(40,24,8,0.14)',
-                          }}
-                        >
-                          {[
-                            { label: 'Copy', title: 'Copy area to clipboard', fn: () => copySelectedArea() },
-                            { label: 'Cut', title: 'Copy to clipboard and fill with white', fn: () => cutSelectedArea() },
-                            { label: '✕', title: 'Cancel selection', fn: () => setAreaSelection(null) },
-                          ].map(({ label, title, fn }) => (
-                            <button key={label} onClick={fn} title={title} style={{
-                              fontFamily: CINZEL, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase',
-                              background: label === '✕' ? 'transparent' : LACQUER,
-                              color: label === '✕' ? LACQUER : '#fff',
-                              border: label === '✕' ? `1px solid rgba(139,26,26,0.35)` : 'none',
-                              borderRadius: 3, padding: '4px 10px', cursor: 'pointer',
-                            }}>{label}</button>
-                          ))}
-                        </div>
                       )}
                       {!isGridView && (textBlocks[pg.num] || []).map(tb => {
                         const isOpen = activePopup?.blockId === tb.id;
