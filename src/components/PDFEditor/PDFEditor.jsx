@@ -2258,7 +2258,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
             closeTab={closeTab}
             handleFile={handleFile}
           />
-          <div className="mobile-editor-hint">For best editing, use a desktop or tablet</div>
+          <div className="mobile-editor-hint">For best editing use a desktop. Slide toolbar to download</div>
 
 
 <div
