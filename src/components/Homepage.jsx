@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Footer from "./ui/Footer";
 import { CINZEL, FELL, LACQUER, hiddenFileInput } from "./utils/constant";
 
 const RED   = "#8B1A1A";
@@ -452,7 +451,20 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         </div>
       </section>
 
-      <Footer navigate={nav} />
+      {/* Hidden internal links for crawlers — not visible to users */}
+      <nav aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
+        <a href="/edit-pdf">Edit PDF</a>
+        <a href="/merge-pdf">Merge PDF</a>
+        <a href="/split-pdf">Split PDF</a>
+        <a href="/sign-pdf">Sign PDF</a>
+        <a href="/annotate-pdf">Annotate PDF</a>
+        <a href="/image-to-pdf">Image to PDF</a>
+        <a href="/reorder-pdf">Reorder Pages</a>
+        <a href="/about">About</a>
+        <a href="/faqs">FAQs</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
     </div>
   );
 }
