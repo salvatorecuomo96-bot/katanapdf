@@ -144,9 +144,8 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-btn-secondary:hover { border-color: ${RED}; background: rgba(139,26,26,0.04); }
         .hp-note { font-size: 13px; color: ${MUTED}; font-style: italic; }
 
-        /* ── What you can do — desktop: hidden; tablet/mobile: dropdown ── */
+        /* ── What you can do ─────────────────────────── */
         .hp-what { margin-top: 18px; position: relative; }
-        @media (min-width: 961px) { .hp-what { display: none; } }
         .hp-what-btn {
           display: inline-flex; align-items: center; gap: 7px;
           background: none; border: none; padding: 0;
