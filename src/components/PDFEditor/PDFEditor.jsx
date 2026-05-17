@@ -2496,7 +2496,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                     const tbActive = { ...tb, background: "rgba(139,26,26,0.12)", outline: "1px solid #8B1A1A", outlineOffset: 1 };
                     const sep = <div style={{ width: 1, height: 20, background: "rgba(139,26,26,0.2)", margin: "0 3px", flexShrink: 0 }} />;
                     return (
-                    <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 10, maxWidth: "100vw", overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
+                    <div onClick={e => e.stopPropagation()} style={{ position: "sticky", top: 8, zIndex: 50, display: "flex", alignItems: "center", gap: 3, marginBottom: 10, maxWidth: "100%", overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, WebkitOverflowScrolling: "touch", background: "rgba(240,236,227,0.92)", backdropFilter: "blur(6px)", borderRadius: 6, padding: "4px 6px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
 
                       {/* Page label */}
                       <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 700, whiteSpace: "nowrap", padding: "0 4px", flexShrink: 0 }}>{displayIdx + 1}</span>
