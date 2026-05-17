@@ -74,13 +74,19 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Hero: fills first viewport, footer flows naturally below ─── */
+        /* ── Hero: fills first viewport ─── */
         .hp-hero {
           min-height: calc(100dvh - 60px);
           display: flex; align-items: stretch; justify-content: center;
-          overflow: hidden;
+          overflow: visible;
           padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(18px,2.8vh,28px);
           box-sizing: border-box;
+          position: relative;
+        }
+        .hp-copyright {
+          position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+          font-size: 11px; color: rgba(24,19,13,0.32); white-space: nowrap;
+          font-family: ${FELL}; pointer-events: none; user-select: none;
         }
 
         /* Stage: the one balanced composition, centered */
@@ -150,7 +156,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-note { font-size: 13px; color: ${MUTED}; font-style: italic; }
 
         /* ── What you can do (expandable) ───────────── */
-        .hp-what { margin-top: 18px; }
+        .hp-what { margin-top: 18px; position: relative; }
         .hp-what-btn {
           display: inline-flex; align-items: center; gap: 7px;
           background: none; border: none; padding: 0;
@@ -182,12 +188,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         }
         .hp-what-chevron.open { transform: rotate(180deg); }
         .hp-what-list {
-          margin-top: 10px;
+          position: absolute; top: calc(100% + 6px); left: 0;
+          width: 300px; z-index: 200;
           border: 1px solid ${LINE};
           border-radius: 4px;
-          overflow: visible;
-          background: rgba(255,253,248,0.88);
-          box-shadow: 0 4px 14px rgba(40,24,8,0.07);
+          background: rgba(255,253,248,0.97);
+          box-shadow: 0 6px 22px rgba(40,24,8,0.10);
+          backdrop-filter: blur(8px);
         }
         .hp-what-item {
           display: flex; align-items: center; gap: 9px;
@@ -241,18 +248,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           justify-content: flex-end; align-items: flex-end;
           min-width: 0; position: relative;
         }
-        /* Fog covers the full art column — stronger bottom blend */
+        /* Fog — pure linear gradients only (no radial ellipses that leave visible halos) */
         .hp-art::after {
           content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
           background:
-            radial-gradient(ellipse 32% 30% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 35%, rgba(255,252,246,0.22) 58%, transparent 78%),
-            radial-gradient(ellipse 30% 28% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 32%, rgba(255,252,246,0.18) 58%, transparent 78%),
-            radial-gradient(ellipse 44% 42% at   0% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.82) 35%, rgba(255,252,246,0.40) 58%, transparent 82%),
-            radial-gradient(ellipse 42% 40% at 100% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.78) 32%, rgba(255,252,246,0.36) 58%, transparent 82%),
-            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
-            linear-gradient(to left,   rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 7%, rgba(255,252,246,0.24) 16%, rgba(255,252,246,0.07) 26%, transparent 36%),
-            linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.30) 4%, rgba(255,252,246,0.08) 9%,  transparent 16%),
-            linear-gradient(to top,    rgba(255,252,246,1.00) 0%, rgba(255,252,246,0.92) 7%, rgba(255,252,246,0.68) 16%, rgba(255,252,246,0.32) 28%, rgba(255,252,246,0.08) 40%, transparent 54%);
+            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.60) 7%, rgba(255,252,246,0.20) 18%, transparent 32%),
+            linear-gradient(to left,   rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.55) 8%, rgba(255,252,246,0.16) 20%, transparent 34%),
+            linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.28) 5%, transparent 14%),
+            linear-gradient(to top,    rgba(255,252,246,1.00) 0%, rgba(255,252,246,0.92) 8%, rgba(255,252,246,0.70) 18%, rgba(255,252,246,0.32) 30%, transparent 48%);
         }
         .hp-art-inner {
           display: inline-flex; align-items: flex-end; justify-content: flex-end;
@@ -308,6 +311,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
           .hp-hero {
             min-height: calc(100dvh - 54px);
+            overflow: visible;
             padding: 8px 28px 4px;
           }
 
@@ -389,6 +393,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
       {/* ── Hero: copy | samurai ── */}
       <section className="hp-hero">
+        <p className="hp-copyright">© 2026 katanapdf — Free PDF editor in your browser.</p>
         <div className="hp-stage">
           <div className="hp-copy">
             <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
