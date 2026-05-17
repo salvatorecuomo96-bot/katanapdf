@@ -40,13 +40,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      style={{ height: "100dvh", minHeight: 560, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL }}
+      style={{ minHeight: "100dvh", overflowX: "hidden", display: "block", color: INK, fontFamily: FELL }}
     >
       <style>{`
+        /* ── Root background (no fixed — causes bad scroll on laptop/mobile) ── */
         .hp {
           background:
             linear-gradient(to bottom, rgba(255,252,246,0.87) 0%, rgba(255,252,246,0.92) 100%),
-            url("/background.png") center top / cover no-repeat fixed;
+            url("/background.png") center top / cover no-repeat;
         }
 
         /* ── Header ─────────────────────────────────── */
@@ -55,7 +56,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           background: rgba(255,253,248,0.92);
           backdrop-filter: blur(10px);
           border-bottom: 1px solid ${LINE};
-          height: 60px; flex-shrink: 0;
+          height: 60px;
           display: flex; align-items: center;
           padding: 0 36px;
         }
@@ -74,11 +75,12 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Hero: centered stage ───────────────────── */
+        /* ── Hero: fills first viewport, footer flows naturally below ─── */
         .hp-hero {
-          flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+          min-height: calc(100dvh - 60px);
           display: flex; align-items: stretch; justify-content: center;
-          padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(8px,2vh,20px);
+          overflow: hidden;
+          padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(18px,2.8vh,28px);
           box-sizing: border-box;
         }
 
@@ -240,19 +242,18 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           justify-content: flex-end; align-items: flex-end;
           min-width: 0; position: relative;
         }
-        /* Fog lives on .hp-art (full column width) so it covers the gap
-           between the image edge and the column edge — no hard line */
+        /* Fog covers the full art column — stronger bottom blend */
         .hp-art::after {
           content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
           background:
             radial-gradient(ellipse 32% 30% at   0%   0%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.68) 35%, rgba(255,252,246,0.22) 58%, transparent 78%),
             radial-gradient(ellipse 30% 28% at 100%   0%, rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 32%, rgba(255,252,246,0.18) 58%, transparent 78%),
-            radial-gradient(ellipse 30% 28% at   0% 100%, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.64) 35%, rgba(255,252,246,0.18) 58%, transparent 78%),
-            radial-gradient(ellipse 28% 26% at 100% 100%, rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.56) 32%, rgba(255,252,246,0.16) 58%, transparent 78%),
+            radial-gradient(ellipse 44% 42% at   0% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.82) 35%, rgba(255,252,246,0.40) 58%, transparent 82%),
+            radial-gradient(ellipse 42% 40% at 100% 100%, rgba(255,252,246,0.99) 0%, rgba(255,252,246,0.78) 32%, rgba(255,252,246,0.36) 58%, transparent 82%),
             linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.62) 6%, rgba(255,252,246,0.22) 15%, rgba(255,252,246,0.06) 24%, transparent 34%),
             linear-gradient(to left,   rgba(255,252,246,0.97) 0%, rgba(255,252,246,0.60) 7%, rgba(255,252,246,0.24) 16%, rgba(255,252,246,0.07) 26%, transparent 36%),
             linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.30) 4%, rgba(255,252,246,0.08) 9%,  transparent 16%),
-            linear-gradient(to top,    rgba(255,252,246,0.78) 0%, rgba(255,252,246,0.26) 4%, rgba(255,252,246,0.07) 9%,  transparent 14%);
+            linear-gradient(to top,    rgba(255,252,246,1.00) 0%, rgba(255,252,246,0.92) 7%, rgba(255,252,246,0.68) 16%, rgba(255,252,246,0.32) 28%, rgba(255,252,246,0.08) 40%, transparent 54%);
         }
         .hp-art-inner {
           display: inline-flex; align-items: flex-end; justify-content: flex-end;
@@ -261,15 +262,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-art img {
           display: block;
           width: clamp(300px, 52vw, 880px);
-          height: auto; max-height: min(82vh, 800px);
+          height: auto; max-height: min(88vh, 860px);
           object-fit: contain; mix-blend-mode: multiply;
           -webkit-mask-image:
             linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 74%, rgba(0,0,0,0.30) 86%, rgba(0,0,0,0.06) 95%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black 8%, black 74%, rgba(0,0,0,0.55) 84%, rgba(0,0,0,0.18) 93%, transparent 100%);
           -webkit-mask-composite: source-in;
           mask-image:
             linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 74%, rgba(0,0,0,0.30) 86%, rgba(0,0,0,0.06) 95%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black  8%, black 92%, rgba(0,0,0,0.5) 97%, transparent 100%);
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black 8%, black 74%, rgba(0,0,0,0.55) 84%, rgba(0,0,0,0.18) 93%, transparent 100%);
           mask-composite: intersect;
         }
 
@@ -289,7 +290,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
-        /* ── Short-screen: compact layout so list fits without scrolling ── */
+        /* ── Compact copy on short desktop screens (no scroll, just tighter) ── */
         @media (max-height: 840px) and (min-width: 961px) {
           .hp-hero { padding: 10px clamp(24px, 3vw, 48px) 6px; }
           .hp-eyebrow { margin-bottom: 9px; }
@@ -299,25 +300,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-btn-primary, .hp-btn-secondary { height: 38px; }
           .hp-note { font-size: 12px; }
           .hp-what { margin-top: 10px; }
-          .hp-what-item { padding: 6px 12px; }
-          .hp-art img { max-height: calc(100dvh - 130px); }
+          .hp-art img { max-height: calc(100dvh - 80px); }
         }
 
-        /* ── Short-screen (720p) ─────────────────────── */
-        @media (max-height: 780px) {
-          .hp-art img { max-height: calc(100dvh - 120px); }
-        }
-
-        /* Desktop laptop: 14-inch screens with browser chrome/taskbar */
+        /* ── 14-inch laptop: tight but premium ─────── */
         @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
-          .hp-header {
-            height: 54px;
-          }
+          .hp-header { height: 54px; }
 
           .hp-hero {
-            overflow: hidden;
-            align-items: center;
-            justify-content: center;
+            min-height: calc(100dvh - 54px);
             padding: 8px 28px 4px;
           }
 
@@ -336,79 +327,36 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             transform: translateY(-8px);
           }
 
-          .hp-eyebrow {
-            margin-bottom: 9px;
-            font-size: 9px;
-            letter-spacing: 3px;
-          }
+          .hp-eyebrow { margin-bottom: 9px; font-size: 9px; letter-spacing: 3px; }
 
-          .hp-h1 {
-            font-size: clamp(38px, 3.7vw, 50px);
-            line-height: 1.04;
-            margin-bottom: 12px;
-          }
+          .hp-h1 { font-size: clamp(38px, 3.7vw, 50px); line-height: 1.04; margin-bottom: 12px; }
 
-          .hp-sub {
-            font-size: 14px;
-            line-height: 1.52;
-            margin-bottom: 17px;
-            max-width: 380px;
-          }
+          .hp-sub { font-size: 14px; line-height: 1.52; margin-bottom: 17px; max-width: 380px; }
 
-          .hp-actions {
-            margin-bottom: 10px;
-            gap: 8px;
-          }
+          .hp-actions { margin-bottom: 10px; gap: 8px; }
 
-          .hp-btn-primary,
-          .hp-btn-secondary {
-            height: 38px;
-            font-size: 9px;
-            letter-spacing: 1.8px;
-          }
+          .hp-btn-primary, .hp-btn-secondary { height: 38px; font-size: 9px; letter-spacing: 1.8px; }
+          .hp-btn-primary  { padding: 0 24px; }
+          .hp-btn-secondary { padding: 0 20px; }
 
-          .hp-btn-primary {
-            padding: 0 24px;
-          }
+          .hp-note { font-size: 12px; }
+          .hp-what { margin-top: 12px; }
 
-          .hp-btn-secondary {
-            padding: 0 20px;
-          }
-
-          .hp-note {
-            font-size: 12px;
-          }
-
-          .hp-what {
-            margin-top: 12px;
-          }
-
-          .hp-art {
-            justify-content: center;
-            align-items: flex-start;
-            overflow: visible;
-          }
-
-          .hp-art-inner {
-            transform: translateX(-56px);
-          }
-
-          .hp-art img {
-            width: clamp(700px, 60vw, 820px);
-            max-height: calc(100dvh - 118px);
-          }
+          .hp-art { justify-content: center; align-items: flex-start; overflow: visible; }
+          .hp-art-inner { transform: translateX(-56px); }
+          .hp-art img { width: clamp(700px, 60vw, 820px); max-height: calc(100dvh - 80px); }
         }
 
-        /* ── Responsive: tablet ─────────────────────── */
+        /* ── Tablet: stacked, natural scroll ─────── */
         @media (max-width: 960px) {
-          .hp-hero { overflow-y: auto; align-items: flex-start; padding: 0; }
+          .hp-hero { min-height: 0; overflow: visible; align-items: flex-start; padding: 0; }
           .hp-stage { grid-template-columns: 1fr; grid-template-rows: auto auto; column-gap: 0; }
           .hp-copy { max-width: 100%; padding: 20px 28px 12px; }
           .hp-art { align-items: center; padding: 0 28px 20px; }
           .hp-art img { width: min(75vw, 380px); max-height: 280px; }
         }
 
-        /* ── Responsive: mobile ─────────────────────── */
+        /* ── Mobile ─────────────────────────────────── */
         @media (max-width: 580px) {
           .hp-header { padding: 0 16px; }
           .hp-logo { width: min(160px,44vw); }
@@ -440,69 +388,68 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         </nav>
       </header>
 
-
       {/* ── Hero: copy | samurai ── */}
       <section className="hp-hero">
-      <div className="hp-stage">
-        <div className="hp-copy">
-          <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
-          <h1 className="hp-h1">
-            Free PDF Editor.<br />
-            <em>Runs in your Browser.</em>
-          </h1>
-          <p className="hp-sub">
-            Edit, annotate, sign, merge and split PDFs directly in your browser. No upload, no account, no watermark.
-          </p>
-          <div className="hp-actions">
-            <label className="hp-btn-primary">
-              Open PDF or Image
-              <input type="file" accept="application/pdf,.pdf,image/*" onChange={onFile} style={hiddenFileInput} />
-            </label>
-            <button className="hp-btn-secondary" onClick={onCreateBlank}>
-              Create Blank PDF
-            </button>
-          </div>
-          <p className="hp-note">or drag a file anywhere on this page</p>
+        <div className="hp-stage">
+          <div className="hp-copy">
+            <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
+            <h1 className="hp-h1">
+              Free PDF Editor.<br />
+              <em>Runs in your Browser.</em>
+            </h1>
+            <p className="hp-sub">
+              Edit, annotate, sign, merge and split PDFs directly in your browser. No upload, no account, no watermark.
+            </p>
+            <div className="hp-actions">
+              <label className="hp-btn-primary">
+                Open PDF or Image
+                <input type="file" accept="application/pdf,.pdf,image/*" onChange={onFile} style={hiddenFileInput} />
+              </label>
+              <button className="hp-btn-secondary" onClick={onCreateBlank}>
+                Create Blank PDF
+              </button>
+            </div>
+            <p className="hp-note">or drag a file anywhere on this page</p>
 
-          {/* ── What you can do ── */}
-          <div className="hp-what">
-            <button
-              className="hp-what-btn"
-              onClick={() => setFeatOpen(v => !v)}
-              title=""
-            >
-              <span className="hp-what-btn-hint">See all {FEATURES.length} features</span>
-              <svg
-                className={`hp-what-chevron${featOpen ? " open" : ""}`}
-                width="10" height="10" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+            {/* ── What you can do ── */}
+            <div className="hp-what">
+              <button
+                className="hp-what-btn"
+                onClick={() => setFeatOpen(v => !v)}
+                title=""
               >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-              What you can do
-            </button>
+                <span className="hp-what-btn-hint">See all {FEATURES.length} features</span>
+                <svg
+                  className={`hp-what-chevron${featOpen ? " open" : ""}`}
+                  width="10" height="10" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+                What you can do
+              </button>
 
-            {featOpen && (
-              <div className="hp-what-list">
-                {FEATURES.map(f => (
-                  <label className="hp-what-item" key={f.label}>
-                    <span className="hp-what-icon">{f.icon}</span>
-                    <span className="hp-what-name">{f.label}</span>
-                    {f.detail && <span className="hp-what-tooltip">{f.detail}</span>}
-                    <input type="file" accept="application/pdf,.pdf,image/*" onChange={onFile} style={hiddenFileInput} />
-                  </label>
-                ))}
-              </div>
-            )}
+              {featOpen && (
+                <div className="hp-what-list">
+                  {FEATURES.map(f => (
+                    <label className="hp-what-item" key={f.label}>
+                      <span className="hp-what-icon">{f.icon}</span>
+                      <span className="hp-what-name">{f.label}</span>
+                      {f.detail && <span className="hp-what-tooltip">{f.detail}</span>}
+                      <input type="file" accept="application/pdf,.pdf,image/*" onChange={onFile} style={hiddenFileInput} />
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="hp-art" aria-hidden="true">
+            <div className="hp-art-inner">
+              <img src="/samurai.png" alt="" draggable={false} />
+            </div>
           </div>
         </div>
-
-        <div className="hp-art" aria-hidden="true">
-          <div className="hp-art-inner">
-            <img src="/samurai.png" alt="" draggable={false} />
-          </div>
-        </div>
-      </div>
       </section>
 
       <Footer navigate={nav} />
