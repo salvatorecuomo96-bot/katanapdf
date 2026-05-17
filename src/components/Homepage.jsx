@@ -39,7 +39,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      style={{ minHeight: "100dvh", overflowX: "hidden", overflowY: "visible", display: "block", color: INK, fontFamily: FELL }}
+      style={{ height: "100dvh", overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL }}
     >
       <style>{`
         .hp {
@@ -50,7 +50,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
         /* ── Header ──────────────────────────────────── */
         .hp-header {
-          position: sticky; top: 0; z-index: 50;
+          position: sticky; top: 0; z-index: 50; flex-shrink: 0;
           background: rgba(255,253,248,0.92);
           backdrop-filter: blur(10px);
           border-bottom: 1px solid ${LINE};
@@ -71,26 +71,17 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Hero ─────────────────────────────────────── */
+        /* ── Hero: flex:1 fills remaining height in flex-column root ── */
         .hp-hero {
-          min-height: calc(100dvh - 60px);
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          flex: 1; min-height: 0; overflow: hidden;
+          display: flex; align-items: center; justify-content: center;
           padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(18px,2.8vh,28px);
           box-sizing: border-box;
-          position: relative;
-        }
-        .hp-copyright {
-          position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-          font-size: 11px; color: rgba(24,19,13,0.32); white-space: nowrap;
-          font-family: ${FELL}; pointer-events: none; user-select: none;
         }
 
         /* ── Stage ────────────────────────────────────── */
         .hp-stage {
-          width: 100%; max-width: 1300px;
+          width: 100%; max-width: 1300px; height: 100%;
           display: grid;
           grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
           column-gap: clamp(16px, 2.2vw, 32px);
@@ -100,8 +91,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         /* ── Copy ─────────────────────────────────────── */
         .hp-copy {
           display: flex; flex-direction: column;
-          justify-content: flex-start;
-          padding-top: clamp(4px, 1.5vh, 32px);
+          justify-content: center;
           max-width: 420px;
         }
         .hp-eyebrow {
@@ -154,8 +144,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-btn-secondary:hover { border-color: ${RED}; background: rgba(139,26,26,0.04); }
         .hp-note { font-size: 13px; color: ${MUTED}; font-style: italic; }
 
-        /* ── What you can do ──────────────────────────── */
+        /* ── What you can do — desktop: hidden; tablet/mobile: dropdown ── */
         .hp-what { margin-top: 18px; position: relative; }
+        @media (min-width: 961px) { .hp-what { display: none; } }
         .hp-what-btn {
           display: inline-flex; align-items: center; gap: 7px;
           background: none; border: none; padding: 0;
@@ -233,41 +224,46 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         }
         .hp-what-item:hover .hp-what-tooltip { visibility: visible; opacity: 1; }
 
-        /* ── Art: no fog, no mask, no blend — image sits on background directly ── */
+        /* ── Art: larger, shifted right/down, subtle perimeter fade only ── */
         .hp-art {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          min-width: 0;
-          position: relative;
-          overflow: visible;
-          background: transparent;
+          display: flex; align-items: center; justify-content: flex-end;
+          min-width: 0; position: relative;
+          overflow: visible; background: transparent;
         }
         .hp-art::after  { display: none !important; content: none !important; }
         .hp-art-inner {
-          display: inline-flex;
-          align-items: center;
-          justify-content: flex-end;
-          position: relative;
-          background: transparent;
-          box-shadow: none;
+          display: inline-flex; align-items: center; justify-content: flex-end;
+          position: relative; background: transparent; box-shadow: none;
           overflow: visible;
+          transform: translateX(24px) translateY(6px);
         }
         .hp-art-inner::after { display: none !important; content: none !important; }
         .hp-art img {
           display: block;
-          width: clamp(560px, 53vw, 880px);
+          width: clamp(700px, 58vw, 980px);
           height: auto;
-          max-height: calc(100dvh - 130px);
+          max-height: calc(100dvh - 120px);
           object-fit: contain;
-          background: transparent;
-          box-shadow: none;
-          border: 0;
-          filter: none;
-          opacity: 1;
-          mix-blend-mode: normal;
-          -webkit-mask-image: none;
-          mask-image: none;
+          background: transparent; box-shadow: none; border: 0;
+          filter: none; opacity: 1; mix-blend-mode: normal;
+          -webkit-mask-image:
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%);
+          -webkit-mask-composite: source-in;
+          mask-image:
+            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%);
+          mask-composite: intersect;
+        }
+
+        /* ── Copyright bar ────────────────────────────── */
+        .hp-copyright-bar {
+          flex-shrink: 0; height: 26px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 11px; color: rgba(24,19,13,0.30);
+          font-family: ${FELL};
+          border-top: 1px solid ${LINE};
+          background: rgba(255,253,248,0.60);
         }
 
         /* ── Drop overlay ─────────────────────────────── */
@@ -286,7 +282,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
-        /* ── Short desktop screens ───────────────────── */
+        /* ── Short desktop (tight but no scroll) ─────── */
         @media (max-height: 840px) and (min-width: 961px) {
           .hp-hero { padding: 10px clamp(24px, 3vw, 48px) 6px; }
           .hp-eyebrow { margin-bottom: 9px; }
@@ -295,7 +291,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-actions { margin-bottom: 9px; gap: 8px; }
           .hp-btn-primary, .hp-btn-secondary { height: 38px; }
           .hp-note { font-size: 12px; }
-          .hp-what { margin-top: 10px; }
           .hp-art img { max-height: calc(100dvh - 100px); }
         }
 
@@ -303,20 +298,17 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
           .hp-header { height: 54px; }
           .hp-hero {
-            min-height: calc(100dvh - 54px);
             overflow: hidden;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 28px 10px;
+            align-items: center; justify-content: center;
+            padding: 10px 30px 14px;
           }
           .hp-stage {
-            height: auto;
-            max-width: min(1220px, calc(100vw - 56px));
-            grid-template-columns: minmax(340px, 390px) minmax(0, 1fr);
-            column-gap: clamp(8px, 1.4vw, 22px);
+            max-width: min(1280px, calc(100vw - 60px));
+            grid-template-columns: minmax(340px, 395px) minmax(0, 1fr);
+            column-gap: clamp(12px, 1.7vw, 28px);
             align-items: center;
           }
-          .hp-copy { max-width: 390px; padding-top: 0; transform: translateY(-8px); }
+          .hp-copy { max-width: 395px; transform: translateY(-4px); }
           .hp-eyebrow { margin-bottom: 9px; font-size: 9px; letter-spacing: 3px; }
           .hp-h1 { font-size: clamp(38px, 3.7vw, 50px); line-height: 1.04; margin-bottom: 12px; }
           .hp-sub { font-size: 14px; line-height: 1.52; margin-bottom: 17px; max-width: 380px; }
@@ -325,31 +317,24 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-btn-primary  { padding: 0 24px; }
           .hp-btn-secondary { padding: 0 20px; }
           .hp-note { font-size: 12px; }
-          .hp-what { margin-top: 12px; }
-          .hp-art { align-items: center; justify-content: flex-start; }
-          .hp-art-inner { transform: translateX(-24px); }
-          .hp-art img { width: clamp(650px, 58vw, 820px); max-height: calc(100dvh - 120px); }
+          .hp-art-inner { transform: translateX(34px) translateY(10px); }
+          .hp-art img { width: clamp(760px, 63vw, 980px); max-height: calc(100dvh - 105px); }
         }
 
         /* ── Tablet ───────────────────────────────────── */
         @media (max-width: 960px) and (min-width: 581px) {
-          .hp-hero { min-height: 0; overflow: visible; align-items: flex-start; padding: 0; }
-          .hp-stage { grid-template-columns: 1fr; grid-template-rows: auto auto; column-gap: 0; }
+          .hp-hero { align-items: flex-start; padding: 0; overflow: visible; flex: none; min-height: calc(100dvh - 60px - 26px); }
+          .hp-stage { grid-template-columns: 1fr; grid-template-rows: auto auto; column-gap: 0; align-items: start; }
           .hp-copy { max-width: 100%; padding: 20px 28px 12px; }
           .hp-art { justify-content: center; padding: 0 28px 20px; }
           .hp-art img { width: min(75vw, 380px); max-height: 280px; }
+          .hp-art-inner { transform: none; }
         }
 
         /* ── Mobile ───────────────────────────────────── */
         @media (max-width: 580px) {
-          .hp {
-            min-height: 100dvh; height: auto !important; overflow: visible !important;
-            background:
-              linear-gradient(to bottom, rgba(255,252,246,0.94), rgba(255,252,246,0.97)),
-              url("/background.png") center top / cover no-repeat;
-          }
           .hp-header {
-            position: relative; height: auto; min-height: 58px;
+            height: auto; min-height: 58px;
             padding: 12px 16px 10px;
             flex-direction: column; justify-content: center; gap: 8px;
           }
@@ -358,21 +343,17 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-nav { flex: none; width: 100%; justify-content: center; }
           .hp-nav a { font-size: 7.5px; letter-spacing: 1.4px; padding: 0 8px; }
           .hp-hero {
-            min-height: auto; overflow: visible;
-            display: block;
-            padding: 34px 18px 36px;
+            flex: none; min-height: 0; overflow: visible;
+            display: block; padding: 34px 18px 20px;
           }
-          .hp-stage {
-            display: flex; flex-direction: column;
-            width: 100%; max-width: 420px; margin: 0 auto;
-          }
+          .hp-stage { display: flex; flex-direction: column; width: 100%; max-width: 420px; margin: 0 auto; }
           .hp-copy { max-width: 100%; padding: 0; text-align: center; align-items: center; }
           .hp-h1 { font-size: clamp(38px, 12vw, 50px); line-height: 1.02; letter-spacing: -0.6px; margin-bottom: 16px; }
           .hp-sub { font-size: 14.5px; line-height: 1.58; max-width: 340px; margin-bottom: 24px; }
           .hp-actions { width: 100%; max-width: 340px; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 13px; }
           .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 50px; }
           .hp-art { display: none !important; }
-          .hp-copyright { position: static; transform: none; text-align: center; display: block; margin-top: 28px; }
+          .hp-copyright-bar { height: auto; min-height: 36px; padding: 8px 16px; }
         }
       `}</style>
 
@@ -395,7 +376,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
       {/* ── Hero ── */}
       <section className="hp-hero">
-        <p className="hp-copyright">© 2026 katanapdf — Free PDF editor in your browser.</p>
         <div className="hp-stage">
           <div className="hp-copy">
             <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
@@ -446,11 +426,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
           <div className="hp-art" aria-hidden="true">
             <div className="hp-art-inner">
-              <img src="/samurai.png?v=3" alt="" draggable={false} />
+              <img src="/samurai.png?v=4" alt="" draggable={false} />
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── Copyright bar ── */}
+      <footer className="hp-copyright-bar">
+        © 2026 katanapdf — Free PDF editor in your browser.
+      </footer>
 
       {/* Hidden internal links for crawlers */}
       <nav aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
