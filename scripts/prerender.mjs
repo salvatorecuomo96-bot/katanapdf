@@ -5,7 +5,7 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -13,7 +13,7 @@ const root = resolve(__dirname, "..");
 const serverBundle = resolve(root, "dist/server/entry-server.js");
 const clientHtml   = resolve(root, "dist/client/index.html");
 
-const { render, SEO_PAGES } = await import(serverBundle);
+const { render, SEO_PAGES } = await import(pathToFileURL(serverBundle).href);
 
 const template = readFileSync(clientHtml, "utf-8");
 
