@@ -340,12 +340,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
         /* ── 14-inch laptop ───────────────────────────── */
         @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
+          .hp { height: auto !important; min-height: 100dvh; overflow: auto !important; }
           .hp-header { height: 54px; }
           .hp-hero {
             overflow: visible;
             align-items: flex-start; justify-content: center;
             padding: 20px 30px 14px;
+            min-height: calc(100dvh - 54px);
           }
+          .hp-what-list { top: auto; bottom: calc(100% + 6px); max-height: 60vh; overflow-y: auto; }
           .hp-stage {
             max-width: min(1280px, calc(100vw - 60px));
             grid-template-columns: minmax(340px, 395px) minmax(0, 1fr);
@@ -364,7 +367,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-note { font-size: 11px; }
           .hp-art-inner { transform: translateX(34px); }
           .hp-art img { width: auto; height: calc(100dvh - 90px); max-width: 100%; max-height: 720px; object-fit: contain; }
-          .hp-what-list { top: auto; bottom: calc(100% + 6px); }
         }
 
         /* ── Tablet ───────────────────────────────────── */
