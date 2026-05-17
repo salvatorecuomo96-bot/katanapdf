@@ -363,7 +363,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-btn-secondary { padding: 0 18px; }
           .hp-note { font-size: 11px; }
           .hp-art-inner { transform: translateX(34px); }
-          .hp-art img { width: clamp(300px, 63vw, 980px); max-width: 100%; max-height: calc(100dvh - 90px); }
+          .hp-art img { width: auto; height: calc(100dvh - 90px); max-width: 100%; max-height: 720px; object-fit: contain; }
           .hp-what-list { top: auto; bottom: calc(100% + 6px); }
         }
 
