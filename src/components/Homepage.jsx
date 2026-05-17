@@ -39,17 +39,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      style={{ minHeight: "100dvh", overflowX: "hidden", display: "block", color: INK, fontFamily: FELL }}
+      style={{ minHeight: "100dvh", overflowX: "hidden", overflowY: "visible", display: "block", color: INK, fontFamily: FELL }}
     >
       <style>{`
-        /* ── Root background (no fixed — causes bad scroll on laptop/mobile) ── */
         .hp {
           background:
-            linear-gradient(to bottom, rgba(255,252,246,0.87) 0%, rgba(255,252,246,0.92) 100%),
+            linear-gradient(to bottom, rgba(255,252,246,0.90) 0%, rgba(255,252,246,0.94) 100%),
             url("/background.png") center top / cover no-repeat;
         }
 
-        /* ── Header ─────────────────────────────────── */
+        /* ── Header ──────────────────────────────────── */
         .hp-header {
           position: sticky; top: 0; z-index: 50;
           background: rgba(255,253,248,0.92);
@@ -61,9 +60,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         }
         .hp-header-spacer { flex: 1; }
         .hp-logo { width: min(200px,44vw); height: auto; display: block; }
-        .hp-nav {
-          flex: 1; display: flex; align-items: center; justify-content: flex-end;
-        }
+        .hp-nav { flex: 1; display: flex; align-items: center; justify-content: flex-end; }
         .hp-nav a {
           font-family: ${CINZEL}; font-size: 9px; letter-spacing: 2.5px;
           text-transform: uppercase; font-weight: 700;
@@ -74,11 +71,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-nav a:last-child { border-right: none; }
         .hp-nav a:hover { color: ${RED}; }
 
-        /* ── Hero: fills first viewport ─── */
+        /* ── Hero ─────────────────────────────────────── */
         .hp-hero {
           min-height: calc(100dvh - 60px);
-          display: flex; align-items: stretch; justify-content: center;
-          overflow: visible;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(18px,2.8vh,28px);
           box-sizing: border-box;
           position: relative;
@@ -89,16 +88,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           font-family: ${FELL}; pointer-events: none; user-select: none;
         }
 
-        /* Stage: the one balanced composition, centered */
+        /* ── Stage ────────────────────────────────────── */
         .hp-stage {
           width: 100%; max-width: 1300px;
           display: grid;
-          grid-template-columns: minmax(0, 400px) 1fr;
-          column-gap: 24px;
-          align-items: stretch;
+          grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+          column-gap: clamp(16px, 2.2vw, 32px);
+          align-items: center;
         }
 
-        /* ── Copy: top-left of stage ────────────────── */
+        /* ── Copy ─────────────────────────────────────── */
         .hp-copy {
           display: flex; flex-direction: column;
           justify-content: flex-start;
@@ -155,15 +154,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-btn-secondary:hover { border-color: ${RED}; background: rgba(139,26,26,0.04); }
         .hp-note { font-size: 13px; color: ${MUTED}; font-style: italic; }
 
-        /* ── What you can do (expandable) ───────────── */
+        /* ── What you can do ──────────────────────────── */
         .hp-what { margin-top: 18px; position: relative; }
         .hp-what-btn {
           display: inline-flex; align-items: center; gap: 7px;
           background: none; border: none; padding: 0;
           font-family: ${CINZEL}; font-size: 8.5px; letter-spacing: 2px;
           text-transform: uppercase; font-weight: 800;
-          color: ${RED}; cursor: pointer;
-          position: relative;
+          color: ${RED}; cursor: pointer; position: relative;
           transition: opacity 0.13s;
         }
         .hp-what-btn:hover { opacity: 0.75; }
@@ -177,21 +175,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           font-family: ${FELL}; text-transform: none; letter-spacing: 0; font-weight: 400;
         }
         .hp-what-btn-hint::after {
-          content: ""; position: absolute;
-          top: 100%; left: 14px;
+          content: ""; position: absolute; top: 100%; left: 14px;
           border: 4px solid transparent; border-top-color: ${INK};
         }
         .hp-what-btn:hover .hp-what-btn-hint { visibility: visible; opacity: 1; }
-        .hp-what-chevron {
-          transition: transform 0.2s;
-          display: block; flex-shrink: 0;
-        }
+        .hp-what-chevron { transition: transform 0.2s; display: block; flex-shrink: 0; }
         .hp-what-chevron.open { transform: rotate(180deg); }
         .hp-what-list {
           position: absolute; top: calc(100% + 6px); left: 0;
           width: 300px; z-index: 200;
-          border: 1px solid ${LINE};
-          border-radius: 4px;
+          border: 1px solid ${LINE}; border-radius: 4px;
           background: rgba(255,253,248,0.97);
           box-shadow: 0 6px 22px rgba(40,24,8,0.10);
           backdrop-filter: blur(8px);
@@ -205,7 +198,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         }
         .hp-what-item:last-child { border-bottom: none; }
         .hp-what-item:first-child { border-radius: 4px 4px 0 0; }
-        .hp-what-item:last-child { border-radius: 0 0 4px 4px; }
+        .hp-what-item:last-child  { border-radius: 0 0 4px 4px; }
         .hp-what-item:hover { background: rgba(139,26,26,0.05); }
         .hp-what-item::before {
           content: ""; position: absolute;
@@ -223,7 +216,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           font-family: ${CINZEL}; font-size: 8px; letter-spacing: 1.4px;
           text-transform: uppercase; font-weight: 800; color: ${INK};
         }
-        /* tooltip pops right, overflows into samurai column */
         .hp-what-tooltip {
           visibility: hidden; opacity: 0;
           position: absolute; left: calc(100% + 10px); top: 50%;
@@ -231,8 +223,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           background: ${INK}; color: rgba(255,253,248,0.92);
           font-family: ${FELL}; font-size: 11px; line-height: 1.45;
           padding: 7px 11px; border-radius: 4px;
-          width: 200px; text-align: left;
-          pointer-events: none; z-index: 300;
+          width: 200px; pointer-events: none; z-index: 300;
           transition: opacity 0.15s; white-space: normal;
         }
         .hp-what-tooltip::after {
@@ -242,38 +233,41 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         }
         .hp-what-item:hover .hp-what-tooltip { visibility: visible; opacity: 1; }
 
-        /* ── Samurai art: bottom-right of stage ─────── */
+        /* ── Art: no fog, no mask, no blend — image sits on background directly ── */
         .hp-art {
-          display: flex; flex-direction: column;
-          justify-content: flex-end; align-items: flex-end;
-          min-width: 0; position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          min-width: 0;
+          position: relative;
+          overflow: visible;
+          background: transparent;
         }
-        /* Fog — pure linear gradients only (no radial ellipses that leave visible halos) */
-        .hp-art::after {
-          content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
-          background:
-            linear-gradient(to right,  rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.60) 7%, rgba(255,252,246,0.20) 18%, transparent 32%),
-            linear-gradient(to left,   rgba(255,252,246,0.96) 0%, rgba(255,252,246,0.55) 8%, rgba(255,252,246,0.16) 20%, transparent 34%),
-            linear-gradient(to bottom, rgba(255,252,246,0.82) 0%, rgba(255,252,246,0.28) 5%, transparent 14%),
-            linear-gradient(to top,    rgba(255,252,246,1.00) 0%, rgba(255,252,246,0.92) 8%, rgba(255,252,246,0.70) 18%, rgba(255,252,246,0.32) 30%, transparent 48%);
-        }
+        .hp-art::after  { display: none !important; content: none !important; }
         .hp-art-inner {
-          display: inline-flex; align-items: flex-end; justify-content: flex-end;
-          position: relative; box-shadow: none; background: transparent;
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-end;
+          position: relative;
+          background: transparent;
+          box-shadow: none;
+          overflow: visible;
         }
+        .hp-art-inner::after { display: none !important; content: none !important; }
         .hp-art img {
           display: block;
-          width: clamp(300px, 52vw, 880px);
-          height: auto; max-height: min(88vh, 860px);
-          object-fit: contain; mix-blend-mode: multiply;
-          -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 74%, rgba(0,0,0,0.30) 86%, rgba(0,0,0,0.06) 95%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black 8%, black 74%, rgba(0,0,0,0.55) 84%, rgba(0,0,0,0.18) 93%, transparent 100%);
-          -webkit-mask-composite: source-in;
-          mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.4) 8%, black 20%, black 74%, rgba(0,0,0,0.30) 86%, rgba(0,0,0,0.06) 95%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 3%, black 8%, black 74%, rgba(0,0,0,0.55) 84%, rgba(0,0,0,0.18) 93%, transparent 100%);
-          mask-composite: intersect;
+          width: clamp(560px, 53vw, 880px);
+          height: auto;
+          max-height: calc(100dvh - 130px);
+          object-fit: contain;
+          background: transparent;
+          box-shadow: none;
+          border: 0;
+          filter: none;
+          opacity: 1;
+          mix-blend-mode: normal;
+          -webkit-mask-image: none;
+          mask-image: none;
         }
 
         /* ── Drop overlay ─────────────────────────────── */
@@ -292,7 +286,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
-        /* ── Compact copy on short desktop screens (no scroll, just tighter) ── */
+        /* ── Short desktop screens ───────────────────── */
         @media (max-height: 840px) and (min-width: 961px) {
           .hp-hero { padding: 10px clamp(24px, 3vw, 48px) 6px; }
           .hp-eyebrow { margin-bottom: 9px; }
@@ -302,75 +296,83 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-btn-primary, .hp-btn-secondary { height: 38px; }
           .hp-note { font-size: 12px; }
           .hp-what { margin-top: 10px; }
-          .hp-art img { max-height: calc(100dvh - 80px); }
+          .hp-art img { max-height: calc(100dvh - 100px); }
         }
 
-        /* ── 14-inch laptop: tight but premium ─────── */
+        /* ── 14-inch laptop ───────────────────────────── */
         @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
           .hp-header { height: 54px; }
-
           .hp-hero {
             min-height: calc(100dvh - 54px);
-            overflow: visible;
-            padding: 8px 28px 4px;
+            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 28px 10px;
           }
-
           .hp-stage {
-            height: 100%;
-            width: 100%;
+            height: auto;
             max-width: min(1220px, calc(100vw - 56px));
             grid-template-columns: minmax(340px, 390px) minmax(0, 1fr);
-            column-gap: 0;
+            column-gap: clamp(8px, 1.4vw, 22px);
             align-items: center;
           }
-
-          .hp-copy {
-            max-width: 390px;
-            padding-top: 0;
-            transform: translateY(-8px);
-          }
-
+          .hp-copy { max-width: 390px; padding-top: 0; transform: translateY(-8px); }
           .hp-eyebrow { margin-bottom: 9px; font-size: 9px; letter-spacing: 3px; }
-
           .hp-h1 { font-size: clamp(38px, 3.7vw, 50px); line-height: 1.04; margin-bottom: 12px; }
-
           .hp-sub { font-size: 14px; line-height: 1.52; margin-bottom: 17px; max-width: 380px; }
-
           .hp-actions { margin-bottom: 10px; gap: 8px; }
-
           .hp-btn-primary, .hp-btn-secondary { height: 38px; font-size: 9px; letter-spacing: 1.8px; }
           .hp-btn-primary  { padding: 0 24px; }
           .hp-btn-secondary { padding: 0 20px; }
-
           .hp-note { font-size: 12px; }
           .hp-what { margin-top: 12px; }
-
-          .hp-art { justify-content: center; align-items: flex-start; overflow: visible; }
-          .hp-art-inner { transform: translateX(-56px); }
-          .hp-art img { width: clamp(700px, 60vw, 820px); max-height: calc(100dvh - 80px); }
+          .hp-art { align-items: center; justify-content: flex-start; }
+          .hp-art-inner { transform: translateX(-24px); }
+          .hp-art img { width: clamp(650px, 58vw, 820px); max-height: calc(100dvh - 120px); }
         }
 
-        /* ── Tablet: stacked, natural scroll ─────── */
-        @media (max-width: 960px) {
+        /* ── Tablet ───────────────────────────────────── */
+        @media (max-width: 960px) and (min-width: 581px) {
           .hp-hero { min-height: 0; overflow: visible; align-items: flex-start; padding: 0; }
           .hp-stage { grid-template-columns: 1fr; grid-template-rows: auto auto; column-gap: 0; }
           .hp-copy { max-width: 100%; padding: 20px 28px 12px; }
-          .hp-art { align-items: center; padding: 0 28px 20px; }
+          .hp-art { justify-content: center; padding: 0 28px 20px; }
           .hp-art img { width: min(75vw, 380px); max-height: 280px; }
         }
 
-        /* ── Mobile ─────────────────────────────────── */
+        /* ── Mobile ───────────────────────────────────── */
         @media (max-width: 580px) {
-          .hp-header { padding: 0 16px; }
-          .hp-logo { width: min(160px,44vw); }
-          .hp-nav a { padding: 0 8px; font-size: 8px; letter-spacing: 1.5px; }
-          .hp-copy { padding: 16px 18px 10px; }
-          .hp-art { padding: 0 18px 16px; }
-          .hp-art img { width: min(82vw, 300px); max-height: 220px; }
-          .hp-h1 { font-size: clamp(24px,10vw,36px); }
-          .hp-sub { font-size: 13px; }
-          .hp-actions { flex-direction: column; align-items: stretch; }
+          .hp {
+            min-height: 100dvh; height: auto !important; overflow: visible !important;
+            background:
+              linear-gradient(to bottom, rgba(255,252,246,0.94), rgba(255,252,246,0.97)),
+              url("/background.png") center top / cover no-repeat;
+          }
+          .hp-header {
+            position: relative; height: auto; min-height: 58px;
+            padding: 12px 16px 10px;
+            flex-direction: column; justify-content: center; gap: 8px;
+          }
+          .hp-header-spacer { display: none; }
+          .hp-logo { width: min(170px, 52vw); }
+          .hp-nav { flex: none; width: 100%; justify-content: center; }
+          .hp-nav a { font-size: 7.5px; letter-spacing: 1.4px; padding: 0 8px; }
+          .hp-hero {
+            min-height: auto; overflow: visible;
+            display: block;
+            padding: 34px 18px 36px;
+          }
+          .hp-stage {
+            display: flex; flex-direction: column;
+            width: 100%; max-width: 420px; margin: 0 auto;
+          }
+          .hp-copy { max-width: 100%; padding: 0; text-align: center; align-items: center; }
+          .hp-h1 { font-size: clamp(38px, 12vw, 50px); line-height: 1.02; letter-spacing: -0.6px; margin-bottom: 16px; }
+          .hp-sub { font-size: 14.5px; line-height: 1.58; max-width: 340px; margin-bottom: 24px; }
+          .hp-actions { width: 100%; max-width: 340px; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 13px; }
           .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 50px; }
+          .hp-art { display: none !important; }
+          .hp-copyright { position: static; transform: none; text-align: center; display: block; margin-top: 28px; }
         }
       `}</style>
 
@@ -391,7 +393,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         </nav>
       </header>
 
-      {/* ── Hero: copy | samurai ── */}
+      {/* ── Hero ── */}
       <section className="hp-hero">
         <p className="hp-copyright">© 2026 katanapdf — Free PDF editor in your browser.</p>
         <div className="hp-stage">
@@ -415,13 +417,8 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             </div>
             <p className="hp-note">or drag a file anywhere on this page</p>
 
-            {/* ── What you can do ── */}
             <div className="hp-what">
-              <button
-                className="hp-what-btn"
-                onClick={() => setFeatOpen(v => !v)}
-                title=""
-              >
+              <button className="hp-what-btn" onClick={() => setFeatOpen(v => !v)} title="">
                 <span className="hp-what-btn-hint">See all {FEATURES.length} features</span>
                 <svg
                   className={`hp-what-chevron${featOpen ? " open" : ""}`}
@@ -432,7 +429,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
                 </svg>
                 What you can do
               </button>
-
               {featOpen && (
                 <div className="hp-what-list">
                   {FEATURES.map(f => (
@@ -450,13 +446,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
           <div className="hp-art" aria-hidden="true">
             <div className="hp-art-inner">
-              <img src="/samurai.png" alt="" draggable={false} />
+              <img src="/samurai.png?v=3" alt="" draggable={false} />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Hidden internal links for crawlers — not visible to users */}
+      {/* Hidden internal links for crawlers */}
       <nav aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
         <a href="/edit-pdf">Edit PDF</a>
         <a href="/merge-pdf">Merge PDF</a>
