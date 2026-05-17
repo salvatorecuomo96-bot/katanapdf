@@ -136,9 +136,39 @@ export default function FloatingBox({
       window.addEventListener("mouseup", onUp);
     };
 
+    const handleTouchStart = e => {
+      e.stopPropagation();
+      const touch = e.touches[0];
+      const startX = touch.clientX;
+      const startY = touch.clientY;
+      let dragged = false;
+
+      const onMove = mv => {
+        const t = mv.touches[0];
+        if (Math.hypot(t.clientX - startX, t.clientY - startY) > 4) {
+          if (!dragged) {
+            dragged = true;
+            draggingRef.current = true;
+            onStartDrag({ clientX: startX, clientY: startY, preventDefault: () => {}, stopPropagation: () => {} });
+          }
+        }
+      };
+
+      const onEnd = () => {
+        window.removeEventListener("touchmove", onMove);
+        window.removeEventListener("touchend", onEnd);
+        draggingRef.current = false;
+        if (!dragged) onSelect();
+      };
+
+      window.addEventListener("touchmove", onMove, { passive: true });
+      window.addEventListener("touchend", onEnd);
+    };
+
     return (
       <div
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
         onPointerDown={e => e.stopPropagation()}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => { if (!draggingRef.current) setHovered(false); }}
@@ -249,6 +279,7 @@ export default function FloatingBox({
         <button
           type="button"
           onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
+          onTouchStart={e => { e.stopPropagation(); const t = e.touches[0]; onStartDrag({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => {}, stopPropagation: () => {} }); }}
           title="Drag to move"
           style={{
             minWidth: 26,

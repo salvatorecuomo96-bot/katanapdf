@@ -51,6 +51,7 @@ export default function FloatingImage({ fi, isSel, zoom = 1, onSelect, onStartDr
           <button
             type="button"
             onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
+            onTouchStart={e => { e.stopPropagation(); const t = e.touches[0]; onStartDrag({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => {}, stopPropagation: () => {} }); }}
             title="Drag to move"
             style={{ height: 18, border: "1px solid rgba(255,255,255,0.2)", borderRadius: 2, background: "rgba(255,255,255,0.08)", color: "#fff", fontSize: 9, cursor: "grab", padding: "1px 4px", display: "inline-flex", alignItems: "center", gap: 2, userSelect: "none", flexShrink: 0 }}
           >

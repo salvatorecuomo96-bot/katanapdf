@@ -779,6 +779,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     setTextLayerNoticeDismissed(false);
     setSelected(null);
     setActivePopup(null);
+    setShowSupportPrompt(false);
   }
 
   function goHome() {
@@ -1682,11 +1683,20 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
   }, []);
 
   useEffect(() => {
+    const onTouchMove = (e) => {
+      if (!e.touches[0]) return;
+      onMouseMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+    };
+    const onTouchEnd = () => onMouseUp();
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd);
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
     };
   }, [onMouseMove, onMouseUp]);
 
@@ -1967,6 +1977,12 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
             const color = hexToRgb(fb.color || "#000000");
             const halfH = lines.length * lhCanvas / 2;
             const topYCanvas = fb.y - halfH;
+            const cx_pdf = fb.x * sx;
+            const cy_pdf = pdfH - fb.y * sy;
+            const fbAngle = fb.angle || 0;
+            const angle_rad = fbAngle * Math.PI / 180;
+            const cos_a = Math.cos(angle_rad);
+            const sin_a = Math.sin(angle_rad);
             if (fb.bgColor && fb.bgColor !== "transparent") {
               let maxLineW = 0;
               for (const ln of lines) {
@@ -1974,12 +1990,23 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                 catch { maxLineW = Math.max(maxLineW, (ln || " ").length * fs * 0.6); }
               }
               const padX = 4 * sx, padY = 3 * sy;
-              pdfPage.drawRectangle({ x: fb.x * sx - maxLineW / 2 - padX, y: pdfH - (topYCanvas + lines.length * lhCanvas) * sy - padY, width: maxLineW + padX * 2, height: lines.length * lhCanvas * sy + padY * 2, color: hexToRgb(fb.bgColor) });
+              const rectW = maxLineW + padX * 2;
+              const rectH = lines.length * lhCanvas * sy + padY * 2;
+              const dx_bl = -(maxLineW / 2 + padX);
+              const dy_bl = -(halfH * sy + padY);
+              const rdx_bl = dx_bl * cos_a - dy_bl * sin_a;
+              const rdy_bl = dx_bl * sin_a + dy_bl * cos_a;
+              pdfPage.drawRectangle({ x: cx_pdf + rdx_bl, y: cy_pdf + rdy_bl, width: rectW, height: rectH, color: hexToRgb(fb.bgColor), rotate: degrees(fbAngle) });
             }
             lines.forEach((ln, i) => {
               if (!ln) return;
-              const yPdf = pdfH - (topYCanvas + i * lhCanvas + fb.fontSize * 0.85) * sy;
-              try { const lw = font.widthOfTextAtSize(ln, fs); pdfPage.drawText(ln, { x: fb.x * sx - lw / 2, y: yPdf, size: fs, font, color }); } catch { /* ignore */ }
+              let lw = 0;
+              try { lw = font.widthOfTextAtSize(ln, fs); } catch { lw = (ln || " ").length * fs * 0.6; }
+              const dx = -lw / 2;
+              const dy = halfH * sy - i * lhCanvas * sy - fb.fontSize * 0.85 * sy;
+              const rdx = dx * cos_a - dy * sin_a;
+              const rdy = dx * sin_a + dy * cos_a;
+              try { pdfPage.drawText(ln, { x: cx_pdf + rdx, y: cy_pdf + rdy, size: fs, font, color, rotate: degrees(fbAngle) }); } catch { /* ignore */ }
             });
           } else if (item._kind === 'image') {
             const fi = item;

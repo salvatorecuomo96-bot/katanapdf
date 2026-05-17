@@ -98,6 +98,7 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
               <button
                 type="button"
                 onMouseDown={e => { e.stopPropagation(); onStartDrag(e); }}
+                onTouchStart={e => { e.stopPropagation(); const t = e.touches[0]; onStartDrag({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => {}, stopPropagation: () => {} }); }}
                 title="Drag to move"
                 style={{ height: 22, border: '1px solid rgba(116,86,44,0.22)', borderRadius: 2, background: 'rgba(139,26,26,0.04)', color: INK, fontSize: 9, cursor: 'grab', padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: 2, userSelect: 'none', flexShrink: 0 }}
               >
