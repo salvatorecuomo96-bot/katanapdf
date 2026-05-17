@@ -278,6 +278,52 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
+        /* ── Large desktop / 4K ──────────────────────── */
+        @media (min-width: 1800px) and (min-height: 900px) {
+          .hp-header { height: 72px; padding: 0 56px; }
+          .hp-logo { width: 230px; }
+          .hp-nav a { font-size: 10px; letter-spacing: 2.8px; padding: 0 17px; }
+          .hp-hero {
+            min-height: calc(100dvh - 72px);
+            padding: clamp(42px,5vh,86px) clamp(90px,7vw,170px) clamp(42px,5vh,78px);
+            align-items: center; justify-content: center;
+          }
+          .hp-stage {
+            max-width: min(1880px, calc(100vw - 220px));
+            grid-template-columns: minmax(520px,620px) minmax(0,1fr);
+            column-gap: clamp(70px,4vw,125px);
+            align-items: center;
+          }
+          .hp-copy { max-width: 600px; transform: translateY(-12px); }
+          .hp-eyebrow { font-size: 11px; letter-spacing: 4px; margin-bottom: 20px; }
+          .hp-eyebrow::before, .hp-eyebrow::after { width: 28px; }
+          .hp-h1 { font-size: clamp(68px,3.6vw,92px); line-height: 1.02; margin-bottom: 22px; letter-spacing: -1.2px; }
+          .hp-sub { font-size: 19px; line-height: 1.62; max-width: 560px; margin-bottom: 32px; }
+          .hp-actions { gap: 15px; margin-bottom: 20px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 52px; font-size: 11px; letter-spacing: 2.3px; }
+          .hp-btn-primary { padding: 0 38px; }
+          .hp-btn-secondary { padding: 0 32px; }
+          .hp-note { font-size: 15px; }
+          .hp-what { margin-top: 26px; }
+          .hp-what-btn { font-size: 9.8px; letter-spacing: 2.5px; }
+          .hp-art { justify-content: flex-start; }
+          .hp-art-inner { transform: translateX(-34px) translateY(10px); }
+          .hp-art img { width: clamp(1150px,55vw,1520px); max-height: calc(100dvh - 150px); }
+          .hp-copyright { bottom: 22px; font-size: 12px; }
+        }
+
+        /* ── Ultra-wide ───────────────────────────────── */
+        @media (min-width: 2400px) {
+          .hp-stage {
+            max-width: min(2100px, calc(100vw - 280px));
+            grid-template-columns: minmax(560px,680px) minmax(0,1fr);
+            column-gap: clamp(90px,4.5vw,150px);
+          }
+          .hp-h1 { font-size: clamp(76px,3.3vw,104px); }
+          .hp-sub { font-size: 20px; max-width: 610px; }
+          .hp-art img { width: clamp(1350px,56vw,1700px); max-height: calc(100dvh - 160px); }
+        }
+
         /* ── Short desktop (tight but no scroll) ─────── */
         @media (max-height: 840px) and (min-width: 961px) {
           .hp-hero { padding: 10px clamp(24px, 3vw, 48px) 6px; }
