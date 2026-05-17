@@ -327,29 +327,129 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-art-inner { transform: none; }
         }
 
+        /* ── Mobile trust strip (hidden on desktop/tablet) ── */
+        .hp-mobile-trust { display: none; }
+
         /* ── Mobile ───────────────────────────────────── */
         @media (max-width: 580px) {
+          .hp {
+            min-height: 100dvh;
+            height: auto !important;
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
+            display: block !important;
+            background:
+              radial-gradient(circle at 50% 0%, rgba(139,26,26,0.045), transparent 34%),
+              linear-gradient(to bottom, rgba(255,252,246,0.96), rgba(255,252,246,0.985)),
+              url("/background.png") center top / cover no-repeat;
+          }
           .hp-header {
-            height: auto; min-height: 58px;
-            padding: 12px 16px 10px;
-            flex-direction: column; justify-content: center; gap: 8px;
+            position: relative;
+            height: auto; min-height: 64px;
+            padding: 14px 18px 10px;
+            display: flex; flex-direction: column; justify-content: center; gap: 9px;
+            background: rgba(255,253,248,0.90);
+            border-bottom: 1px solid rgba(116,86,44,0.14);
+            backdrop-filter: blur(10px);
           }
           .hp-header-spacer { display: none; }
-          .hp-logo { width: min(170px, 52vw); }
-          .hp-nav { flex: none; width: 100%; justify-content: center; }
-          .hp-nav a { font-size: 7.5px; letter-spacing: 1.4px; padding: 0 8px; }
+          .hp-logo { width: min(170px, 54vw); }
+          .hp-nav { flex: none; width: 100%; justify-content: center; gap: 0; }
+          .hp-nav a { font-size: 7px; letter-spacing: 1.4px; padding: 0 8px; color: rgba(24,19,13,0.46); }
           .hp-hero {
-            flex: none; min-height: 0; overflow: visible;
-            display: block; padding: 34px 18px 20px;
+            min-height: auto; overflow: visible;
+            display: block; padding: 36px 18px 34px; box-sizing: border-box;
           }
-          .hp-stage { display: flex; flex-direction: column; width: 100%; max-width: 420px; margin: 0 auto; }
-          .hp-copy { max-width: 100%; padding: 0; text-align: center; align-items: center; }
-          .hp-h1 { font-size: clamp(38px, 12vw, 50px); line-height: 1.02; letter-spacing: -0.6px; margin-bottom: 16px; }
-          .hp-sub { font-size: 14.5px; line-height: 1.58; max-width: 340px; margin-bottom: 24px; }
-          .hp-actions { width: 100%; max-width: 340px; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 13px; }
-          .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 50px; }
+          .hp-stage { display: flex; flex-direction: column; width: 100%; max-width: 430px; margin: 0 auto; }
+          .hp-copy { max-width: 100%; padding: 0; text-align: center; align-items: center; justify-content: flex-start; }
+          .hp-eyebrow { justify-content: center; font-size: 8px; letter-spacing: 2.35px; gap: 7px; margin-bottom: 15px; }
+          .hp-eyebrow::before, .hp-eyebrow::after { width: 18px; }
+          .hp-h1 { font-size: clamp(38px, 12vw, 52px); line-height: 1.02; letter-spacing: -0.8px; margin: 0 0 16px; max-width: 350px; }
+          .hp-sub { font-size: 14.5px; line-height: 1.58; max-width: 345px; margin: 0 0 24px; color: rgba(24,19,13,0.62); }
+          .hp-actions { width: 100%; max-width: 345px; flex-direction: column; align-items: stretch; gap: 11px; margin-bottom: 13px; }
+          .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 52px; padding: 0 18px; font-size: 9.5px; letter-spacing: 1.9px; border-radius: 4px; }
+          .hp-btn-primary { box-shadow: 0 14px 30px rgba(139,26,26,0.20); }
+          .hp-note { font-size: 12.5px; margin: 0; color: rgba(24,19,13,0.48); }
           .hp-art { display: none !important; }
           .hp-copyright-bar { height: auto; min-height: 36px; padding: 8px 16px; }
+
+          /* Trust strip */
+          .hp-mobile-trust {
+            display: flex;
+            width: 100%; max-width: 345px;
+            justify-content: center; gap: 0;
+            margin: 20px 0 0;
+            border: 1px solid rgba(116,86,44,0.16);
+            background: rgba(255,253,248,0.72);
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: 0 8px 22px rgba(40,24,8,0.04);
+          }
+          .hp-mobile-trust span {
+            flex: 1; text-align: center;
+            padding: 9px 6px;
+            font-family: ${CINZEL}; font-size: 7.2px; letter-spacing: 1.3px;
+            text-transform: uppercase; font-weight: 800;
+            color: rgba(139,26,26,0.82);
+            border-right: 1px solid rgba(116,86,44,0.13);
+          }
+          .hp-mobile-trust span:last-child { border-right: none; }
+
+          /* What you can do — mobile card list */
+          .hp-what { width: 100%; max-width: 360px; margin-top: 28px; }
+          .hp-what-btn {
+            width: 100%; justify-content: center;
+            font-size: 8.5px; letter-spacing: 2px;
+            padding: 12px 0;
+            border-top: 1px solid rgba(116,86,44,0.16);
+            border-bottom: 1px solid rgba(116,86,44,0.16);
+          }
+          .hp-what-btn-hint { display: none !important; }
+          .hp-what-list {
+            position: static;
+            width: 100%; margin-top: 12px;
+            background: rgba(255,253,248,0.82);
+            border: 1px solid rgba(116,86,44,0.16);
+            border-radius: 8px;
+            box-shadow: 0 12px 28px rgba(40,24,8,0.06);
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+          }
+          .hp-what-item {
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            align-items: start;
+            gap: 10px;
+            padding: 13px 14px;
+            border-bottom: 1px solid rgba(116,86,44,0.13);
+          }
+          .hp-what-item:last-child { border-bottom: none; }
+          .hp-what-item::before { display: none; }
+          .hp-what-icon { width: 22px; height: 22px; font-size: 13px; margin-top: 1px; }
+          .hp-what-name { font-size: 8.5px; letter-spacing: 1.4px; line-height: 1.3; }
+          .hp-what-tooltip {
+            display: block !important; visibility: visible !important; opacity: 1 !important;
+            position: static !important; transform: none !important;
+            grid-column: 2;
+            width: auto !important;
+            background: transparent !important;
+            color: rgba(24,19,13,0.56) !important;
+            padding: 3px 0 0 !important;
+            box-shadow: none !important;
+            font-size: 12px !important; line-height: 1.42 !important;
+            pointer-events: none;
+          }
+          .hp-what-tooltip::after { display: none !important; }
+        }
+
+        /* ── Very small phones ────────────────────────── */
+        @media (max-width: 380px) {
+          .hp-header { padding-left: 12px; padding-right: 12px; }
+          .hp-nav a { font-size: 6.8px; padding: 0 6px; letter-spacing: 1.1px; }
+          .hp-hero { padding-left: 16px; padding-right: 16px; }
+          .hp-h1 { font-size: 36px; }
+          .hp-sub { font-size: 14px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 50px; }
         }
       `}</style>
 
@@ -392,6 +492,12 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
               </button>
             </div>
             <p className="hp-note">or drag a file anywhere on this page</p>
+
+            <div className="hp-mobile-trust" aria-label="katanapdf privacy promises">
+              <span>No upload</span>
+              <span>No account</span>
+              <span>No watermark</span>
+            </div>
 
             <div className="hp-what">
               <button className="hp-what-btn" onClick={() => setFeatOpen(v => !v)} title="">
