@@ -124,6 +124,7 @@ export default function PDFEditor() {
   const [ocrError, setOcrError] = useState('');
   const ocrCancelRef = useRef(false);
   const ocrWorkerRef = useRef(null);
+  const internalClipboardRef = useRef(null);
   const [shapePanelPage, setShapePanelPage] = useState(null);
   const [shapePanelColor, setShapePanelColor] = useState('#000000');
   const [shapePanelFill, setShapePanelFill] = useState(false);
@@ -240,22 +241,38 @@ export default function PDFEditor() {
     return { x0, y0, x1, y1 };
   }
 
-  function _ocrGetParagraphs(data) {
-    // Returns [[line, line, ...], [line, ...]] — one sub-array per Tesseract paragraph.
-    // Preserves Tesseract's own grouping so we don't need to re-cluster.
-    if (Array.isArray(data.blocks) && data.blocks.length) {
-      const paras = [];
+  function _ocrGetItems(data) {
+    const out = [];
+    if (Array.isArray(data?.blocks)) {
       for (const block of data.blocks) {
         for (const para of block.paragraphs || []) {
-          if (Array.isArray(para.lines) && para.lines.length) paras.push(para.lines);
+          for (const line of para.lines || []) out.push(line);
         }
+        for (const line of block.lines || []) out.push(line);
       }
-      if (paras.length) return paras;
     }
-    // Fallback: group all lines/words, each as its own paragraph
-    const items = (Array.isArray(data.lines) && data.lines.length) ? data.lines
-      : (Array.isArray(data.words) ? data.words : []);
-    return items.map(item => [item]);
+    if (!out.length && Array.isArray(data?.lines)) out.push(...data.lines);
+    if (!out.length && Array.isArray(data?.words)) out.push(...data.words);
+    return out;
+  }
+
+  function sanitizeOcrStyle(style) {
+    const hexToRgb = hex => {
+      const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+      if (!m) return null;
+      const n = parseInt(m[1], 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    };
+    const dist = (a, b) => {
+      if (!a || !b) return 999;
+      return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
+    };
+    const lum = rgb => rgb ? 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2] : 0;
+    const fg = hexToRgb(style?.color);
+    const bg = hexToRgb(style?.bgColor);
+    const safeColor = (!fg || lum(fg) > 185 || dist(fg, bg) < 45) ? "#243241" : style.color;
+    const safeBg = (!bg || lum(bg) < 160) ? "#ffffff" : style.bgColor;
+    return { color: safeColor, bgColor: safeBg, isBold: !!style?.isBold, fontFamily: style?.fontFamily || "Arial, sans-serif" };
   }
 
   function _ocrRgbToHex(r, g, b) {
@@ -474,63 +491,38 @@ export default function PDFEditor() {
 
         lastOCRText += "\n" + (data.text || "");
 
-        // Use Tesseract's own paragraph structure (much more reliable than re-clustering)
-        const paragraphs = _ocrGetParagraphs(data);
+        const rawLines = _ocrGetItems(data);
+        const stripEmoji = t => t.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{20D0}-\u{20FF}]/gu, '').trim();
 
-        const pageBlocks = paragraphs.map((paraLines, pi) => {
-          const lineItems = paraLines
-            .filter(line => {
-              const text = (line.text || "").trim();
-              return text && (line.confidence == null || line.confidence > 20);
-            })
-            .map(line => {
-              const bbox = _ocrGetBBox(line);
-              const style = _ocrSampleStyle(samplingCtx, bbox, pg.width, pg.height);
-              const fontSize = fitOcrFontSize(line.text.trim(), bbox, style.fontFamily, style.isBold);
-              return { bbox, style, fontSize, text: line.text.trim() };
-            });
-
-          if (!lineItems.length) return null;
-
-          const first = lineItems[0];
-          const last = lineItems[lineItems.length - 1];
-          const style = first.style;
-          const avgFontSize = lineItems.reduce((s, it) => s + it.fontSize, 0) / lineItems.length;
-
-          const gx0 = Math.min(...lineItems.map(it => it.bbox.x0));
-          const gx1 = Math.max(...lineItems.map(it => it.bbox.x1));
-          const gy0 = first.bbox.y0;
-          const gy1 = last.bbox.y1;
-
-          // Baseline ≈ top of ascenders + 73% of fontSize (accurate for typical fonts)
-          const lineBaselines = lineItems.map(it => it.bbox.y0 + it.fontSize * 0.73);
-          const baselineY = lineBaselines[0];
-
-          // y = top of bbox minus 1 canvas px (compensates for 2px textarea padding / SCALE=2)
-          const topY = Math.max(0, gy0 - OCR_Y_PAD);
-          const totalHeight = Math.max(gy1 - gy0 + OCR_H_PAD, avgFontSize * 1.2);
-          const text = lineItems.map(it => it.text).join('\n');
-
-          return {
-            id: `ocr-${pg.num}-P${pi}`,
-            page: pg.num,
-            text,
-            x: Math.max(0, gx0 - OCR_X_PAD),
-            y: topY,
-            width: Math.max(gx1 - gx0 + OCR_W_PAD, 10),
-            height: totalHeight,
-            baselineY,
-            lineBaselines,
-            fontSize: avgFontSize,
-            fontFamily: style.fontFamily,
-            isBold: style.isBold,
-            isItalic: false,
-            color: style.color,
-            bgColor: style.bgColor,
-            edited: false,
-            ocr: true,
-          };
-        }).filter(Boolean);
+        const pageBlocks = rawLines
+          .map(line => ({ ...line, _text: stripEmoji(line.text || "") }))
+          .filter(line => line._text && (line.confidence == null || line.confidence > 20))
+          .map((line, li) => {
+            const bbox = _ocrGetBBox(line);
+            const style = sanitizeOcrStyle(_ocrSampleStyle(samplingCtx, bbox, pg.width, pg.height));
+            const fontSize = fitOcrFontSize(line._text, bbox, style.fontFamily, style.isBold);
+            const baselineY = bbox.y0 + fontSize * 0.92;
+            const y = Math.max(0, baselineY - fontSize * 1.02);
+            return {
+              id: `ocr-${pg.num}-L${li}`,
+              page: pg.num,
+              text: line._text,
+              x: Math.max(0, bbox.x0 - OCR_X_PAD),
+              y,
+              width: Math.max(bbox.x1 - bbox.x0 + OCR_W_PAD, 10),
+              height: Math.max(bbox.y1 - bbox.y0 + OCR_H_PAD, fontSize * 1.25),
+              baselineY,
+              lineBaselines: [baselineY],
+              fontSize,
+              fontFamily: style.fontFamily,
+              isBold: style.isBold,
+              isItalic: false,
+              color: style.color,
+              bgColor: style.bgColor,
+              edited: false,
+              ocr: true,
+            };
+          });
         newTextBlocksByPage[pg.num] = pageBlocks;
 
         await new Promise(r => setTimeout(r, 10));
@@ -609,7 +601,7 @@ export default function PDFEditor() {
   useEffect(() => {
     liveStateRef.current = {
       pdfBytes, pages, pageOrder, textBlocks, floatingBoxes, floatingImages, floatingShapes, history, fileName, zoom, hasTextLayer, isEncrypted,
-      rotatedPages, deletedPages,
+      rotatedPages, deletedPages, selected, areaSelection, selectMode,
     };
   });
 
@@ -652,17 +644,101 @@ export default function PDFEditor() {
     return () => window.removeEventListener('paste', handlePaste);
   }, []);
 
-  // Escape clears area selection / exits select mode
+  // Keyboard shortcuts: Escape, Ctrl+C/X/V for floating objects
   useEffect(() => {
+    const isTyping = t => {
+      const tag = t?.tagName?.toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select' || !!t?.isContentEditable;
+    };
+
+    const snapHistory = (ref) => {
+      const { textBlocks, floatingBoxes, floatingImages, floatingShapes, rotatedPages, deletedPages } = ref.current;
+      setHistory(prev => [...prev.slice(-29), {
+        textBlocks: JSON.parse(JSON.stringify(textBlocks || [])),
+        floatingBoxes: JSON.parse(JSON.stringify(floatingBoxes || [])),
+        floatingImages: JSON.parse(JSON.stringify(floatingImages || [])),
+        floatingShapes: JSON.parse(JSON.stringify(floatingShapes || [])),
+        rotatedPages: { ...(rotatedPages || {}) },
+        deletedPages: new Set(deletedPages),
+      }]);
+    };
+
     const onKey = e => {
+      const { selected, areaSelection, selectMode,
+              floatingImages, floatingBoxes, floatingShapes } = liveStateRef.current;
+
       if (e.key === 'Escape') {
         if (areaSelection) { setAreaSelection(null); return; }
-        if (selectMode) setSelectMode(false);
+        if (selectMode) { setSelectMode(false); return; }
+        return;
+      }
+
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (!ctrl) return;
+      if (isTyping(e.target)) return;
+
+      if (e.key === 'c' || e.key === 'C') {
+        if (!selected) return;
+        const img = floatingImages?.find(fi => fi.id === selected);
+        if (img) { internalClipboardRef.current = { type: 'image', item: JSON.parse(JSON.stringify(img)) }; e.preventDefault(); return; }
+        const box = floatingBoxes?.find(fb => fb.id === selected);
+        if (box) { internalClipboardRef.current = { type: 'box', item: JSON.parse(JSON.stringify(box)) }; e.preventDefault(); return; }
+        const shape = floatingShapes?.find(s => s.id === selected);
+        if (shape) { internalClipboardRef.current = { type: 'shape', item: JSON.parse(JSON.stringify(shape)) }; e.preventDefault(); return; }
+      }
+
+      if (e.key === 'x' || e.key === 'X') {
+        if (!selected) return;
+        const img = floatingImages?.find(fi => fi.id === selected);
+        if (img) {
+          internalClipboardRef.current = { type: 'image', item: JSON.parse(JSON.stringify(img)) };
+          snapHistory(liveStateRef);
+          setFloatingImages(prev => prev.filter(fi => fi.id !== selected));
+          setSelected(null); e.preventDefault(); return;
+        }
+        const box = floatingBoxes?.find(fb => fb.id === selected);
+        if (box) {
+          internalClipboardRef.current = { type: 'box', item: JSON.parse(JSON.stringify(box)) };
+          snapHistory(liveStateRef);
+          setFloatingBoxes(prev => prev.filter(fb => fb.id !== selected));
+          setSelected(null); e.preventDefault(); return;
+        }
+        const shape = floatingShapes?.find(s => s.id === selected);
+        if (shape) {
+          internalClipboardRef.current = { type: 'shape', item: JSON.parse(JSON.stringify(shape)) };
+          snapHistory(liveStateRef);
+          setFloatingShapes(prev => prev.filter(s => s.id !== selected));
+          setSelected(null); e.preventDefault(); return;
+        }
+      }
+
+      if (e.key === 'v' || e.key === 'V') {
+        if (!internalClipboardRef.current) return; // fall through to system paste event
+        const clip = internalClipboardRef.current;
+        snapHistory(liveStateRef);
+        floatingIdCounter++;
+        const offset = 24;
+        if (clip.type === 'image') {
+          const newItem = { ...clip.item, id: `img-${floatingIdCounter}`, x: clip.item.x + offset, y: clip.item.y + offset, z: 50 + floatingIdCounter };
+          setFloatingImages(prev => [...prev, newItem]);
+          setSelected(newItem.id); e.preventDefault(); return;
+        }
+        if (clip.type === 'box') {
+          const newItem = { ...clip.item, id: `float-${floatingIdCounter}`, x: clip.item.x + offset, y: clip.item.y + offset, z: 50 + floatingIdCounter };
+          setFloatingBoxes(prev => [...prev, newItem]);
+          setSelected(newItem.id); e.preventDefault(); return;
+        }
+        if (clip.type === 'shape') {
+          const newItem = { ...clip.item, id: `shape-${floatingIdCounter}`, x: clip.item.x + offset, y: clip.item.y + offset, z: 50 + floatingIdCounter };
+          setFloatingShapes(prev => [...prev, newItem]);
+          setSelected(newItem.id); e.preventDefault(); return;
+        }
       }
     };
+
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [areaSelection, selectMode]);
+  }, []); // reads fresh state from liveStateRef every keypress
 
   // Warn on browser refresh/tab-close when a PDF is open
   useEffect(() => {
@@ -1174,10 +1250,10 @@ export default function PDFEditor() {
   }
 
   async function copySelectedArea() {
-    if (!areaSelection) return;
+    if (!areaSelection) return false;
     const { pageNum, x0, y0, x1, y1 } = areaSelection;
     const pg = pages.find(p => p.num === pageNum);
-    if (!pg) return;
+    if (!pg) return false;
     const w = Math.max(1, Math.round(x1 - x0));
     const h = Math.max(1, Math.round(y1 - y0));
     const canvas = document.createElement('canvas');
@@ -1186,18 +1262,16 @@ export default function PDFEditor() {
     const img = new Image();
     await new Promise(res => { img.onload = res; img.src = pg.dataUrl; });
     ctx.drawImage(img, Math.round(x0), Math.round(y0), w, h, 0, 0, w, h);
-    return new Promise(res => {
-      canvas.toBlob(blob => {
-        try {
-          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        } catch (_) {
-          const url = canvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          a.href = url; a.download = 'selection.png'; a.click();
-        }
-        res();
-      }, 'image/png');
-    });
+    const dataUrl = canvas.toDataURL('image/png');
+    internalClipboardRef.current = { type: 'area-image', page: pageNum, dataUrl, w, h, sourceX: x0, sourceY: y0 };
+    // Optional: also write to system clipboard. Ignore failure.
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (blob) await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }
+    } catch (_) { /* internal clipboard is sufficient */ }
+    return true;
   }
 
   async function eraseSelectedArea(fillColor = '#ffffff') {
@@ -1220,8 +1294,32 @@ export default function PDFEditor() {
   }
 
   async function cutSelectedArea() {
-    await copySelectedArea();
+    const copied = await copySelectedArea();
+    if (!copied) return;
     await eraseSelectedArea('#ffffff');
+  }
+
+  function pasteSelectedArea() {
+    const clip = internalClipboardRef.current;
+    if (!clip || clip.type !== 'area-image') return false;
+    const targetPage =
+      pages.find(p => p.num === clip.page && !deletedPages.has(p.num))?.num ||
+      focusedPageNumRef.current ||
+      visiblePages[0]?.num ||
+      pages[0]?.num;
+    if (!targetPage) return false;
+    saveHistory();
+    floatingIdCounter++;
+    const id = `img-${floatingIdCounter}`;
+    setFloatingImages(prev => [...prev, {
+      id, page: targetPage, z: 50 + floatingIdCounter,
+      x: Math.max(0, (clip.sourceX || 0) + 24),
+      y: Math.max(0, (clip.sourceY || 0) + 24),
+      w: clip.w, h: clip.h, dataUrl: clip.dataUrl,
+    }]);
+    setSelected(id);
+    setAreaSelection(null);
+    return true;
   }
 
   function handleDrawStart(e, pgNum, scale) {
@@ -1435,11 +1533,11 @@ export default function PDFEditor() {
     setDraggingImg({ id: fi.id });
   }
 
-  function startResizeImg(e, fi) {
+  function startResizeImg(e, fi, corner = 'se') {
     e.preventDefault();
     e.stopPropagation();
     saveHistory();
-    imgResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: fi.w, h: fi.h };
+    imgResizeOrigin.current = { mx: e.clientX, my: e.clientY, w: fi.w, h: fi.h, x: fi.x, y: fi.y, ratio: (fi.w / fi.h) || 1, corner };
     setResizingImg({ id: fi.id });
   }
 
@@ -1539,8 +1637,22 @@ export default function PDFEditor() {
     if (resizingImg) {
       const o = imgResizeOrigin.current;
       if (!o) return;
+      const dx = e.clientX - o.mx;
+      const dy = e.clientY - o.my;
+      const corner = o.corner || 'se';
+      // Scalar growth: positive = bigger. Each corner maps the two drag axes to growth.
+      let delta;
+      if      (corner === 'se') delta = (dx + dy) / 2;
+      else if (corner === 'sw') delta = (-dx + dy) / 2;
+      else if (corner === 'ne') delta = (dx - dy) / 2;
+      else                      delta = (-dx - dy) / 2; // nw
+      const newW = Math.max(40, o.w + delta);
+      const newH = newW / o.ratio;
+      // Anchor the opposite corner so the image doesn't jump
+      const newX = (corner === 'sw' || corner === 'nw') ? o.x + o.w - newW : o.x;
+      const newY = (corner === 'nw' || corner === 'ne') ? o.y + o.h - newH : o.y;
       setFloatingImages(prev => prev.map(fi => fi.id === resizingImg.id
-        ? { ...fi, w: Math.max(40, o.w + e.clientX - o.mx), h: Math.max(40, o.h + e.clientY - o.my) }
+        ? { ...fi, w: newW, h: newH, x: Math.max(0, newX), y: Math.max(0, newY) }
         : fi
       ));
     }
@@ -2089,6 +2201,23 @@ export default function PDFEditor() {
     gap: 8,
   };
 
+  // Area-selection Ctrl+C/X/V — placed here so visiblePages is in scope
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    const isTyping = t => { const tag = t?.tagName?.toLowerCase(); return tag === 'input' || tag === 'textarea' || tag === 'select' || !!t?.isContentEditable; };
+    const onKeyDown = async (e) => {
+      if (isTyping(e.target)) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === 'c' && areaSelection) { e.preventDefault(); await copySelectedArea(); return; }
+      if (key === 'x' && areaSelection) { e.preventDefault(); await cutSelectedArea(); return; }
+      if (key === 'v' && internalClipboardRef.current?.type === 'area-image') { e.preventDefault(); pasteSelectedArea(); return; }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [areaSelection, pages, deletedPages, visiblePages]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className={`editor-container ${isNoFile ? "editor-relative" : "editor-fixed"}`}
          style={{ userSelect: dragging ? "none" : "auto" }}
@@ -2358,187 +2487,163 @@ export default function PDFEditor() {
                          boxSizing: "border-box",
                          borderRadius: dragOverImagePage === pg.num ? 4 : 0,
                        }}>
-                  {!isGridView && (
-                    <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, width: dispW, maxWidth: "100%", flexWrap: "wrap", gap: 8 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
-                        {/* Phase 6: reorder controls — custom popup instead of native select */}
-                        <div style={{ position: "relative" }}>
-                          <button
-                            onClick={e => { e.stopPropagation(); setMoveToPanelPage(p => p === pg.num ? null : pg.num); }}
-                            style={{ ...pageBtn, display: "flex", alignItems: "center", gap: 4, padding: "4px 8px" }}
-                            title="Move page to position"
-                          >
-                            <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 2, fontWeight: 600 }}>MOVE TO</span>
-                          </button>
-                          {moveToPanelPage === pg.num && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "6px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 3, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", maxHeight: 200, overflowY: "auto", minWidth: 64 }}>
-                              {visiblePages.map((_, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => { if (i !== displayIdx) movePageTo(pg.num, i); setMoveToPanelPage(null); }}
-                                  style={{ ...pageBtn, padding: "4px 12px", background: i === displayIdx ? "rgba(139,26,26,0.1)" : "transparent", fontWeight: i === displayIdx ? 700 : 400, borderRadius: 4 }}
-                                >
-                                  {i + 1}
+                  {!isGridView && (() => {
+                    const tb = { width: 34, height: 34, border: "1px solid rgba(139,26,26,0.25)", borderRadius: 4, background: "transparent", color: LACQUER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0 };
+                    const tbActive = { ...tb, background: "rgba(139,26,26,0.12)", outline: "1px solid #8B1A1A", outlineOffset: 1 };
+                    const sep = <div style={{ width: 1, height: 20, background: "rgba(139,26,26,0.2)", margin: "0 3px", flexShrink: 0 }} />;
+                    return (
+                    <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 10, width: dispW, maxWidth: "100%", flexWrap: "wrap", paddingBottom: 2 }}>
+
+                      {/* Page label */}
+                      <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 700, whiteSpace: "nowrap", padding: "0 4px", flexShrink: 0 }}>{displayIdx + 1}</span>
+
+                      {/* Move To */}
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <button onClick={e => { e.stopPropagation(); setMoveToPanelPage(p => p === pg.num ? null : pg.num); }} style={moveToPanelPage === pg.num ? tbActive : tb} title="Move page to position" aria-label="Move page to position">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 16 3 12 7 8"/><line x1="3" y1="12" x2="21" y2="12"/><polyline points="17 8 21 12 17 16"/></svg>
+                        </button>
+                        {moveToPanelPage === pg.num && (
+                          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "6px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 3, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", maxHeight: 200, overflowY: "auto", minWidth: 64 }}>
+                            {visiblePages.map((_, i) => (
+                              <button key={i} onClick={() => { if (i !== displayIdx) movePageTo(pg.num, i); setMoveToPanelPage(null); }}
+                                style={{ ...pageBtn, padding: "4px 12px", background: i === displayIdx ? "rgba(139,26,26,0.1)" : "transparent", fontWeight: i === displayIdx ? 700 : 400, borderRadius: 4 }}>
+                                {i + 1}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Zoom */}
+                      <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(139,26,26,0.3)", borderRadius: 4, overflow: "hidden", flexShrink: 0 }}>
+                        <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...tb, border: "none", borderRight: "1px solid rgba(139,26,26,0.2)", width: 28, borderRadius: 0, fontSize: 15, fontWeight: 700 }} title="Zoom out" aria-label="Zoom out">−</button>
+                        <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, minWidth: 38, textAlign: "center", letterSpacing: 1, padding: "0 2px", fontWeight: 600 }}>{Math.round(zoom * 100)}%</span>
+                        <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...tb, border: "none", borderLeft: "1px solid rgba(139,26,26,0.2)", width: 28, borderRadius: 0, fontSize: 15, fontWeight: 700 }} title="Zoom in" aria-label="Zoom in">+</button>
+                      </div>
+
+                      {sep}
+
+                      {/* Undo */}
+                      <button onClick={e => { e.stopPropagation(); undo(); }} disabled={!history.length} aria-label="Undo" title="Undo" style={{ ...tb, opacity: history.length ? 1 : 0.3, fontSize: 18 }}>&#8630;</button>
+
+                      {/* Rotate */}
+                      <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label="Rotate page" title="Rotate page" style={tb}>
+                        <RotateIcon size={14} />
+                      </button>
+
+                      {/* Add blank page */}
+                      <button onClick={e => { e.stopPropagation(); addBlankPage(pg.num); }} aria-label="Add blank page after" title="Add blank page after" style={tb}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="12" y2="19"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+                      </button>
+
+                      {/* Delete */}
+                      <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label="Delete page" title="Delete page" style={tb}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+
+                      {sep}
+
+                      {/* Select area */}
+                      <button
+                        onClick={e => { e.stopPropagation(); const next = !selectMode; setSelectMode(next); if (next) { setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelected(null); setActivePopup(null); setAreaSelection(null); } }}
+                        style={{ ...(selectMode ? tbActive : tb), fontSize: 16, lineHeight: 1 }} title="Select" aria-label="Select area"
+                      >↖</button>
+
+                      {/* Sign */}
+                      <button onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelectMode(false); setAreaSelection(null); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }} style={tb} title="Sign" aria-label="Add signature">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "rotate(180deg)" }}>
+                          <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                          <path d="M2 2l7.586 7.586"/>
+                          <circle cx="11" cy="11" r="2"/>
+                        </svg>
+                      </button>
+
+                      {/* Add Text */}
+                      <button onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelectMode(false); setAreaSelection(null); addFloatingBox(pg.num); }} style={{ ...tb, fontSize: 16, fontWeight: 700, lineHeight: 1 }} title="Add text" aria-label="Add text box">T</button>
+
+                      {/* Draw */}
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <button
+                          onClick={e => { e.stopPropagation(); const next = !drawMode; setSelected(null); setActivePopup(null); setDrawMode(next); setDrawPanelOpen(next); if (next) { setShapePanelPage(null); setSelectMode(false); setAreaSelection(null); } }}
+                          style={drawMode ? tbActive : tb} title="Freehand draw" aria-label="Freehand draw"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
+                        </button>
+                        {drawPanelOpen && (
+                          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "10px", zIndex: 9999, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 136 }}>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
+                              <button onClick={() => { setDrawTool('highlighter'); if (drawWidth < 10) setDrawWidth(14); }} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'highlighter' ? LACQUER : "transparent", color: drawTool === 'highlighter' ? "#fff" : LACQUER, fontWeight: 700 }}>HIGHLIGHT</button>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
+                              {DRAW_COLORS.map(c => (
+                                <button key={c} onClick={() => { setDrawColor(c); setDrawPanelOpen(false); }} title={c} style={{ width: 26, height: 26, background: c, border: drawColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                              ))}
+                              <label title="Custom color" style={{ width: 26, height: 26, border: `1px solid rgba(0,0,0,0.2)`, borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 0 0-20 0"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                                <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} onBlur={() => setDrawPanelOpen(false)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                              </label>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 9, color: LACQUER, fontFamily: CINZEL, letterSpacing: 1 }}>SIZE</span>
+                              <select value={FB_SIZES.includes(drawWidth) ? drawWidth : FB_SIZES.reduce((a, b) => Math.abs(b - drawWidth) < Math.abs(a - drawWidth) ? b : a)} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, fontSize: 11, background: "#fff", border: `1px solid ${GOLD}`, borderRadius: 2, padding: "1px 2px", height: 23 }}>
+                                {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Shapes */}
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <button onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setSelectMode(false); setAreaSelection(null); setShapePanelPage(p => p === pg.num ? null : pg.num); }} style={shapePanelPage === pg.num ? tbActive : tb} title="Add shape" aria-label="Add shape">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="5"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+                        </button>
+                        {shapePanelPage === pg.num && (
+                          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 160 }}>
+                            <div style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, letterSpacing: 3, fontWeight: 700 }}>SHAPE COLOR</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
+                              {DRAW_COLORS.map(c => (
+                                <button key={c} type="button" onClick={e => { e.stopPropagation(); setShapePanelColor(c); }} style={{ width: 22, height: 22, background: c, border: shapePanelColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                              ))}
+                              <label title="Custom" style={{ width: 22, height: 22, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                                <input type="color" value={shapePanelColor} onChange={e => { e.stopPropagation(); setShapePanelColor(e.target.value); }} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                              </label>
+                            </div>
+                            <label style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: CINZEL, fontSize: 10, color: LACQUER, cursor: "pointer", letterSpacing: 2 }}>
+                              <input type="checkbox" checked={shapePanelFill} onChange={e => setShapePanelFill(e.target.checked)} style={{ accentColor: LACQUER }} />
+                              FILLED
+                            </label>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+                              {[
+                                { type: 'circle', label: 'CIRCLE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/></svg> },
+                                { type: 'square', label: 'SQUARE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/></svg> },
+                                { type: 'checkmark', label: 'CHECK', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3,13 9,19 21,6"/></svg> },
+                                { type: 'cross', label: 'CROSS', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg> },
+                                { type: 'line', label: 'LINE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="3" y1="12" x2="21" y2="12"/></svg> },
+                                { type: 'arrow', label: 'ARROW', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="19" y2="12"/><polyline points="14,7 21,12 14,17"/></svg> },
+                              ].map(({ type, label, svg }) => (
+                                <button key={type} onClick={() => handleAddShape(pg.num, type)} style={{ ...pageActionBtn, flexDirection: "column", gap: 3, padding: "8px 4px" }} title={`Add ${label.toLowerCase()}`}>
+                                  {svg}
+                                  <span style={{ fontSize: 8, letterSpacing: 1.5 }}>{label}</span>
                                 </button>
                               ))}
                             </div>
-                          )}
-                        </div>
-                        {/* Per-page zoom controls */}
-                        <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", border: `1px solid rgba(139,26,26,0.3)`, borderRadius: 3, overflow: "hidden" }}>
-                          <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderRight: `1px solid rgba(139,26,26,0.2)`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom out">−</button>
-                          <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, minWidth: 42, textAlign: "center", letterSpacing: 1, padding: "7px 4px", fontWeight: 600 }}>{Math.round(zoom * 100)}%</span>
-                          <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...pageBtn, padding: "7px 11px", border: "none", borderLeft: `1px solid rgba(139,26,26,0.2)`, fontSize: 14, lineHeight: 1, fontWeight: 700 }} title="Zoom in">+</button>
-                        </div>
-                        <button onClick={e => { e.stopPropagation(); undo(); }} disabled={!history.length} aria-label="Undo" title="Undo last action" style={{ ...pageBtn, padding: "4px 10px", opacity: history.length ? 1 : 0.3, display: "flex", alignItems: "center", gap: 4 }}>
-                          &#8630;
-                        </button>
-                        <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} aria-label={`Rotate page ${displayIdx + 1}`} title="Rotate page" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <RotateIcon size={14} />
-                        </button>
-                        <button onClick={e => { e.stopPropagation(); addBlankPage(pg.num); }} aria-label="Add blank page after" title="Add blank page after this one" style={{ ...pageBtn, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="12" y2="19"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
-                        </button>
-                        <button onClick={e => { e.stopPropagation(); deletePage(pg.num); }} aria-label={`Delete page ${displayIdx + 1}`} title="Delete page" style={{ ...pageBtn, padding: "4px 8px" }}>X</button>
+                          </div>
+                        )}
                       </div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        {/* Sign */}
-                        <button
-                          onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSignatureTargetPageNum(pg.num); setIsSignModalOpen(true); }}
-                          style={pageActionBtn} title="Sign"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.2"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>
-                          <span className="page-action-label">Sign</span>
-                        </button>
 
-                        {/* Draw + controls dropdown */}
-                        <div style={{ position: "relative" }}>
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              const next = !drawMode;
-                              setSelected(null); setActivePopup(null);
-                              setDrawMode(next);
-                              setDrawPanelOpen(next);
-                              if (next) setShapePanelPage(null);
-                            }}
-                            style={{ ...pageActionBtn, background: drawMode ? 'rgba(139,26,26,0.12)' : 'transparent', outline: drawMode ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
-                            title="Freehand draw"
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
-                            <span className="page-action-label">Draw</span>
-                          </button>
-                          {drawPanelOpen && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "10px", zIndex: 9999, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 136 }}>
-                              {/* Pencil / Highlight toggle — closes panel on click */}
-                              <div style={{ display: "flex", gap: 4 }}>
-                                <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
-                                <button onClick={() => { setDrawTool('highlighter'); if (drawWidth < 10) setDrawWidth(14); }} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'highlighter' ? LACQUER : "transparent", color: drawTool === 'highlighter' ? "#fff" : LACQUER, fontWeight: 700 }}>HIGHLIGHT</button>
-                              </div>
-                              {/* 4×4 color grid — closes panel on color select */}
-                              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
-                                {DRAW_COLORS.map(c => (
-                                  <button key={c} onClick={() => { setDrawColor(c); setDrawPanelOpen(false); }} title={c} style={{ width: 26, height: 26, background: c, border: drawColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
-                                ))}
-                                <label title="Custom color" style={{ width: 26, height: 26, border: `1px solid rgba(0,0,0,0.2)`, borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 0 0-20 0"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                                  <input type="color" value={drawColor}
-                                    onChange={e => setDrawColor(e.target.value)}
-                                    onBlur={() => setDrawPanelOpen(false)}
-                                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                                </label>
-                              </div>
-                              {/* Width — same size list as text */}
-                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ fontSize: 9, color: LACQUER, fontFamily: CINZEL, letterSpacing: 1 }}>SIZE</span>
-                                <select value={FB_SIZES.includes(drawWidth) ? drawWidth : FB_SIZES.reduce((a, b) => Math.abs(b - drawWidth) < Math.abs(a - drawWidth) ? b : a)} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, fontSize: 11, background: "#fff", border: `1px solid ${GOLD}`, borderRadius: 2, padding: "1px 2px", height: 23 }}>
-                                  {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                      {/* Add Image */}
+                      <label style={{ ...tb, cursor: "pointer" }} title="Add image" aria-label="Add image" onClick={() => { setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
+                      </label>
 
-                        {/* Shapes */}
-                        <div style={{ position: "relative" }}>
-                          <button
-                            onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(p => p === pg.num ? null : pg.num); }}
-                            style={{ ...pageActionBtn, background: shapePanelPage === pg.num ? 'rgba(139,26,26,0.12)' : 'transparent', outline: shapePanelPage === pg.num ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
-                            title="Add shape"
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="5"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
-                            <span className="page-action-label">Shapes</span>
-                          </button>
-                          {shapePanelPage === pg.num && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 160 }}>
-                              <div style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, letterSpacing: 3, fontWeight: 700 }}>SHAPE COLOR</div>
-                              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
-                                {DRAW_COLORS.map(c => (
-                                  <button key={c} type="button" onClick={e => { e.stopPropagation(); setShapePanelColor(c); }}
-                                    style={{ width: 22, height: 22, background: c, border: shapePanelColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
-                                ))}
-                                <label title="Custom" style={{ width: 22, height: 22, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                  <input type="color" value={shapePanelColor} onChange={e => { e.stopPropagation(); setShapePanelColor(e.target.value); }} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                                </label>
-                              </div>
-                              <label style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: CINZEL, fontSize: 10, color: LACQUER, cursor: "pointer", letterSpacing: 2 }}>
-                                <input type="checkbox" checked={shapePanelFill} onChange={e => setShapePanelFill(e.target.checked)} style={{ accentColor: LACQUER }} />
-                                FILLED
-                              </label>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-                                {[
-                                  { type: 'circle', label: 'CIRCLE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/></svg> },
-                                  { type: 'square', label: 'SQUARE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/></svg> },
-                                  { type: 'checkmark', label: 'CHECK', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3,13 9,19 21,6"/></svg> },
-                                  { type: 'cross', label: 'CROSS', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg> },
-                                  { type: 'line', label: 'LINE', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="3" y1="12" x2="21" y2="12"/></svg> },
-                                  { type: 'arrow', label: 'ARROW', svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="19" y2="12"/><polyline points="14,7 21,12 14,17"/></svg> },
-                                ].map(({ type, label, svg }) => (
-                                  <button key={type} onClick={() => handleAddShape(pg.num, type)} style={{ ...pageActionBtn, flexDirection: "column", gap: 3, padding: "8px 4px" }} title={`Add ${label.toLowerCase()}`}>
-                                    {svg}
-                                    <span style={{ fontSize: 8, letterSpacing: 1.5 }}>{label}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Select area */}
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            const next = !selectMode;
-                            setSelectMode(next);
-                            if (next) { setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelected(null); setActivePopup(null); setAreaSelection(null); }
-                          }}
-                          style={{ ...pageActionBtn, background: selectMode ? 'rgba(139,26,26,0.12)' : 'transparent', outline: selectMode ? '1px solid #8B1A1A' : 'none', outlineOffset: 2 }}
-                          title="Select area (copy / cut / erase)"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" strokeDasharray="2 1"/><rect x="14" y="3" width="7" height="7" strokeDasharray="2 1"/><rect x="3" y="14" width="7" height="7" strokeDasharray="2 1"/><rect x="14" y="14" width="7" height="7" strokeDasharray="2 1"/></svg>
-                          <span className="page-action-label">Select</span>
-                        </button>
-
-                        {/* Add Text */}
-                        <button
-                          onClick={e => { e.stopPropagation(); setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); setSelectMode(false); setAreaSelection(null); addFloatingBox(pg.num); }}
-                          style={pageActionBtn} title="Add text box"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
-                          <span className="page-action-label">Add text</span>
-                        </button>
-
-                        {/* Add Image */}
-                        <label style={pageActionBtn} title="Add image" onClick={() => { setDrawMode(false); setDrawPanelOpen(false); setShapePanelPage(null); }}>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                          <span className="page-action-label">Add image</span>
-                          <input type="file" accept="image/*" onChange={e => handleAddImage(e, pg.num)} style={hiddenFileInput} />
-                        </label>
-                      </div>
                     </div>
-                  )}
+                    );
+                  })()}
                   {isGridView && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                        <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
@@ -2628,9 +2733,8 @@ export default function PDFEditor() {
                           }}
                         >
                           {[
-                            { label: 'Copy', title: 'Copy area as image', fn: () => copySelectedArea() },
-                            { label: 'Cut', title: 'Copy and erase area', fn: () => cutSelectedArea() },
-                            { label: 'Erase', title: 'Fill area with white', fn: () => eraseSelectedArea('#ffffff') },
+                            { label: 'Copy', title: 'Copy area to clipboard', fn: () => copySelectedArea() },
+                            { label: 'Cut', title: 'Copy to clipboard and fill with white', fn: () => cutSelectedArea() },
                             { label: '✕', title: 'Cancel selection', fn: () => setAreaSelection(null) },
                           ].map(({ label, title, fn }) => (
                             <button key={label} onClick={fn} title={title} style={{
@@ -2691,7 +2795,7 @@ export default function PDFEditor() {
                           onSelect={() => setSelected(fi.id)}
                           onDeselect={() => setSelected(null)}
                           onStartDrag={e => startDragImg(e, fi)}
-                          onStartResize={e => startResizeImg(e, fi)}
+                          onStartResize={(e, corner) => startResizeImg(e, fi, corner)}
                           onDelete={() => deleteFloatingImage(fi.id)} />
                       ))}
                       {!isGridView && floatingShapes.filter(s => s.page === pg.num).map(shape => (
