@@ -307,8 +307,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-copy { max-width: 395px; }
           .hp-eyebrow { margin-bottom: 9px; font-size: 9px; letter-spacing: 3px; }
           .hp-h1 { font-size: clamp(38px, 3.7vw, 50px); line-height: 1.04; margin-bottom: 12px; }
-          .hp-sub { font-size: 14px; line-height: 1.52; margin-bottom: 17px; max-width: 380px; }
-          .hp-actions { margin-bottom: 10px; gap: 8px; }
+          .hp-sub { font-size: 14px; line-height: 1.52; margin-bottom: 12px; max-width: 380px; }
+          .hp-actions { margin-bottom: 6px; gap: 8px; }
+          .hp-what { margin-top: 10px; }
           .hp-btn-primary, .hp-btn-secondary { height: 38px; font-size: 9px; letter-spacing: 1.8px; }
           .hp-btn-primary  { padding: 0 24px; }
           .hp-btn-secondary { padding: 0 20px; }

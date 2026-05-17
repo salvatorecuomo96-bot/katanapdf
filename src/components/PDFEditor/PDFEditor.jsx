@@ -1850,6 +1850,14 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
         return await handleDownloadCanvasFallback();
       }
 
+      const hasRotatedFloatingText = floatingBoxes.some(fb =>
+        fb.text && Math.abs((fb.angle || 0) % 360) > 0.1
+      );
+      if (hasRotatedFloatingText) {
+        console.warn("Rotated floating text detected; using canvas export so text position/rotation matches the editor.");
+        return await handleDownloadCanvasFallback();
+      }
+
       // Phase 6: build a new doc and copyPages from src in the user\'s pageOrder
       // so reorders survive download. When pageOrder is identity this is a no-op
       // beyond the small copyPages overhead. Phase 5 fonts embed on newDoc (not src).
