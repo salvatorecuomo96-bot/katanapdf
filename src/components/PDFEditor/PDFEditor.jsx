@@ -2420,6 +2420,10 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                 const scale = isGridView ? Math.min(240 / (swap ? pg.height : pg.width), 0.5) : zoom;
                 const dispW = (swap ? pg.height : pg.width) * scale;
                 const dispH = (swap ? pg.width : pg.height) * scale;
+                const unrotatedW = pg.width * scale;
+                const visualW = dispW;
+                const visualH = dispH;
+                const pageShellW = Math.max(unrotatedW, visualW);
                 return (
                   <div key={pg.num}
                        draggable={isGridView}
@@ -2488,12 +2492,13 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                          boxSizing: "border-box",
                          borderRadius: dragOverImagePage === pg.num ? 4 : 0,
                        }}>
+                  <div className="editor-page-shell" style={{ width: isGridView ? "100%" : pageShellW, maxWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", overflow: "visible" }}>
                   {!isGridView && (() => {
                     const tb = { width: 34, height: 34, border: "1px solid rgba(139,26,26,0.25)", borderRadius: 4, background: "transparent", color: LACQUER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0 };
                     const tbActive = { ...tb, background: "rgba(139,26,26,0.12)", outline: "1px solid #8B1A1A", outlineOffset: 1 };
                     const sep = <div style={{ width: 1, height: 20, background: "rgba(139,26,26,0.2)", margin: "0 3px", flexShrink: 0 }} />;
                     return (
-                    <div onClick={e => e.stopPropagation()} style={{ position: "sticky", top: 8, zIndex: 50, display: "flex", alignItems: "center", gap: 3, marginBottom: 10, maxWidth: "100%", overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, WebkitOverflowScrolling: "touch", background: "rgba(240,236,227,0.92)", backdropFilter: "blur(6px)", borderRadius: 6, padding: "4px 6px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+                    <div onClick={e => e.stopPropagation()} style={{ position: "sticky", top: 8, zIndex: 3000, width: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", gap: 3, marginBottom: 10, maxWidth: "100%", overflowX: "auto", overflowY: "visible", flexWrap: "nowrap", WebkitOverflowScrolling: "touch", background: "rgba(240,236,227,0.92)", backdropFilter: "blur(6px)", borderRadius: 6, padding: "6px 8px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
 
                       {/* Page label */}
                       <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 700, whiteSpace: "nowrap", padding: "0 4px", flexShrink: 0 }}>{displayIdx + 1}</span>
@@ -2658,7 +2663,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                       setSelected(null);
                       setActivePopup(null);
                     }
-                  }} style={{ position: "relative", width: dispW, height: dispH, maxWidth: "100%", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "visible", cursor: isGridView ? "pointer" : "default" }}>
+                  }} style={{ position: "relative", width: visualW, height: visualH, maxWidth: "100%", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "visible", cursor: isGridView ? "pointer" : "default" }}>
                     <div style={{
                       position: "absolute",
                       left: "50%",
@@ -2746,6 +2751,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                           onUpdate={u => updateFloatingShape(shape.id, u)} />
                       ))}
                     </div>
+                  </div>
                   </div>
                 </div>
               );
