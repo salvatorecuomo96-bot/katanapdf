@@ -172,9 +172,8 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-what-chevron { transition: transform 0.2s; display: block; flex-shrink: 0; }
         .hp-what-chevron.open { transform: rotate(180deg); }
         .hp-what-list {
-          position: absolute; top: calc(100% + 6px); left: 0;
+          position: absolute; bottom: calc(100% + 6px); left: 0;
           width: 300px; z-index: 200;
-          max-height: 260px; overflow-y: auto;
           border: 1px solid ${LINE}; border-radius: 4px;
           background: rgba(255,253,248,0.97);
           box-shadow: 0 6px 22px rgba(40,24,8,0.10);
