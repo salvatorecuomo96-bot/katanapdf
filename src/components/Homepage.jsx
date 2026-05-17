@@ -226,11 +226,11 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         /* ── Copy: sits above art layer so samurai can never touch buttons ── */
         .hp-copy { position: relative; z-index: 2; }
 
-        /* ── Art: clipped to its column — samurai cannot bleed left ── */
+        /* ── Art: no overflow clip — samurai shows fully, z-index keeps it below copy ── */
         .hp-art {
           display: flex; align-items: center; justify-content: flex-end;
           min-width: 0; position: relative; z-index: 1;
-          overflow: hidden; background: transparent;
+          overflow: visible; background: transparent;
         }
         .hp-art::after  { display: none !important; content: none !important; }
         .hp-art-inner {
@@ -248,14 +248,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           object-fit: contain;
           background: transparent; box-shadow: none; border: 0;
           filter: none; opacity: 1; mix-blend-mode: normal;
-          -webkit-mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%);
-          -webkit-mask-composite: source-in;
-          mask-image:
-            linear-gradient(to right,  transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%),
-            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.92) 5%, black 10%, black 90%, rgba(0,0,0,0.92) 95%, transparent 100%);
-          mask-composite: intersect;
         }
 
         /* ── Copyright bar ────────────────────────────── */
