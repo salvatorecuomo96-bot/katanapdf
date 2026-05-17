@@ -16,7 +16,6 @@ export default function HexColorInput({ value, onChange, onDone, swatchSize = 22
           type="color"
           value={HEX_RE.test(value) ? value : "#ffffff"}
           onChange={e => { onChange(e.target.value); setDraft(e.target.value); }}
-          onBlur={onDone}
           style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}
         />
       </label>
