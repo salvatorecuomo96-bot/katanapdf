@@ -73,7 +73,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
 
         /* ── Hero: flex:1 fills remaining height in flex-column root ── */
         .hp-hero {
-          flex: 1; min-height: 0; overflow: hidden;
+          flex: 1; min-height: 0; overflow: visible;
           display: flex; align-items: center; justify-content: center;
           padding: clamp(20px,3.5vh,48px) clamp(28px,4.5vw,72px) clamp(18px,2.8vh,28px);
           box-sizing: border-box;
@@ -297,7 +297,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
           .hp-header { height: 54px; }
           .hp-hero {
-            overflow: hidden;
+            overflow: visible;
             align-items: center; justify-content: center;
             padding: 10px 30px 14px;
           }
