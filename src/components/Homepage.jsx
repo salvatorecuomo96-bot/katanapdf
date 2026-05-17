@@ -44,7 +44,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
       <style>{`
         .hp {
           background:
-            linear-gradient(to bottom, rgba(255,252,246,0.90) 0%, rgba(255,252,246,0.94) 100%),
+            linear-gradient(to bottom, rgba(255,252,246,0.98) 0%, rgba(255,252,246,0.98) 100%),
             url("/background.png") center top / cover no-repeat;
         }
 
@@ -226,11 +226,12 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         /* ── Copy: sits above art layer so samurai can never touch buttons ── */
         .hp-copy { position: relative; z-index: 2; }
 
-        /* ── Art: no overflow clip — samurai shows fully, z-index keeps it below copy ── */
+        /* ── Art: clip left edge only so image never bleeds into copy column ── */
         .hp-art {
           display: flex; align-items: center; justify-content: flex-end;
           min-width: 0; position: relative; z-index: 1;
           overflow: visible; background: transparent;
+          clip-path: inset(0 -9999px 0 0);
         }
         .hp-art::after  { display: none !important; content: none !important; }
         .hp-art-inner {
