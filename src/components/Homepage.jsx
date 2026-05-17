@@ -236,31 +236,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-art-inner {
           width: 100%;
           display: flex; align-items: flex-start; justify-content: flex-end;
-          position: relative; isolation: isolate; background: transparent; box-shadow: none;
+          position: relative; background: transparent; box-shadow: none;
           overflow: visible;
           transform: translateX(24px);
         }
         .hp-art-inner::after { display: none !important; content: none !important; }
-        .hp-art-inner::before {
-          content: "";
-          position: absolute;
-          inset: -2%;
-          z-index: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(
-              ellipse at 68% 52%,
-              rgba(255,253,248,1) 0%,
-              rgba(255,253,248,0.98) 58%,
-              rgba(255,253,248,0.78) 78%,
-              rgba(255,253,248,0.20) 92%,
-              transparent 100%
-            );
-        }
         .hp-art img {
           display: block;
-          position: relative;
-          z-index: 1;
           width: clamp(300px, 58vw, 980px);
           max-width: 100%;
           height: auto;
