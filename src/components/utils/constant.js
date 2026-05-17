@@ -11,8 +11,8 @@ export const GOLD        = "#C4963A";
 export const CINZEL      = '"Cinzel", "Times New Roman", serif';
 export const FELL        = '"Lora", Georgia, "Times New Roman", serif';
 
-// Hidden file input — covers the label so iOS/Android can trigger the picker
-export const hiddenFileInput = { position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", overflow: "hidden" };
+// Hidden file input — tiny but pointer-events:auto so iOS file picker fires through the label
+export const hiddenFileInput = { position: "absolute", top: 0, left: 0, width: "1px", height: "1px", opacity: 0, overflow: "hidden" };
 
 // Editor toolbar button styles (dark INK toolbar)
 export const tbBtn     = { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", border: "1px solid rgba(196,150,58,0.35)", fontSize: 11, background: "transparent", color: INK, cursor: "pointer", userSelect: "none", fontFamily: CINZEL, letterSpacing: 2, textTransform: "uppercase", borderRadius: 2 };
