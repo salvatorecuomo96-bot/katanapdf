@@ -248,7 +248,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           height: auto;
           max-height: calc(100dvh - 120px);
           object-fit: contain;
-          background: transparent; box-shadow: none; border: 0;
+          background: transparent;
+          border: 1px solid rgba(139,26,26,0.09);
+          box-shadow: 0 0 0 3px rgba(139,26,26,0.04), 0 0 48px 10px rgba(139,26,26,0.07);
           filter: none; opacity: 1; mix-blend-mode: normal;
         }
 
