@@ -2412,7 +2412,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                 onDismissOCRDone={() => setOcrState(null)}
               />
 
-              <div ref={containerRef} className="main-scroll-area" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflowY: 'auto', overflowX: 'hidden', padding: '40px 60px 25vh 60px', background: "#f0ece3", display: isGridView ? "grid" : "block", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, gap: isGridView ? 20 : undefined, boxSizing: "border-box" }}>
+              <div ref={containerRef} className="main-scroll-area" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'auto', padding: '40px 60px 80px 60px', background: "#f0ece3", display: isGridView ? "grid" : "flex", gridTemplateColumns: isGridView ? "repeat(auto-fill, minmax(240px, 1fr))" : undefined, flexDirection: isGridView ? undefined : "column", alignItems: isGridView ? "start" : "center", gap: isGridView ? 20 : 48, boxSizing: "border-box" }}>
               {visiblePages.map((pg, displayIdx) => {
                 if (!pg) return null;
                 const rotation = rotatedPages[pg.num] || 0;
@@ -2491,16 +2491,14 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                          padding: isGridView ? 4 : 0,
                          boxSizing: "border-box",
                          borderRadius: dragOverImagePage === pg.num ? 4 : 0,
-                         width: isGridView ? undefined : "100%",
-                         display: isGridView ? undefined : "block",
-                         marginBottom: isGridView ? undefined : 48,
                        }}>
+                  <div className="editor-page-shell" style={isGridView ? { overflow: "visible" } : { width: visualW, minWidth: visualW, maxWidth: "none", display: "flex", flexDirection: "column", alignItems: "flex-start", overflow: "visible", flexShrink: 0 }}>
                   {!isGridView && (() => {
                     const tb = { width: 34, height: 34, border: "1px solid rgba(139,26,26,0.25)", borderRadius: 4, background: "transparent", color: LACQUER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0 };
                     const tbActive = { ...tb, background: "rgba(139,26,26,0.12)", outline: "1px solid #8B1A1A", outlineOffset: 1 };
                     const sep = <div style={{ width: 1, height: 20, background: "rgba(139,26,26,0.2)", margin: "0 3px", flexShrink: 0 }} />;
                     return (
-                    <div onClick={e => e.stopPropagation()} style={{ position: "sticky", top: 8, zIndex: 3000, width: "fit-content", maxWidth: "100%", margin: "0 auto 10px", boxSizing: "border-box", display: "flex", alignItems: "center", gap: 3, overflowX: "auto", overflowY: "visible", flexWrap: "nowrap", WebkitOverflowScrolling: "touch", background: "#f0ece3", border: "1px solid rgba(116,86,44,0.22)", borderRadius: 6, padding: "6px 8px", boxShadow: "0 2px 10px rgba(40,24,8,0.10)" }}>
+                    <div className="editor-page-toolbar" onClick={e => e.stopPropagation()} style={{ position: "sticky", top: 8, zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 3, width: visualW, minWidth: visualW, maxWidth: "none", overflowX: "auto", overflowY: "visible", padding: "6px 8px", marginBottom: 10, boxSizing: "border-box", borderRadius: 6, background: "rgba(240,236,227,0.92)", backdropFilter: "blur(8px)", border: "1px solid rgba(116,86,44,0.12)", boxShadow: "none", flexShrink: 0 }}>
 
                       {/* Page label */}
                       <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 700, whiteSpace: "nowrap", padding: "0 4px", flexShrink: 0 }}>{displayIdx + 1}</span>
@@ -2651,7 +2649,6 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                        </div>
                     </div>
                   )}
-                  <div className="editor-page-shell" style={{ width: "100%", maxWidth: "100%", display: "flex", justifyContent: "safe center", overflowX: "auto", overflowY: "visible" }}>
                   <div data-pgwrap={pg.num} onClick={e => {
                     e.stopPropagation();
                     focusedPageNumRef.current = pg.num;
@@ -2666,7 +2663,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                       setSelected(null);
                       setActivePopup(null);
                     }
-                  }} style={{ position: "relative", width: visualW, height: visualH, maxWidth: "100%", boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", overflow: "visible", cursor: isGridView ? "pointer" : "default" }}>
+                  }} style={{ position: "relative", width: visualW, height: visualH, minWidth: visualW, minHeight: visualH, maxWidth: "none", overflow: "visible", flexShrink: 0, boxShadow: "0 4px 6px rgba(0,0,0,0.2), 0 24px 64px rgba(0,0,0,0.6)", cursor: isGridView ? "pointer" : "default" }}>
                     <div style={{
                       position: "absolute",
                       left: "50%",
@@ -2674,7 +2671,8 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                       width: pg.width * scale,
                       height: pg.height * scale,
                       transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                      transformOrigin: "center center"
+                      transformOrigin: "center center",
+                      overflow: "visible"
                     }}>
                       <canvas ref={(el) => { if (el) canvasRefs.current[pg.num] = el; else delete canvasRefs.current[pg.num]; }} style={{ display: "block", width: pg.width * scale, height: pg.height * scale }} />
                       {!isGridView && (

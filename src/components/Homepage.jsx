@@ -249,9 +249,12 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           max-height: calc(100dvh - 120px);
           object-fit: contain;
           background: transparent;
-          border: 1px solid rgba(139,26,26,0.09);
-          box-shadow: 0 0 0 3px rgba(139,26,26,0.04), 0 0 48px 10px rgba(139,26,26,0.07);
-          filter: none; opacity: 1; mix-blend-mode: normal;
+          border: 0 !important;
+          box-shadow: none !important;
+          outline: 0 !important;
+          filter: none;
+          opacity: 1;
+          mix-blend-mode: normal;
         }
 
         /* ── Copyright bar ────────────────────────────── */
@@ -348,7 +351,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             padding: 20px 30px 14px;
             min-height: calc(100dvh - 54px);
           }
-          .hp-what-list { top: auto; bottom: calc(100% + 6px); max-height: 60vh; overflow-y: auto; }
+          .hp-what-list { top: calc(100% + 6px); bottom: auto; max-height: none; overflow: visible; }
           .hp-stage {
             max-width: min(1280px, calc(100vw - 60px));
             grid-template-columns: minmax(340px, 395px) minmax(0, 1fr);
@@ -366,7 +369,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-btn-secondary { padding: 0 18px; }
           .hp-note { font-size: 11px; }
           .hp-art-inner { transform: translateX(34px); }
-          .hp-art img { width: auto; height: calc(100dvh - 90px); max-width: 100%; max-height: 720px; object-fit: contain; }
+          .hp-art img {
+            width: min(64vw, 900px);
+            height: auto;
+            max-width: none;
+            max-height: calc(100dvh - 100px);
+            object-fit: contain;
+            border: 0 !important;
+            box-shadow: none !important;
+            outline: 0 !important;
+          }
         }
 
         /* ── Tablet ───────────────────────────────────── */
