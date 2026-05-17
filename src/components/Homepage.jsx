@@ -174,6 +174,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-what-list {
           position: absolute; top: calc(100% + 6px); left: 0;
           width: 300px; z-index: 200;
+          max-height: 260px; overflow-y: auto;
           border: 1px solid ${LINE}; border-radius: 4px;
           background: rgba(255,253,248,0.97);
           box-shadow: 0 6px 22px rgba(40,24,8,0.10);
@@ -223,11 +224,14 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         }
         .hp-what-item:hover .hp-what-tooltip { visibility: visible; opacity: 1; }
 
-        /* ── Art: larger, shifted right/down, subtle perimeter fade only ── */
+        /* ── Copy: sits above art layer so samurai can never touch buttons ── */
+        .hp-copy { position: relative; z-index: 2; }
+
+        /* ── Art: clipped to its column — samurai cannot bleed left ── */
         .hp-art {
           display: flex; align-items: center; justify-content: flex-end;
-          min-width: 0; position: relative;
-          overflow: visible; background: transparent;
+          min-width: 0; position: relative; z-index: 1;
+          overflow: hidden; background: transparent;
         }
         .hp-art::after  { display: none !important; content: none !important; }
         .hp-art-inner {

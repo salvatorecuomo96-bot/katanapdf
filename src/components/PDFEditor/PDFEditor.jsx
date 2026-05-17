@@ -12,6 +12,7 @@ import EditorHeader from "./EditorHeader";
 import EditorToolbar from "./EditorToolbar";
 import FloatingShape from "./FloatingShape";
 import DownloadSupportPrompt from "./DownloadSupportPrompt";
+import HexColorInput from "./HexColorInput";
 import { GridIcon, RotateIcon } from "./PageSidebar";
 import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../utils/pdfLoadUtils";
 import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
@@ -2545,11 +2546,8 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                               {DRAW_COLORS.map(c => (
                                 <button key={c} onClick={() => { setDrawColor(c); setDrawPanelOpen(false); }} title={c} style={{ width: 26, height: 26, background: c, border: drawColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
                               ))}
-                              <label title="Custom color" style={{ width: 26, height: 26, border: `1px solid rgba(0,0,0,0.2)`, borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 0 0-20 0"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                                <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)} onBlur={() => setDrawPanelOpen(false)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                              </label>
                             </div>
+                            <HexColorInput value={drawColor} onChange={setDrawColor} onDone={() => setDrawPanelOpen(false)} swatchSize={26} />
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                               <span style={{ fontSize: 9, color: LACQUER, fontFamily: CINZEL, letterSpacing: 1 }}>SIZE</span>
                               <select value={FB_SIZES.includes(drawWidth) ? drawWidth : FB_SIZES.reduce((a, b) => Math.abs(b - drawWidth) < Math.abs(a - drawWidth) ? b : a)} onChange={e => setDrawWidth(+e.target.value)} style={{ flex: 1, fontSize: 11, background: "#fff", border: `1px solid ${GOLD}`, borderRadius: 2, padding: "1px 2px", height: 23 }}>
@@ -2572,11 +2570,8 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                               {DRAW_COLORS.map(c => (
                                 <button key={c} type="button" onClick={e => { e.stopPropagation(); setShapePanelColor(c); }} style={{ width: 22, height: 22, background: c, border: shapePanelColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
                               ))}
-                              <label title="Custom" style={{ width: 22, height: 22, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                <input type="color" value={shapePanelColor} onChange={e => { e.stopPropagation(); setShapePanelColor(e.target.value); }} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                              </label>
                             </div>
+                            <HexColorInput value={shapePanelColor} onChange={v => { setShapePanelColor(v); }} />
                             <label style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: CINZEL, fontSize: 10, color: LACQUER, cursor: "pointer", letterSpacing: 2 }}>
                               <input type="checkbox" checked={shapePanelFill} onChange={e => setShapePanelFill(e.target.checked)} style={{ accentColor: LACQUER }} />
                               FILLED

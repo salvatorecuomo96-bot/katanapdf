@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CINZEL, DRAW_COLORS, FELL, GOLD, INK, LACQUER, pageBtn, PARCHMENT } from "../utils/constant";
+import HexColorInput from "./HexColorInput";
 
 const LINE = "rgba(116,86,44,0.18)";
 
@@ -214,16 +215,14 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
                 style={{ width: 32, height: 32, borderRadius: 4, background: color, border: "1.5px solid rgba(0,0,0,0.3)", cursor: "pointer", padding: 0, display: "block" }}
               />
               {sigColorOpen && (
-                <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
-                  {DRAW_COLORS.map(c => (
-                    <button key={c} type="button" onClick={() => { setColor(c); setSigColorOpen(false); }}
-                      style={{ width: 22, height: 22, background: c, border: color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
-                  ))}
-                  <label title="Custom" style={{ width: 22, height: 22, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                    <input type="color" value={color} onChange={e => setColor(e.target.value)} onBlur={() => setSigColorOpen(false)}
-                      style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                  </label>
+                <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, display: "flex", flexDirection: "column", background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
+                    {DRAW_COLORS.map(c => (
+                      <button key={c} type="button" onClick={() => { setColor(c); setSigColorOpen(false); }}
+                        style={{ width: 22, height: 22, background: c, border: color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                    ))}
+                  </div>
+                  <HexColorInput value={color} onChange={setColor} onDone={() => setSigColorOpen(false)} swatchSize={22} />
                 </div>
               )}
             </div>

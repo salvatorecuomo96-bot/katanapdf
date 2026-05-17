@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { INK, LACQUER, GOLD, PARCHMENT, FB_SIZES, FONT_FAMILIES, SCALE, CINZEL, DRAW_COLORS } from "../utils/constant";
+import HexColorInput from "./HexColorInput";
 
 const RotateIcon = () => (
   <svg
@@ -457,18 +458,14 @@ export default function EditPopup({
               style={{ width: 18, height: 18, borderRadius: "50%", background: format.color, border: "2px solid rgba(116,86,44,0.4)", cursor: "pointer", padding: 0, display: "block" }}
             />
             {openPanel === 'textColor' && (
-              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
-                {DRAW_COLORS.map(c => (
-                  <button key={c} type="button" onClick={e => { e.stopPropagation(); setFormat(prev => ({ ...prev, color: c })); setOpenPanel(null); refocusText(); }}
-                    style={{ width: 20, height: 20, background: c, border: format.color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
-                ))}
-                <label title="Custom" style={{ width: 20, height: 20, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                  <input type="color" value={format.color}
-                    onChange={e => { setFormat(prev => ({ ...prev, color: e.target.value })); }}
-                    onBlur={() => { setOpenPanel(null); refocusText(); }}
-                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                </label>
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
+                  {DRAW_COLORS.map(c => (
+                    <button key={c} type="button" onClick={e => { e.stopPropagation(); setFormat(prev => ({ ...prev, color: c })); setOpenPanel(null); refocusText(); }}
+                      style={{ width: 20, height: 20, background: c, border: format.color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                  ))}
+                </div>
+                <HexColorInput value={format.color} onChange={v => setFormat(prev => ({ ...prev, color: v }))} onDone={() => { setOpenPanel(null); refocusText(); }} />
               </div>
             )}
           </div>
@@ -487,18 +484,14 @@ export default function EditPopup({
               }}
             />
             {openPanel === 'bgColor' && (
-              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3, background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
-                {DRAW_COLORS.map(c => (
-                  <button key={c} type="button" onClick={e => { e.stopPropagation(); setFormat(prev => ({ ...prev, bgColor: c })); setOpenPanel(null); refocusText(); }}
-                    style={{ width: 20, height: 20, background: c, border: format.bgColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
-                ))}
-                <label title="Custom" style={{ width: 20, height: 20, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                  <input type="color" value={format.bgColor === "transparent" ? "#ffffff" : format.bgColor || "#ffffff"}
-                    onChange={e => { setFormat(prev => ({ ...prev, bgColor: e.target.value })); }}
-                    onBlur={() => { setOpenPanel(null); refocusText(); }}
-                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                </label>
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
+                  {DRAW_COLORS.map(c => (
+                    <button key={c} type="button" onClick={e => { e.stopPropagation(); setFormat(prev => ({ ...prev, bgColor: c })); setOpenPanel(null); refocusText(); }}
+                      style={{ width: 20, height: 20, background: c, border: format.bgColor === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
+                  ))}
+                </div>
+                <HexColorInput value={format.bgColor === "transparent" ? "#ffffff" : format.bgColor || "#ffffff"} onChange={v => setFormat(prev => ({ ...prev, bgColor: v }))} onDone={() => { setOpenPanel(null); refocusText(); }} />
               </div>
             )}
           </div>
