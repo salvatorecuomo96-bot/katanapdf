@@ -294,18 +294,37 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
+        /* Desktop laptop: 14-inch screens with browser chrome/taskbar */
+        @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
+          .hp-hero {
+            padding: clamp(10px, 2vh, 22px) clamp(28px, 4vw, 52px) clamp(6px, 1vh, 12px);
+            min-height: 0;
+          }
+          .hp-stage {
+            max-width: min(1180px, calc(100vw - 72px));
+            grid-template-columns: minmax(320px, 370px) minmax(560px, 1fr);
+            column-gap: clamp(16px, 2vw, 34px);
+            align-items: center;
+          }
+          .hp-copy { padding-top: 0; }
+          .hp-h1 { font-size: clamp(34px, 3.3vw, 48px); line-height: 1.04; margin-bottom: 12px; }
+          .hp-sub { font-size: 14px; line-height: 1.55; margin-bottom: 18px; }
+          .hp-art { justify-content: center; align-items: center; }
+          .hp-art img { width: clamp(560px, 54vw, 760px); max-height: calc(100dvh - 150px); }
+        }
+
         /* ── Short-screen: compact layout so list fits without scrolling ── */
         @media (max-height: 840px) and (min-width: 961px) {
-          .hp-hero { padding: clamp(8px,1.5vh,16px) clamp(20px,3vw,48px) clamp(4px,1vh,10px); }
+          .hp-hero { padding: clamp(8px,1.5vh,14px) clamp(20px,3vw,48px) clamp(4px,1vh,8px); min-height: 0; }
           .hp-eyebrow { margin-bottom: 8px; }
-          .hp-h1 { font-size: clamp(22px, 2.6vw, 40px); margin: 0 0 10px; line-height: 1.04; }
-          .hp-sub { margin: 0 0 14px; font-size: 13px; }
+          .hp-h1 { font-size: clamp(26px, 2.8vw, 44px); margin: 0 0 10px; line-height: 1.04; }
+          .hp-sub { margin: 0 0 14px; font-size: 13.5px; }
           .hp-actions { margin-bottom: 8px; gap: 8px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 36px; }
-          .hp-note { font-size: 11px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 38px; }
+          .hp-note { font-size: 12px; }
           .hp-what { margin-top: 8px; }
-          .hp-what-item { padding: 5px 12px; }
-          .hp-art img { max-height: min(78vh, 700px); }
+          .hp-what-item { padding: 6px 12px; }
+          .hp-art img { max-height: min(80vh, 720px); }
         }
 
         /* ── Short-screen (720p) ─────────────────────── */

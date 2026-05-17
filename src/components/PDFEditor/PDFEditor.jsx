@@ -428,6 +428,8 @@ export default function PDFEditor() {
   }
 
   async function handleActivateOCR() {
+    setSelectMode(false);
+    setAreaSelection(null);
     const { pages: livePages, deletedPages: liveDel, pageOrder: liveOrder } = liveStateRef.current;
     const activePages = liveOrder
       .map(i => livePages[i])
