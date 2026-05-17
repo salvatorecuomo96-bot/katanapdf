@@ -1293,12 +1293,14 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
   function handleDrawStart(e, pgNum, scale) {
     if (!drawMode) return;
     e.preventDefault();
+    setDrawPanelOpen(false);
     isDrawingRef.current = true;
     const canvas = drawCanvasRefs.current[pgNum];
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
+    const touch = e.touches ? e.touches[0] : e;
+    const x = (touch.clientX - rect.left) / scale;
+    const y = (touch.clientY - rect.top) / scale;
     const ctx = canvas.getContext('2d');
     const isHL = drawTool === 'highlighter';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1318,8 +1320,9 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     const stroke = currentStrokeRef.current;
     const { ctx, canvas } = stroke;
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
+    const touch = e.touches ? e.touches[0] : e;
+    const x = (touch.clientX - rect.left) / scale;
+    const y = (touch.clientY - rect.top) / scale;
     if (stroke.isHighlighter) {
       stroke.points.push({x, y});
       // Redraw entire path at once so semi-transparency doesn't compound
@@ -2685,6 +2688,10 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                           onMouseMove={e => handleDrawMove(e, pg.num, scale)}
                           onMouseUp={() => handleDrawEnd(pg.num, pg)}
                           onMouseLeave={() => handleDrawEnd(pg.num, pg)}
+                          onTouchStart={e => handleDrawStart(e, pg.num, scale)}
+                          onTouchMove={e => handleDrawMove(e, pg.num, scale)}
+                          onTouchEnd={() => handleDrawEnd(pg.num, pg)}
+                          onTouchCancel={() => handleDrawEnd(pg.num, pg)}
                         />
                       )}
                       {/* Area selection overlay */}

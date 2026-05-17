@@ -285,16 +285,16 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-nav a { font-size: 10px; letter-spacing: 2.8px; padding: 0 17px; }
           .hp-hero {
             min-height: calc(100dvh - 72px);
-            padding: clamp(42px,5vh,86px) clamp(90px,7vw,170px) clamp(42px,5vh,78px);
-            align-items: center; justify-content: center;
+            padding: clamp(60px,10vh,140px) clamp(90px,7vw,170px) clamp(42px,5vh,78px);
+            align-items: flex-start; justify-content: center;
           }
           .hp-stage {
             max-width: min(1880px, calc(100vw - 220px));
             grid-template-columns: minmax(520px,620px) minmax(0,1fr);
             column-gap: clamp(36px,2.5vw,72px);
-            align-items: center;
+            align-items: flex-start;
           }
-          .hp-copy { max-width: 600px; transform: translateY(-32px); }
+          .hp-copy { max-width: 600px; }
           .hp-eyebrow { font-size: 11px; letter-spacing: 4px; margin-bottom: 20px; }
           .hp-eyebrow::before, .hp-eyebrow::after { width: 28px; }
           .hp-h1 { font-size: clamp(68px,3.6vw,92px); line-height: 1.02; margin-bottom: 22px; letter-spacing: -1.2px; }
@@ -351,15 +351,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             align-items: flex-start;
           }
           .hp-copy { max-width: 395px; }
-          .hp-eyebrow { margin-bottom: 9px; font-size: 9px; letter-spacing: 3px; }
-          .hp-h1 { font-size: clamp(38px, 3.7vw, 50px); line-height: 1.04; margin-bottom: 12px; }
-          .hp-sub { font-size: 14px; line-height: 1.52; margin-bottom: 12px; max-width: 380px; }
-          .hp-actions { margin-bottom: 6px; gap: 8px; }
-          .hp-what { margin-top: 10px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 38px; font-size: 9px; letter-spacing: 1.8px; }
-          .hp-btn-primary  { padding: 0 24px; }
-          .hp-btn-secondary { padding: 0 20px; }
-          .hp-note { font-size: 12px; }
+          .hp-eyebrow { margin-bottom: 6px; font-size: 9px; letter-spacing: 3px; }
+          .hp-h1 { font-size: clamp(28px, 3vw, 38px); line-height: 1.03; margin-bottom: 8px; }
+          .hp-sub { font-size: 13px; line-height: 1.48; margin-bottom: 8px; max-width: 360px; }
+          .hp-actions { margin-bottom: 5px; gap: 7px; }
+          .hp-what { margin-top: 8px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 34px; font-size: 9px; letter-spacing: 1.8px; }
+          .hp-btn-primary  { padding: 0 22px; }
+          .hp-btn-secondary { padding: 0 18px; }
+          .hp-note { font-size: 11px; }
           .hp-art-inner { transform: translateX(34px); }
           .hp-art img { width: clamp(300px, 63vw, 980px); max-width: 100%; max-height: calc(100dvh - 90px); }
           .hp-what-list { top: auto; bottom: calc(100% + 6px); }
