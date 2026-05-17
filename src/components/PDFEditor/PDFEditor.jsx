@@ -25,48 +25,8 @@ import "./PDFEditor.css";
 let floatingIdCounter = 0;
 
 
-export default function PDFEditor() {
+export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate }) {
   const [pdfBytes, setPdfBytes] = useState(null);
-  const [route, setRoute] = useState(() => {
-    const h = (typeof window !== "undefined" && window.location.hash.slice(1)) || "home";
-    return ["privacy", "terms", "about", "faqs"].includes(h) ? h : "home";
-  });
-  useEffect(() => {
-    const onHash = () => {
-      const h = window.location.hash.slice(1) || "home";
-      setRoute(["privacy", "terms", "about"].includes(h) ? h : "home");
-      window.scrollTo(0, 0);
-    };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-
-  // Dynamic title + meta description per hash route
-  useEffect(() => {
-    const PAGE_META = {
-      "":              { title: "katanapdf — Free PDF Editor Online",         desc: "Edit, merge, sign, annotate and reorder PDF pages directly in your browser — no upload, no account." },
-      "merge":         { title: "Merge PDF Files Free – katanapdf",           desc: "Combine multiple PDF files into one instantly in your browser. No upload, no account required." },
-      "reorder":       { title: "Reorder PDF Pages Free – katanapdf",         desc: "Drag and drop to rearrange pages in your PDF for free, right in your browser." },
-      "sign":          { title: "Sign PDF Online Free – katanapdf",           desc: "Add your handwritten signature to any PDF in seconds. No upload, no account." },
-      "image-to-pdf":  { title: "Image to PDF Converter – katanapdf",        desc: "Convert JPG or PNG images to PDF instantly in your browser. Free, no upload needed." },
-      "draw":          { title: "Draw & Annotate PDF Free – katanapdf",      desc: "Freehand draw, highlight and annotate your PDF directly in the browser. Free, no upload." },
-      "shapes":        { title: "Add Shapes to PDF Free – katanapdf",        desc: "Add circles, rectangles and shapes to your PDF for free, right in your browser." },
-      "about":         { title: "About – katanapdf",                          desc: "Learn about katanapdf, the free browser-based PDF editor with no upload and no account." },
-      "privacy":       { title: "Privacy Policy – katanapdf",                 desc: "katanapdf privacy policy. Your files never leave your browser." },
-      "terms":         { title: "Terms of Service – katanapdf",               desc: "katanapdf terms of service." },
-      "faqs":          { title: "FAQs – katanapdf",                           desc: "Frequently asked questions about katanapdf, the free browser-based PDF editor." },
-    };
-    const update = () => {
-      const h = window.location.hash.slice(1) || "";
-      const meta = PAGE_META[h] || PAGE_META[""];
-      document.title = meta.title;
-      const el = document.querySelector('meta[name="description"]');
-      if (el) el.setAttribute("content", meta.desc);
-    };
-    update();
-    window.addEventListener("hashchange", update);
-    return () => window.removeEventListener("hashchange", update);
-  }, []);
 
   const [pages, setPages] = useState([]);
   // Phase 6: pageOrder is an array of indices into `pages[]` describing the
@@ -149,6 +109,11 @@ export default function PDFEditor() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   // Close sidebar by default only on actual phone screens
   useEffect(() => { if (window.innerWidth < 480) setSidebarOpen(false); }, []);
+
+  useEffect(() => {
+    if (!pendingFile) return;
+    loadPdfFromFile(pendingFile).catch(console.error).finally(() => onPendingFileConsumed?.());
+  }, [pendingFile]);
 
   async function handleFile(e) {
     const input = e.target;
@@ -1080,7 +1045,7 @@ export default function PDFEditor() {
       fontSize: 14, fontFamily: "Arial, sans-serif",
       isBold: false, isItalic: false, color: "#000000",
       bgColor: "#ffffff",
-      angle: 0, // 0 means horizontal on screen (FloatingBox.jsx handles counter-rotation)
+      angle: 0,
     }]);
     setSelected(id); // auto-select so the textarea focuses immediately
   }
@@ -2231,6 +2196,7 @@ export default function PDFEditor() {
           onFile={handleFile}
           onDropFile={handleDroppedFile}
           onCreateBlank={createBlankPdf}
+          navigate={navigate}
         />
       ) : (
         <>

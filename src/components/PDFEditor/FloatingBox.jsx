@@ -73,7 +73,7 @@ export default function FloatingBox({
     else onCommit();
   };
 
-  const angle = (fb.angle || 0) - rotation;
+  const angle = fb.angle || 0;
 
   const text = fb.text || "";
   const lines = text.split(/\r?\n/);

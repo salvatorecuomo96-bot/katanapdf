@@ -1,12 +1,7 @@
 import { renderToString } from "react-dom/server";
-import Homepage from "./components/Homepage";
+import App from "./App.jsx";
+export { SEO_PAGES } from "./seo.js";
 
-export function render() {
-  return renderToString(
-    <Homepage
-      onFile={() => {}}
-      onDropFile={() => {}}
-      onCreateBlank={() => {}}
-    />
-  );
+export function render(pathname = "/") {
+  return renderToString(<App initialPath={pathname} />);
 }

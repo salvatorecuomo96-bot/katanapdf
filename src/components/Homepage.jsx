@@ -7,33 +7,28 @@ const INK   = "#18130d";
 const MUTED = "rgba(24,19,13,0.58)";
 const LINE  = "rgba(116,86,44,0.18)";
 
-function use4KZoom() {
-  if (typeof window === "undefined") return 1;
-  const dpr = window.devicePixelRatio || 1;
-  return (window.screen?.width || window.innerWidth) * dpr >= 2560 ? 1.3 : 1;
-}
-
 const FEATURES = [
   { icon: "✎", label: "Edit Text",       detail: "Click any text block to edit it in place. Font, size and colour are pre-filled." },
-  { icon: "＋", label: "Add Text",       detail: "Drop new text boxes anywhere on the page at any size." },
-  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
-  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L18 10 L12 22 L6 10 Z"/><line x1="12" y1="22" x2="12" y2="10" strokeWidth="1.4"/><line x1="6" y1="10" x2="18" y2="10" strokeWidth="1" opacity="0.5"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
-  { icon: "✏", label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
+  { icon: "T", label: "Add Text",         detail: "Drop new text boxes anywhere on the page at any size." },
+  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
+  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{transform:"rotate(180deg)"}}><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
+  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>), label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
+  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="5"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>), label: "Shapes",          detail: "Add circles, squares, lines and arrows to mark up any page." },
   { icon: "⇄", label: "Merge & Split",  detail: "Combine multiple PDFs or split a document into separate files." },
   { icon: "⊞", label: "Reorder Pages",  detail: "Drag pages into any order, rotate or delete them instantly." },
 ];
 
 const NAV = [
-  ["About",   "#about"],
-  ["FAQs",    "#faqs"],
-  ["Privacy", "#privacy"],
-  ["Terms",   "#terms"],
+  ["About",   "/about"],
+  ["FAQs",    "/faqs"],
+  ["Privacy", "/privacy"],
+  ["Terms",   "/terms"],
 ];
 
-export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
+export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }) {
+  const nav = navigate || ((href) => { window.location.href = href; });
   const [dragOver, setDragOver] = useState(false);
   const [featOpen, setFeatOpen] = useState(false);
-  const zoom4k = use4KZoom();
 
   const onDragOver  = e => { e.preventDefault(); if (!dragOver) setDragOver(true); };
   const onDragLeave = e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false); };
@@ -45,7 +40,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      style={{ height: `calc(100dvh / ${zoom4k})`, minHeight: 520, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL, zoom: zoom4k }}
+      style={{ height: "100dvh", minHeight: 560, overflow: "hidden", display: "flex", flexDirection: "column", color: INK, fontFamily: FELL }}
     >
       <style>{`
         .hp {
@@ -294,42 +289,114 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           box-shadow: 0 14px 32px rgba(40,24,8,0.12);
         }
 
-        /* Desktop laptop: 14-inch screens with browser chrome/taskbar */
-        @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
-          .hp-hero {
-            padding: clamp(10px, 2vh, 22px) clamp(28px, 4vw, 52px) clamp(6px, 1vh, 12px);
-            min-height: 0;
-          }
-          .hp-stage {
-            max-width: min(1180px, calc(100vw - 72px));
-            grid-template-columns: minmax(320px, 370px) minmax(560px, 1fr);
-            column-gap: clamp(16px, 2vw, 34px);
-            align-items: center;
-          }
-          .hp-copy { padding-top: 0; }
-          .hp-h1 { font-size: clamp(34px, 3.3vw, 48px); line-height: 1.04; margin-bottom: 12px; }
-          .hp-sub { font-size: 14px; line-height: 1.55; margin-bottom: 18px; }
-          .hp-art { justify-content: center; align-items: center; }
-          .hp-art img { width: clamp(560px, 54vw, 760px); max-height: calc(100dvh - 150px); }
-        }
-
         /* ── Short-screen: compact layout so list fits without scrolling ── */
         @media (max-height: 840px) and (min-width: 961px) {
-          .hp-hero { padding: clamp(8px,1.5vh,14px) clamp(20px,3vw,48px) clamp(4px,1vh,8px); min-height: 0; }
-          .hp-eyebrow { margin-bottom: 8px; }
-          .hp-h1 { font-size: clamp(26px, 2.8vw, 44px); margin: 0 0 10px; line-height: 1.04; }
-          .hp-sub { margin: 0 0 14px; font-size: 13.5px; }
-          .hp-actions { margin-bottom: 8px; gap: 8px; }
+          .hp-hero { padding: 10px clamp(24px, 3vw, 48px) 6px; }
+          .hp-eyebrow { margin-bottom: 9px; }
+          .hp-h1 { font-size: clamp(32px, 3vw, 46px); margin-bottom: 11px; line-height: 1.04; }
+          .hp-sub { margin-bottom: 16px; font-size: 14px; line-height: 1.5; }
+          .hp-actions { margin-bottom: 9px; gap: 8px; }
           .hp-btn-primary, .hp-btn-secondary { height: 38px; }
           .hp-note { font-size: 12px; }
-          .hp-what { margin-top: 8px; }
+          .hp-what { margin-top: 10px; }
           .hp-what-item { padding: 6px 12px; }
-          .hp-art img { max-height: min(80vh, 720px); }
+          .hp-art img { max-height: calc(100dvh - 130px); }
         }
 
         /* ── Short-screen (720p) ─────────────────────── */
         @media (max-height: 780px) {
-          .hp-art img { max-height: min(80vh, 680px); }
+          .hp-art img { max-height: calc(100dvh - 120px); }
+        }
+
+        /* Desktop laptop: 14-inch screens with browser chrome/taskbar */
+        @media (min-width: 961px) and (max-width: 1500px) and (max-height: 900px) {
+          .hp-header {
+            height: 54px;
+          }
+
+          .hp-hero {
+            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 28px 4px;
+          }
+
+          .hp-stage {
+            height: 100%;
+            width: 100%;
+            max-width: min(1220px, calc(100vw - 56px));
+            grid-template-columns: minmax(340px, 390px) minmax(0, 1fr);
+            column-gap: 0;
+            align-items: center;
+          }
+
+          .hp-copy {
+            max-width: 390px;
+            padding-top: 0;
+            transform: translateY(-8px);
+          }
+
+          .hp-eyebrow {
+            margin-bottom: 9px;
+            font-size: 9px;
+            letter-spacing: 3px;
+          }
+
+          .hp-h1 {
+            font-size: clamp(38px, 3.7vw, 50px);
+            line-height: 1.04;
+            margin-bottom: 12px;
+          }
+
+          .hp-sub {
+            font-size: 14px;
+            line-height: 1.52;
+            margin-bottom: 17px;
+            max-width: 380px;
+          }
+
+          .hp-actions {
+            margin-bottom: 10px;
+            gap: 8px;
+          }
+
+          .hp-btn-primary,
+          .hp-btn-secondary {
+            height: 38px;
+            font-size: 9px;
+            letter-spacing: 1.8px;
+          }
+
+          .hp-btn-primary {
+            padding: 0 24px;
+          }
+
+          .hp-btn-secondary {
+            padding: 0 20px;
+          }
+
+          .hp-note {
+            font-size: 12px;
+          }
+
+          .hp-what {
+            margin-top: 12px;
+          }
+
+          .hp-art {
+            justify-content: center;
+            align-items: flex-start;
+            overflow: visible;
+          }
+
+          .hp-art-inner {
+            transform: translateX(-56px);
+          }
+
+          .hp-art img {
+            width: clamp(700px, 60vw, 820px);
+            max-height: calc(100dvh - 118px);
+          }
         }
 
         /* ── Responsive: tablet ─────────────────────── */
@@ -365,10 +432,10 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
       {/* ── Header ── */}
       <header className="hp-header">
         <div className="hp-header-spacer" />
-        <img src="/logo.png" alt="katanapdf" className="hp-logo" />
+        <img src="/logo.png" alt="katanapdf — Free PDF Editor" className="hp-logo" />
         <nav className="hp-nav">
           {NAV.map(([label, href]) => (
-            <a key={label} href={href}>{label}</a>
+            <a key={label} href={href} onClick={e => { e.preventDefault(); nav(href); }}>{label}</a>
           ))}
         </nav>
       </header>
@@ -381,7 +448,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
           <div className="hp-eyebrow">100% Free · No Account · No Upload</div>
           <h1 className="hp-h1">
             Free PDF Editor.<br />
-            <em>Runs in your Browser<em>.</em></em>
+            <em>Runs in your Browser.</em>
           </h1>
           <p className="hp-sub">
             Edit, annotate, sign, merge and split PDFs directly in your browser. No upload, no account, no watermark.
@@ -438,7 +505,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank }) {
       </div>
       </section>
 
-      <Footer />
+      <Footer navigate={nav} />
     </div>
   );
 }
