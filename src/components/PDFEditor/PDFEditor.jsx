@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PDFDocument, degrees, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import Homepage from "../Homepage";
-import StaticPage from "../StaticPage";
 import EditPopup from "./EditPopup";
 import FloatingBox from "./FloatingBox";
 import FloatingImage from "./FloatingImage";
@@ -2189,9 +2188,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     <div className={`editor-container ${isNoFile ? "editor-relative" : "editor-fixed"}`}
          style={{ userSelect: dragging ? "none" : "auto" }}
          onClick={handleBgClick}>
-      {route !== "home" ? (
-        <StaticPage route={route} />
-      ) : isNoFile ? (
+      {isNoFile ? (
         <Homepage
           onFile={handleFile}
           onDropFile={handleDroppedFile}
