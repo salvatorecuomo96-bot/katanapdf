@@ -2492,16 +2492,14 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                          boxSizing: "border-box",
                          borderRadius: dragOverImagePage === pg.num ? 4 : 0,
                          width: isGridView ? undefined : "100%",
-                         display: isGridView ? undefined : "flex",
-                         flexDirection: isGridView ? undefined : "column",
-                         alignItems: isGridView ? undefined : "center",
+                         display: isGridView ? undefined : "block",
                        }}>
                   {!isGridView && (() => {
                     const tb = { width: 34, height: 34, border: "1px solid rgba(139,26,26,0.25)", borderRadius: 4, background: "transparent", color: LACQUER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0 };
                     const tbActive = { ...tb, background: "rgba(139,26,26,0.12)", outline: "1px solid #8B1A1A", outlineOffset: 1 };
                     const sep = <div style={{ width: 1, height: 20, background: "rgba(139,26,26,0.2)", margin: "0 3px", flexShrink: 0 }} />;
                     return (
-                    <div onClick={e => e.stopPropagation()} style={{ position: "sticky", top: 8, zIndex: 3000, alignSelf: "stretch", width: "auto", maxWidth: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", gap: 3, marginBottom: 10, overflowX: "auto", overflowY: "visible", flexWrap: "nowrap", WebkitOverflowScrolling: "touch", background: "rgba(240,236,227,0.92)", backdropFilter: "blur(6px)", borderRadius: 6, padding: "6px 8px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+                    <div onClick={e => e.stopPropagation()} style={{ position: "sticky", top: 8, zIndex: 3000, width: "fit-content", maxWidth: "100%", margin: "0 auto 10px", boxSizing: "border-box", display: "flex", alignItems: "center", gap: 3, overflowX: "auto", overflowY: "visible", flexWrap: "nowrap", WebkitOverflowScrolling: "touch", background: "rgba(248,244,232,0.98)", backdropFilter: "blur(8px)", borderRadius: 6, padding: "6px 8px", boxShadow: "0 2px 10px rgba(40,24,8,0.12)" }}>
 
                       {/* Page label */}
                       <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 700, whiteSpace: "nowrap", padding: "0 4px", flexShrink: 0 }}>{displayIdx + 1}</span>
@@ -2652,7 +2650,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
                        </div>
                     </div>
                   )}
-                  <div className="editor-page-shell" style={{ width: "100%", maxWidth: "100%", display: "flex", justifyContent: "center", overflowX: "auto", overflowY: "visible" }}>
+                  <div className="editor-page-shell" style={{ width: "100%", maxWidth: "100%", display: "flex", justifyContent: "safe center", overflowX: "auto", overflowY: "visible" }}>
                   <div data-pgwrap={pg.num} onClick={e => {
                     e.stopPropagation();
                     focusedPageNumRef.current = pg.num;
