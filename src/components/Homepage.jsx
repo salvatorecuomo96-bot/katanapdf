@@ -84,7 +84,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           width: 100%; max-width: 1300px;
           display: grid;
           grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
-          column-gap: clamp(48px, 5vw, 80px);
+          column-gap: clamp(28px, 3.5vw, 56px);
           align-items: flex-start;
         }
 
@@ -301,7 +301,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-stage {
             max-width: min(1280px, calc(100vw - 60px));
             grid-template-columns: minmax(340px, 395px) minmax(0, 1fr);
-            column-gap: clamp(48px, 4.5vw, 72px);
+            column-gap: clamp(28px, 3vw, 48px);
             align-items: flex-start;
           }
           .hp-copy { max-width: 395px; }
@@ -327,8 +327,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-art-inner { transform: none; }
         }
 
-        /* ── Mobile trust strip (hidden on desktop/tablet) ── */
+        /* ── Mobile trust strip + scroll cue (hidden on desktop/tablet) ── */
         .hp-mobile-trust { display: none; }
+        .hp-scroll-cue { display: none; }
+        @keyframes hp-cue-bounce {
+          0%, 100% { transform: translateY(0); opacity: 0.45; }
+          50%       { transform: translateY(5px); opacity: 0.75; }
+        }
 
         /* ── Mobile ───────────────────────────────────── */
         @media (max-width: 580px) {
@@ -440,6 +445,15 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             pointer-events: none;
           }
           .hp-what-tooltip::after { display: none !important; }
+
+          /* Scroll cue */
+          .hp-scroll-cue {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            margin-top: 26px; color: rgba(24,19,13,0.38);
+            font-family: ${CINZEL}; font-size: 7px; letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: hp-cue-bounce 2.2s ease-in-out infinite;
+          }
         }
 
         /* ── Very small phones ────────────────────────── */
@@ -497,6 +511,13 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
               <span>No upload</span>
               <span>No account</span>
               <span>No watermark</span>
+            </div>
+
+            <div className="hp-scroll-cue" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              scroll for features
             </div>
 
             <div className="hp-what">
