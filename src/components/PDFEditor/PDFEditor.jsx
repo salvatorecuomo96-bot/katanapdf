@@ -179,6 +179,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     setTextBlocks(words);
     setFloatingBoxes([]);
     setFloatingImages([]);
+    setFloatingShapes([]);
     setHistory([]);
     setActivePopup(null);
     setSelected(null);
@@ -737,6 +738,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     setTextBlocks(snap.textBlocks);
     setFloatingBoxes(snap.floatingBoxes);
     setFloatingImages(snap.floatingImages);
+    setFloatingShapes(snap.floatingShapes || []);
     setHistory(snap.history);
     setFileName(snap.fileName);
     setZoom(snap.zoom);
@@ -770,6 +772,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     setTextBlocks({});
     setFloatingBoxes([]);
     setFloatingImages([]);
+    setFloatingShapes([]);
     setHistory([]);
     setFileName("");
     setPdfBytes(null);
@@ -807,6 +810,7 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
           setTextBlocks({});
           setFloatingBoxes([]);
           setFloatingImages([]);
+          setFloatingShapes([]);
           setHistory([]);
           setFileName("");
           setPdfBytes(null);

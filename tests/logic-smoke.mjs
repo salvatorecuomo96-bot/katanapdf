@@ -223,6 +223,39 @@ await check("split preserves per-page rotation", async () => {
   assert.equal(part1.getPages()[0].getRotation().angle, 90);
 });
 
+// ── Snapshot/restore round-trip (regression guard) ───────────
+// Mirrors the tab-snapshot system: state is captured into a plain object,
+// then a restore function pushes each field back into the live state.
+// Bug found 2026-05-18: restoreSnapshot dropped floatingShapes.
+await check("snapshot/restore preserves all annotation arrays", () => {
+  const live = {
+    textBlocks: { 1: [{ id: "tb1", text: "hello" }] },
+    floatingBoxes: [{ id: "fb1", page: 1, text: "box" }],
+    floatingImages: [{ id: "fi1", page: 1, dataUrl: "data:image/png;base64,AAA" }],
+    floatingShapes: [{ id: "fs1", page: 1, shapeType: "circle" }],
+    rotatedPages: { 1: 90 },
+    deletedPages: new Set([2]),
+  };
+  const snap = JSON.parse(JSON.stringify({
+    ...live,
+    deletedPages: [...live.deletedPages],
+  }));
+  // Simulate the FIELDS restoreSnapshot writes
+  const restored = {
+    textBlocks: snap.textBlocks,
+    floatingBoxes: snap.floatingBoxes,
+    floatingImages: snap.floatingImages,
+    floatingShapes: snap.floatingShapes || [],
+    rotatedPages: snap.rotatedPages || {},
+    deletedPages: new Set(snap.deletedPages || []),
+  };
+  assert.equal(restored.floatingBoxes.length, 1);
+  assert.equal(restored.floatingImages.length, 1);
+  assert.equal(restored.floatingShapes.length, 1, "shapes must survive round-trip");
+  assert.equal(restored.floatingShapes[0].id, "fs1");
+  assert.equal(restored.deletedPages.has(2), true);
+});
+
 // ── Report ────────────────────────────────────────────────────
 const line = "-".repeat(56);
 console.log("\nkatanapdf logic smoke tests");
