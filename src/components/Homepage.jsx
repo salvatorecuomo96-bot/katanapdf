@@ -172,16 +172,17 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-what-chevron.open { transform: rotate(180deg); }
         .hp-what-list {
           position: absolute; top: calc(100% + 6px); left: 0;
-          width: 300px; z-index: 200;
+          width: 360px; z-index: 200;
+          display: flex; flex-wrap: wrap;
           border: 1px solid ${LINE}; border-radius: 4px;
           background: rgba(255,253,248,0.97);
           box-shadow: 0 6px 22px rgba(40,24,8,0.10);
           backdrop-filter: blur(8px);
-          max-height: 55vh; overflow-y: auto;
         }
         .hp-what-item {
+          width: 50%; box-sizing: border-box;
           display: flex; align-items: center; gap: 9px;
-          padding: 9px 12px;
+          padding: 7px 10px;
           border-bottom: 1px solid ${LINE};
           cursor: pointer; position: relative;
           transition: background 0.12s;
@@ -207,6 +208,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           text-transform: uppercase; font-weight: 800; color: ${INK};
         }
         .hp-what-tooltip {
+          display: none;
           visibility: hidden; opacity: 0;
           position: absolute; left: calc(100% + 10px); top: 50%;
           transform: translateY(-50%);
@@ -351,8 +353,6 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             padding: 20px 30px 14px;
             min-height: calc(100dvh - 54px);
           }
-          .hp-what-list { top: calc(100% + 6px); bottom: auto; width: 360px; display: flex; flex-wrap: wrap; max-height: none; overflow: visible; }
-          .hp-what-item { width: 50%; box-sizing: border-box; padding: 7px 10px; }
           .hp-what-tooltip { display: none !important; }
           .hp-stage {
             max-width: min(1280px, calc(100vw - 60px));
