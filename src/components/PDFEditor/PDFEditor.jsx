@@ -585,8 +585,8 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
       const pg = pages[0];
       if (!pg) return;
       const availW = Math.max(200, el.clientWidth - 80);
-      setZoom(Math.min(0.9, Math.max(0.3, +(availW / pg.width).toFixed(2))));
-    });
+const minZoom = window.innerWidth < 600 ? 0.08 : 0.3;
+setZoom(Math.min(0.9, Math.max(minZoom, +(availW / pg.width).toFixed(2))));    });
     return () => cancelAnimationFrame(id);
   }, [pages]);
 
@@ -2570,7 +2570,7 @@ function addFloatingBox(pageNum) {
 
                       {/* Zoom */}
                       <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(139,26,26,0.3)", borderRadius: 4, overflow: "hidden", flexShrink: 0 }}>
-                        <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(1)))} style={{ ...tb, border: "none", borderRight: "1px solid rgba(139,26,26,0.2)", width: 28, borderRadius: 0, fontSize: 15, fontWeight: 700 }} title="Zoom out" aria-label="Zoom out">−</button>
+                        <button onClick={() => setZoom(z => Math.max(window.innerWidth < 600 ? 0.08 : 0.3, +(z - 0.1).toFixed(2)))} style={{ ...tb, border: "none", borderRight: "1px solid rgba(139,26,26,0.2)", width: 28, borderRadius: 0, fontSize: 15, fontWeight: 700 }} title="Zoom out" aria-label="Zoom out">−</button>
                         <span style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, minWidth: 38, textAlign: "center", letterSpacing: 1, padding: "0 2px", fontWeight: 600 }}>{Math.round(zoom * 100)}%</span>
                         <button onClick={() => setZoom(z => Math.min(3, +(z + 0.1).toFixed(1)))} style={{ ...tb, border: "none", borderLeft: "1px solid rgba(139,26,26,0.2)", width: 28, borderRadius: 0, fontSize: 15, fontWeight: 700 }} title="Zoom in" aria-label="Zoom in">+</button>
                       </div>

@@ -85,7 +85,7 @@ const { width: rawW, height: rawH } = img.scale(1);
 
 // Prevent huge phone photos from creating massive PDF pages.
 // This keeps mobile editor layout stable.
-const MAX_PAGE_SIZE = 1600;
+const MAX_PAGE_SIZE = 900;
 const scale = Math.min(1, MAX_PAGE_SIZE / Math.max(rawW, rawH));
 
 const width = rawW * scale;
