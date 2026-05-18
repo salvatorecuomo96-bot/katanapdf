@@ -81,9 +81,23 @@ export async function convertImageToPdfBytes(file) {
     }
     img = await doc.embedPng(pngBuf);
   }
-  const { width, height } = img.scale(1);
-  const page = doc.addPage([width, height]);
-  page.drawImage(img, { x: 0, y: 0, width, height });
+const { width: rawW, height: rawH } = img.scale(1);
+
+// Prevent huge phone photos from creating massive PDF pages.
+// This keeps mobile editor layout stable.
+const MAX_PAGE_SIZE = 1600;
+const scale = Math.min(1, MAX_PAGE_SIZE / Math.max(rawW, rawH));
+
+const width = rawW * scale;
+const height = rawH * scale;
+
+const page = doc.addPage([width, height]);
+page.drawImage(img, {
+  x: 0,
+  y: 0,
+  width,
+  height,
+});
   return await doc.save();
 }
 
