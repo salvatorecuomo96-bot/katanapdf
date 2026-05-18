@@ -1007,49 +1007,53 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     }
   }
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
-  }, []);
+useEffect(() => {
+  const el = containerRef.current;
+  if (!el) return;
+  el.addEventListener("wheel", handleWheel, { passive: false });
+  return () => el.removeEventListener("wheel", handleWheel);
+}, []);
 
-  function addFloatingBox(pageNum) {
-    if (addTextClickLock.current) return;
+function addFloatingBox(pageNum) {
+  if (addTextClickLock.current) return;
 
-    addTextClickLock.current = true;
-    window.setTimeout(() => {
-      addTextClickLock.current = false;
-    }, 250);
+  addTextClickLock.current = true;
+  window.setTimeout(() => {
+    addTextClickLock.current = false;
+  }, 250);
 
-    const pg = pages.find(p => p.num === pageNum);
-    if (!pg) return;
-    saveHistory();
-    floatingIdCounter++;
-    const id = `float-${floatingIdCounter}`;
-    const rot = rotatedPages[pageNum] || 0;
-    const swap = rot === 90 || rot === 270;
-    const visW = swap ? pg.height : pg.width;
-    const visH = swap ? pg.width : pg.height;
-    const visX = visW / 2;
-    const visY = Math.max(60, visH * 0.10);
-    const rad = -rot * Math.PI / 180;
-    const cos = Math.cos(rad), sin = Math.sin(rad);
-    const dx = visX - visW / 2, dy = visY - visH / 2;
-    const pageX = pg.width / 2 + dx * cos - dy * sin;
-    const pageY = pg.height / 2 + dx * sin + dy * cos;
+  const pg = pages.find(p => p.num === pageNum);
+  if (!pg) return;
 
-    setFloatingBoxes(prev => [...prev, {
-      id, page: pageNum,
+  saveHistory();
+  floatingIdCounter++;
+
+  const id = `float-${floatingIdCounter}`;
+
+  const x = pg.width / 2;
+  const y = pg.height * 0.18;
+
+  setFloatingBoxes(prev => [
+    ...prev,
+    {
+      id,
+      page: pageNum,
       z: 50 + floatingIdCounter,
-      x: pageX, y: pageY, text: "",
-      fontSize: 14, fontFamily: "Arial, sans-serif",
-      isBold: false, isItalic: false, color: "#000000",
+      x,
+      y,
+      text: "",
+      fontSize: 14,
+      fontFamily: "Arial, sans-serif",
+      isBold: false,
+      isItalic: false,
+      color: "#000000",
       bgColor: "#ffffff",
       angle: 0,
-    }]);
-    setSelected(id); // auto-select so the textarea focuses immediately
-  }
+    },
+  ]);
+
+  setSelected(id);
+}
 
   function updateFloatingBox(id, updates) {
     // Determine if this update needs a history save (e.g. text changing should maybe not save per keystroke, but property changes should).
