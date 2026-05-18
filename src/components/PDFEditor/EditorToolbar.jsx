@@ -97,8 +97,7 @@ export default function EditorToolbar({
         </>
       )}
 
-      <div style={{ flex: 1 }} />
-
+<div className="editor-toolbar-spacer" />
       <button
         onClick={handleDownloadImages}
         className="editor-top-action editor-top-secondary"

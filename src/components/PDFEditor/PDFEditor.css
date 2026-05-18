@@ -329,3 +329,31 @@ body {
     margin-bottom: 12px;
   }
 }
+[data-edit-toolbar] {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+[data-edit-toolbar] > * {
+  flex-shrink: 0 !important;
+}
+
+.editor-toolbar-spacer {
+  flex: 1 1 auto;
+  min-width: 12px;
+}
+
+@media (max-width: 599px) {
+  .editor-toolbar-spacer {
+    flex: 0 0 12px !important;
+  }
+
+  [data-edit-toolbar] {
+    justify-content: flex-start !important;
+    padding: 0 8px !important;
+  }
+}
