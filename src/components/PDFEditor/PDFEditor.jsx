@@ -2546,7 +2546,7 @@ function addFloatingBox(pageNum) {
                     const tbActive = { ...tb, background: "rgba(139,26,26,0.12)", outline: "1px solid #8B1A1A", outlineOffset: 1 };
                     const sep = <div style={{ width: 1, height: 20, background: "rgba(139,26,26,0.2)", margin: "0 3px", flexShrink: 0 }} />;
                     return (
-                    <div className="editor-page-toolbar" onClick={e => e.stopPropagation()} style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 3, width: visualW, minWidth: visualW, maxWidth: "none", overflowX: "auto", overflowY: "visible", padding: "6px 8px", marginBottom: 10, boxSizing: "border-box", borderRadius: 6, background: "rgba(240,236,227,0.92)", backdropFilter: "blur(8px)", border: "1px solid rgba(116,86,44,0.12)", boxShadow: "none", flexShrink: 0 }}>
+                    <div className="editor-page-toolbar" onClick={e => e.stopPropagation()} style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 3, width: visualW, minWidth: visualW, maxWidth: "none", overflowX: "visible", overflowY: "visible", padding: "6px 8px", marginBottom: 10, boxSizing: "border-box", borderRadius: 6, background: "rgba(240,236,227,0.92)", backdropFilter: "blur(8px)", border: "1px solid rgba(116,86,44,0.12)", boxShadow: "none", flexShrink: 0 }}>
 
                       {/* Page label */}
                       <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 3, fontWeight: 700, whiteSpace: "nowrap", padding: "0 4px", flexShrink: 0 }}>{displayIdx + 1}</span>
