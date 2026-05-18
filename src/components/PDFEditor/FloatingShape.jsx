@@ -6,6 +6,7 @@ const SHAPE_LABELS = { circle: 'CIRCLE', square: 'SQUARE', checkmark: 'CHECKMARK
 
 export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, onSelect, onStartDrag, onStartResize, onDelete, onUpdate, onDeselect }) {
   const { x, y, w, h, shapeType, shapeColor, shapeFill, z } = shape;
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 767;
 
   useEffect(() => {
     if (!isSel) return;
@@ -22,14 +23,12 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
   const [colorOpen, setColorOpen] = useState(false);
   const isLineShape = shapeType === 'checkmark' || shapeType === 'cross' || shapeType === 'line' || shapeType === 'arrow';
 
-  // Toolbar positioning: place it at the visual "above" edge for the viewer based on page rotation.
-  // rotation=0  → toolbar above shape in page space  → appears above to viewer ✓
-  // rotation=90 → toolbar left of shape in page space → appears above to viewer (page rotated 90°CW) ✓
-  // rotation=180→ toolbar below shape in page space  → appears above to viewer (page is upside-down) ✓
-  // rotation=270→ toolbar right of shape in page space→ appears above to viewer ✓
+  // Toolbar positioning. On mobile, force above + horizontal scroll + no counter-rotation.
   const r = ((rotation % 360) + 360) % 360;
   const TH = 32;
-  const toolbarWrap = r === 0
+  const toolbarWrap = isMobile
+    ? { position: 'absolute', top: -44, left: 0, height: 38, overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }
+    : r === 0
     ? { position: 'absolute', top: -TH, left: 0, right: 0, height: TH, overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }
     : r === 90
     ? { position: 'absolute', left: -TH, top: 0, bottom: 0, width: TH, overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }
@@ -37,7 +36,18 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
     ? { position: 'absolute', bottom: -TH, left: 0, right: 0, height: TH, overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }
     : /* 270 */ { position: 'absolute', right: -TH, top: 0, bottom: 0, width: TH, overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-  const toolbarContent = {
+  const toolbarContent = isMobile ? {
+    display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6,
+    background: '#fffdf8', padding: '6px 8px', fontSize: 10, color: INK,
+    cursor: 'default', whiteSpace: 'nowrap', height: 38, boxSizing: 'border-box',
+    border: '1px solid rgba(116,86,44,0.25)',
+    boxShadow: '0 4px 16px rgba(40,24,8,0.12)',
+    borderRadius: 4,
+    maxWidth: 'calc(100vw - 32px)',
+    overflowX: 'auto', overflowY: 'visible',
+    WebkitOverflowScrolling: 'touch',
+    transform: 'none',
+  } : {
     display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6,
     background: '#fffdf8', padding: '4px 8px', fontSize: 10, color: INK,
     cursor: 'default', whiteSpace: 'nowrap', height: TH, boxSizing: 'border-box',
@@ -114,11 +124,11 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
                   style={{ width: 18, height: 18, borderRadius: '50%', background: shapeColor, border: '1.5px solid rgba(0,0,0,0.35)', cursor: 'pointer', padding: 0, display: 'block' }}
                 />
                 {colorOpen && (
-                  <div onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, display: 'flex', flexDirection: 'column', background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3 }}>
+                  <div onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()} style={isMobile ? { position: 'fixed', bottom: 16, left: 16, right: 16, display: 'flex', flexDirection: 'column', background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 8, padding: 12, zIndex: 100000, boxShadow: '0 12px 32px rgba(0,0,0,0.32)' } : { position: 'absolute', top: 'calc(100% + 4px)', left: 0, display: 'flex', flexDirection: 'column', background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 8 : 3 }}>
                       {DRAW_COLORS.map(c => (
                         <button key={c} type="button" onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); onUpdate({ shapeColor: c }); setColorOpen(false); }}
-                          style={{ width: 20, height: 20, background: c, border: shapeColor === c ? `2px solid ${LACQUER}` : '1px solid rgba(0,0,0,0.2)', borderRadius: 3, cursor: 'pointer', padding: 0 }} />
+                          style={{ width: isMobile ? 34 : 20, height: isMobile ? 34 : 20, background: c, border: shapeColor === c ? `2px solid ${LACQUER}` : '1px solid rgba(0,0,0,0.2)', borderRadius: isMobile ? 6 : 3, cursor: 'pointer', padding: 0 }} />
                       ))}
                     </div>
                     <HexColorInput value={shapeColor} onChange={v => onUpdate({ shapeColor: v })} onDone={() => setColorOpen(false)} />
@@ -146,28 +156,46 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
           {/* Bottom-center resize handle */}
           <div
             onMouseDown={e => { e.stopPropagation(); onStartResize(e, 's'); }}
+            onTouchStart={e => {
+              e.preventDefault(); e.stopPropagation();
+              const t = e.touches[0];
+              onStartResize({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => {}, stopPropagation: () => {} }, 's');
+            }}
             style={{
-              position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%)',
-              width: 22, height: 10, background: '#ff2222',
+              position: 'absolute', bottom: isMobile ? -10 : -6, left: '50%', transform: 'translateX(-50%)',
+              width: isMobile ? 34 : 22, height: isMobile ? 18 : 10, background: '#ff2222',
               cursor: 's-resize', borderRadius: 2, border: '2px solid #fff',
+              touchAction: 'none',
             }}
           />
           {/* Right-center resize handle */}
           <div
             onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'e'); }}
+            onTouchStart={e => {
+              e.preventDefault(); e.stopPropagation();
+              const t = e.touches[0];
+              onStartResize({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => {}, stopPropagation: () => {} }, 'e');
+            }}
             style={{
-              position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)',
-              width: 10, height: 22, background: '#ff2222',
+              position: 'absolute', right: isMobile ? -10 : -6, top: '50%', transform: 'translateY(-50%)',
+              width: isMobile ? 18 : 10, height: isMobile ? 34 : 22, background: '#ff2222',
               cursor: 'e-resize', borderRadius: 2, border: '2px solid #fff',
+              touchAction: 'none',
             }}
           />
           {/* Bottom-right corner resize handle */}
           <div
             onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'se'); }}
+            onTouchStart={e => {
+              e.preventDefault(); e.stopPropagation();
+              const t = e.touches[0];
+              onStartResize({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => {}, stopPropagation: () => {} }, 'se');
+            }}
             style={{
-              position: 'absolute', bottom: -8, right: -8,
-              width: 16, height: 16, background: '#ff2222',
+              position: 'absolute', bottom: isMobile ? -13 : -8, right: isMobile ? -13 : -8,
+              width: isMobile ? 26 : 16, height: isMobile ? 26 : 16, background: '#ff2222',
               cursor: 'nwse-resize', borderRadius: '50%', border: '2px solid #fff',
+              touchAction: 'none',
             }}
           />
         </>

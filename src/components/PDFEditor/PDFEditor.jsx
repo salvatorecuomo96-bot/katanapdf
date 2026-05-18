@@ -26,6 +26,9 @@ let floatingIdCounter = 0;
 
 
 export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate }) {
+  // Mobile bottom-sheet replaces tiny absolute dropdowns for draw/shape on phones.
+  const isPhone = typeof window !== "undefined" && window.innerWidth <= 599;
+
   const [pdfBytes, setPdfBytes] = useState(null);
 
   const [pages, setPages] = useState([]);
@@ -1724,12 +1727,17 @@ function addFloatingBox(pageNum) {
   useEffect(() => {
     const onTouchMove = (e) => {
       if (!e.touches[0]) return;
-      onMouseMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+      // Only suppress native scroll while actively manipulating an object.
+      // Otherwise normal page scrolling on phone must keep working.
+      const isInteracting =
+        dragging || rotating || draggingImg || resizingImg || resizingFb || draggingShape || resizingShape;
+      if (isInteracting) e.preventDefault();
+      onMouseMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY, preventDefault: () => {}, stopPropagation: () => {} });
     };
     const onTouchEnd = () => onMouseUp();
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd);
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
@@ -1737,7 +1745,7 @@ function addFloatingBox(pageNum) {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [onMouseMove, onMouseUp]);
+  }, [onMouseMove, onMouseUp, dragging, rotating, draggingImg, resizingImg, resizingFb, draggingShape, resizingShape]);
 
   async function rasterizePage(pg) {
     const pageRotation = rotatedPages[pg.num] || 0;
@@ -2610,7 +2618,7 @@ function addFloatingBox(pageNum) {
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>
                         </button>
-                        {drawPanelOpen && (
+                        {drawPanelOpen && !isPhone && (
                           <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, display: "flex", flexDirection: "column", gap: 6, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "10px", zIndex: 9999, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 136 }}>
                             <div style={{ display: "flex", gap: 4 }}>
                               <button onClick={() => setDrawTool('pencil')} style={{ flex: 1, padding: "3px 6px", fontFamily: CINZEL, fontSize: 9, letterSpacing: 1, cursor: "pointer", border: `1px solid ${GOLD}`, borderRadius: 2, background: drawTool === 'pencil' ? LACQUER : "transparent", color: drawTool === 'pencil' ? "#fff" : LACQUER, fontWeight: 700 }}>PENCIL</button>
@@ -2637,7 +2645,7 @@ function addFloatingBox(pageNum) {
                         <button onClick={e => { e.stopPropagation(); setSelected(null); setActivePopup(null); setDrawMode(false); setDrawPanelOpen(false); setSelectMode(false); setAreaSelection(null); setShapePanelPage(p => p === pg.num ? null : pg.num); }} style={shapePanelPage === pg.num ? tbActive : tb} title="Add shape" aria-label="Add shape">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="5"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
                         </button>
-                        {shapePanelPage === pg.num && (
+                        {shapePanelPage === pg.num && !isPhone && (
                           <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fffdf8", border: "1px solid rgba(116,86,44,0.20)", borderRadius: 6, padding: "12px 14px", zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 8px 24px rgba(40,24,8,0.12)", minWidth: 160 }}>
                             <div style={{ fontFamily: CINZEL, fontSize: 10, color: LACQUER, letterSpacing: 3, fontWeight: 700 }}>SHAPE COLOR</div>
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
@@ -2805,6 +2813,84 @@ function addFloatingBox(pageNum) {
           </div>
         </>
       )}
+      {/* Mobile bottom-sheet: Draw — replaces the cramped page-toolbar dropdown on phones */}
+      {drawPanelOpen && drawMode && isPhone && (
+        <div className="mobile-tool-sheet" onClick={e => e.stopPropagation()}>
+          <div className="mobile-tool-sheet-title">Draw</div>
+          <div className="mobile-tool-row">
+            <button
+              className={drawTool === "pencil" ? "mobile-tool-chip active" : "mobile-tool-chip"}
+              onClick={() => setDrawTool("pencil")}
+            >Pencil</button>
+            <button
+              className={drawTool === "highlighter" ? "mobile-tool-chip active" : "mobile-tool-chip"}
+              onClick={() => { setDrawTool("highlighter"); if (drawWidth < 10) setDrawWidth(14); }}
+            >Highlighter</button>
+          </div>
+          <div className="mobile-color-grid">
+            {DRAW_COLORS.map(c => (
+              <button
+                key={c}
+                onClick={() => setDrawColor(c)}
+                style={{ background: c }}
+                className={drawColor === c ? "mobile-color-swatch active" : "mobile-color-swatch"}
+                aria-label={`Choose ${c}`}
+              />
+            ))}
+          </div>
+          <div className="mobile-tool-row">
+            <label className="mobile-tool-label">Size</label>
+            <select
+              value={FB_SIZES.includes(drawWidth) ? drawWidth : FB_SIZES.reduce((a, b) => Math.abs(b - drawWidth) < Math.abs(a - drawWidth) ? b : a)}
+              onChange={e => setDrawWidth(+e.target.value)}
+              className="mobile-tool-select"
+            >
+              {FB_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <button className="mobile-tool-done" onClick={() => setDrawPanelOpen(false)}>Done</button>
+        </div>
+      )}
+
+      {/* Mobile bottom-sheet: Shapes */}
+      {shapePanelPage && isPhone && (
+        <div className="mobile-tool-sheet" onClick={e => e.stopPropagation()}>
+          <div className="mobile-tool-sheet-title">Shapes</div>
+          <div className="mobile-color-grid">
+            {DRAW_COLORS.map(c => (
+              <button
+                key={c}
+                onClick={() => setShapePanelColor(c)}
+                style={{ background: c }}
+                className={shapePanelColor === c ? "mobile-color-swatch active" : "mobile-color-swatch"}
+                aria-label={`Choose ${c}`}
+              />
+            ))}
+          </div>
+          <label className="mobile-shape-fill">
+            <input type="checkbox" checked={shapePanelFill} onChange={e => setShapePanelFill(e.target.checked)} />
+            Filled shape
+          </label>
+          <div className="mobile-shape-grid">
+            {[
+              ["circle", "Circle"],
+              ["square", "Square"],
+              ["checkmark", "Check"],
+              ["cross", "Cross"],
+              ["line", "Line"],
+              ["arrow", "Arrow"],
+            ].map(([type, label]) => (
+              <button
+                key={type}
+                className="mobile-tool-chip"
+                onClick={() => handleAddShape(shapePanelPage, type)}
+              >{label}</button>
+            ))}
+          </div>
+          <button className="mobile-tool-done" onClick={() => setShapePanelPage(null)}>Done</button>
+        </div>
+      )}
+
       {isSplitModalOpen && (
         <SplitModal
           pages={pages}
