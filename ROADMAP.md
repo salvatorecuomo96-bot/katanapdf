@@ -62,6 +62,17 @@ Post-roadmap bug fixes + features (2026-05-15):
 - **Phase 13 partial**: `index.html` has full SEO meta (title, description, keywords, OG, Twitter cards, canonical, robots); `public/sitemap.xml` + `public/robots.txt` exist. Remaining: per-tool hash routes + dynamic `document.title` per route.
 - **Phase 14 partial**: viewport meta, auto-zoom, collapsible sidebar, mobile icon-only page buttons, toolbar nowrap all shipped. Remaining: EditPopup/FloatingBox viewport clamping, Format dropdown for <720px, per-page controls collapse on narrow viewports, `viewport-fit=cover`.
 
+Post-roadmap UX polish + bug fixes (2026-05-15, session 2):
+- IndexedDB recovery scrapped; replaced with leave confirmation modal (Download First / Leave Anyway / Stay) + `beforeunload` guard ✅
+- Multi-tab auto-save stale closure bug fixed: deduplication now uses object identity (`s.pdfBytes !== pdfBytes`) instead of tab ID ✅
+- Sign icon redesigned as pen nib diamond (distinct from pencil/draw icon) ✅
+- HL button removed from EditPopup and FloatingBox toolbars ✅
+- Draw mode: added Pencil / Highlighter toggle in draw dropdown ✅
+- Highlighter: semi-transparent preview during drag (40% alpha, single pass), auto-straightens to horizontal rectangle on release ✅
+- 4×4 colour grid (15 presets + eyedropper) added to draw dropdown, EditPopup text toolbar, FloatingBox text toolbar, and SignatureModal ✅
+- Draw/highlight width control replaced range slider with FB_SIZES dropdown (matches text size selector) ✅
+- Highlight download position fixed: stores `hlRect` metadata on stroke, uses `pdfPage.drawRectangle` with 40% opacity instead of embedding a full-page PNG — resolves Y-axis coordinate mismatch that placed highlights at bottom-left ✅
+
 ## Rules
 - **At session start**, run `git fetch && git status`. If behind `origin/main`, pull before any edits. The laptop pushes from a different machine, so the worktree is often stale at session start — discover that on turn 1, not turn 5.
 - **When picking the next phase**, read only this `ROADMAP.md` (status table + rules) and the one phase file you're about to execute. Don't read all 15 phase files.

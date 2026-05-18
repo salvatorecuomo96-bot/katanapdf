@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { CINZEL, DRAW_COLORS, FELL, GOLD, INK, LACQUER, pageBtn, PARCHMENT } from "../utils/constant";
-import HexColorInput from "./HexColorInput";
-
-const LINE = "rgba(116,86,44,0.18)";
 
 export default function SignatureModal({ onClose, onInsert, color, setColor }) {
   const canvasRef = useRef(null);
@@ -13,7 +10,6 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
   const [typeText, setTypeText] = useState("");
   const [selectedSignFont, setSelectedSignFont] = useState("Whisper");
   const [uploadDataUrl, setUploadDataUrl] = useState(null);
-  const [sigColorOpen, setSigColorOpen] = useState(false);
 
   useEffect(() => {
     if (signTab !== "draw") return;
@@ -134,13 +130,13 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(24,19,13,0.72)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(3px)" }} onClick={onClose}>
-      <div style={{ background: "#fffdf8", border: `1px solid ${LINE}`, borderRadius: 10, padding: "28px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: "90vw", boxSizing: "border-box", boxShadow: "0 24px 64px rgba(40,24,8,0.22)" }} onClick={e => e.stopPropagation()}>
-        <h2 style={{ margin: 0, fontFamily: CINZEL, color: LACQUER, fontSize: 22, letterSpacing: 3, textTransform: "uppercase", fontWeight: 800 }}>Sign Document</h2>
-
-        <div style={{ display: "flex", gap: 8, borderBottom: `1px solid ${LINE}`, paddingBottom: 12, width: "100%", justifyContent: "center" }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(26,18,8,0.8)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: PARCHMENT, border: `2px solid ${GOLD}`, padding: "24px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: "90vw", boxSizing: "border-box" }} onClick={e => e.stopPropagation()}>
+        <h2 style={{ margin: 0, fontFamily: CINZEL, color: LACQUER, fontSize: 24, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>Sign Document</h2>
+        
+        <div style={{ display: "flex", gap: 8, borderBottom: `1px solid ${GOLD}`, paddingBottom: 8, width: "100%", justifyContent: "center" }}>
           {["draw", "type", "upload"].map(tab => (
-            <button key={tab} onClick={() => setSignTab(tab)} style={{ ...pageBtn, background: signTab === tab ? LACQUER : "transparent", color: signTab === tab ? "#fff" : LACQUER, border: signTab === tab ? "none" : `1px solid rgba(139,26,26,0.38)`, borderRadius: 3, padding: "7px 18px" }}>
+            <button key={tab} onClick={() => setSignTab(tab)} style={{ ...pageBtn, background: signTab === tab ? LACQUER : "transparent", color: signTab === tab ? PARCHMENT : LACQUER }}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
@@ -174,11 +170,11 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
             />
             <div style={{ display: "flex", gap: 12, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
               {["Whisper", "Great Vibes", "Dancing Script"].map(f => (
-                <label key={f} style={{
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: `"${f}", cursive`, fontSize: 32,
+                <label key={f} style={{ 
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", 
+                  fontFamily: `"${f}", cursive`, fontSize: 32, 
                   color: selectedSignFont === f ? LACQUER : INK,
-                  border: selectedSignFont === f ? `2px solid ${LACQUER}` : `2px solid ${LINE}`,
+                  border: selectedSignFont === f ? `2px solid ${GOLD}` : "2px solid transparent",
                   padding: "4px 12px", borderRadius: 4, background: "rgba(0,0,0,0.02)"
                 }}>
                   <input type="radio" name="signFont" value={f} checked={selectedSignFont === f} onChange={() => setSelectedSignFont(f)} style={{ display: "none" }} />
@@ -205,32 +201,24 @@ export default function SignatureModal({ onClose, onInsert, color, setColor }) {
         )}
 
         <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button onClick={handleClear} style={{ ...pageBtn, padding: "8px 16px" }}>Clear</button>
-            <div style={{ position: "relative" }}>
-              <button
-                type="button"
-                title="Ink colour"
-                onClick={() => setSigColorOpen(o => !o)}
-                style={{ width: 32, height: 32, borderRadius: 4, background: color, border: "1.5px solid rgba(0,0,0,0.3)", cursor: "pointer", padding: 0, display: "block" }}
-              />
-              {sigColorOpen && (
-                <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, display: "flex", flexDirection: "column", background: PARCHMENT, border: `1px solid ${GOLD}`, borderRadius: 4, padding: 5, zIndex: 10000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 3 }}>
-                    {DRAW_COLORS.map(c => (
-                      <button key={c} type="button" onClick={() => { setColor(c); setSigColorOpen(false); }}
-                        style={{ width: 22, height: 22, background: c, border: color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 3, cursor: "pointer", padding: 0 }} />
-                    ))}
-                  </div>
-                  <HexColorInput value={color} onChange={setColor} onDone={() => setSigColorOpen(false)} swatchSize={22} />
-                </div>
-              )}
+            {/* 4×4 colour grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4 }}>
+              {DRAW_COLORS.map(c => (
+                <button key={c} onClick={() => setColor(c)} title={c}
+                  style={{ width: 26, height: 26, background: c, border: color === c ? `2px solid ${LACQUER}` : "1px solid rgba(0,0,0,0.2)", borderRadius: 4, cursor: "pointer", padding: 0 }} />
+              ))}
+              <label title="Custom colour" style={{ width: 26, height: 26, border: "1px solid rgba(0,0,0,0.2)", borderRadius: 4, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", position: "relative", overflow: "hidden" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={LACQUER} strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <input type="color" value={color} onChange={e => setColor(e.target.value)} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+              </label>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: `1px solid ${LINE}`, color: "rgba(24,19,13,0.5)" }}>Cancel</button>
-              <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: "#fff", border: "none", boxShadow: "0 4px 14px rgba(139,26,26,0.22)" }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
+              <button onClick={onClose} style={{ ...pageBtn, padding: "8px 16px", border: "1px solid transparent", color: INK }}>Cancel</button>
+              <button onClick={handleInsert} style={{ ...pageBtn, padding: "8px 24px", background: LACQUER, color: PARCHMENT }} disabled={signTab === "upload" && !uploadDataUrl}>Insert Signature</button>
             </div>
           </div>
         </div>

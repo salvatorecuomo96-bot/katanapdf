@@ -19,12 +19,8 @@
       "Bash(git commit -m ' *)",
       "Bash(git config *)",
       "Bash(git push *)",
-      "PowerShell($lines = Get-Content \"C:\\\\Users\\\\jayfr\\\\Desktop\\\\katanapdf\\\\src\\\\App.jsx\"; for\\($i=0;$i -lt $lines.Count;$i++\\){if\\($lines[$i] -match \"EditPopup|editPopup|activePopup|textBlock|fontFamily|fontSize|bgColor|color\"\\){Write-Output \"$\\($i+1\\): $\\($lines[$i]\\)\"}})",
-      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\Users\\\\jayfr\\\\Desktop\\\\katanapdf\\\\src\\\\App.jsx\"\\); Write-Output \"File bytes: $\\($bytes.Length\\)\")",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\jayfr\\\\Desktop\\\\katanapdf\\\\src\" -Recurse | ForEach-Object { $_.FullName })",
-      "Bash(node -e \"import\\('./src/entry-server.jsx'\\).catch\\(e => console.log\\('Expected \\(needs Vite transform\\):', e.message.split\\('\\\\n'\\)[0]\\)\\)\")",
-      "Bash(node -e \"import\\('./vite.config.js'\\).then\\(m => console.log\\('Config OK, type:', typeof m.default\\)\\)\")",
-      "Bash(node --input-type=module --eval ' *)"
+      "Bash(git stash *)",
+      "Bash(git pull *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\jayfr\\Desktop\\katanapdf\\src\\components\\PDFEditor"
