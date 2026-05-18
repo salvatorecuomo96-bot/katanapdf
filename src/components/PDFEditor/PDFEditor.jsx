@@ -1783,7 +1783,7 @@ function addFloatingBox(pageNum) {
         const halfH = lines.length * lh / 2;
         outCtx.save();
         outCtx.translate(visX, visY);
-        outCtx.rotate((item.angle || 0) * Math.PI / 180);
+        outCtx.rotate((pageRotation + (item.angle || 0)) * Math.PI / 180);
         outCtx.font = `${item.isItalic ? "italic " : ""}${item.isBold ? "bold " : ""}${item.fontSize}px ${item.fontFamily}`;
         outCtx.textAlign = "center";
         outCtx.textBaseline = "top";
@@ -1805,8 +1805,7 @@ function addFloatingBox(pageNum) {
           img.onload = () => {
             outCtx.save();
             outCtx.translate(visCX, visCY);
-            outCtx.rotate((item.angle || 0) * Math.PI / 180);
-            outCtx.drawImage(img, -item.w / 2, -item.h / 2, item.w, item.h);
+             outCtx.rotate((pageRotation + (item.angle || 0)) * Math.PI / 180);            outCtx.drawImage(img, -item.w / 2, -item.h / 2, item.w, item.h);
             outCtx.restore();
             resolve();
           };
@@ -2646,6 +2645,9 @@ function addFloatingBox(pageNum) {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                        <span style={{ fontFamily: CINZEL, fontSize: 11, color: LACQUER, letterSpacing: 4, textTransform: "uppercase", fontWeight: 600 }}>Page {displayIdx + 1}</span>
                        <div style={{ display: "flex", gap: 4 }}>
+                         <button onClick={e => { e.stopPropagation(); rotatePage(pg.num); }} title="Rotate page" aria-label="Rotate page" style={{ ...pageBtn, padding: "2px 6px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                           <RotateIcon size={12} />
+                         </button>
                          <button onClick={e => { e.stopPropagation(); addBlankPage(pg.num); }} title="Add blank page after" style={{ ...pageBtn, padding: "2px 6px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="12" y2="19"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
                          </button>

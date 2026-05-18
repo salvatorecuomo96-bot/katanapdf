@@ -250,7 +250,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           max-height: calc(100dvh - 120px);
           object-fit: contain;
           background: transparent;
-          border: 1px solid rgba(139,26,26,0.22) !important;
+          border: 0 !important;
           box-shadow: none !important;
           outline: 0 !important;
           filter: none;
@@ -378,7 +378,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             max-width: none;
             max-height: calc(100dvh - 100px);
             object-fit: contain;
-            border: 1px solid rgba(139,26,26,0.22) !important;
+            border: 0 !important;
             box-shadow: none !important;
             outline: 0 !important;
           }
