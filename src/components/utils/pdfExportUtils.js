@@ -5,7 +5,7 @@ export function pickPdfLibFont(fonts, family, bold, italic) {
 
   // Noto Sans has full set; Noto Serif has regular + bold; Noto Sans Mono has
   // regular only. Fall back to the closest variant we shipped.
-  if (f.includes("times") || f.includes("georgia") || f.includes("serif")) {
+  if (!f.includes("sans") && (f.includes("times") || f.includes("georgia") || f.includes("serif"))) {
     return bold ? fonts.timesB : fonts.times;
   }
 
