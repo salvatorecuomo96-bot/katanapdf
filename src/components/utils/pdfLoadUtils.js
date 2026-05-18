@@ -1,10 +1,55 @@
 import { PDFDocument } from "pdf-lib";
 
+// iOS Safari/in-app browsers occasionally have Blob.arrayBuffer missing or flaky.
+// Fall back to FileReader so uploads work on every WebKit version.
+export function fileToArrayBuffer(file) {
+  if (file && typeof file.arrayBuffer === "function") {
+    try {
+      return file.arrayBuffer();
+    } catch (_) { /* fall through */ }
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("Could not read file."));
+    reader.onabort = () => reject(new Error("File reading was cancelled."));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("Could not read image file."));
+    reader.onabort = () => reject(new Error("Image reading was cancelled."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataUrlToImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Could not decode image."));
+    img.src = dataUrl;
+  });
+}
+
+function dataUrlToArrayBuffer(dataUrl) {
+  const base64 = dataUrl.split(",")[1];
+  const binary = atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
 export async function convertImageToPdfBytes(file) {
   const doc = await PDFDocument.create();
-  const arrayBuffer = await file.arrayBuffer();
+  const arrayBuffer = await fileToArrayBuffer(file);
   let img;
-  const type = file.type.toLowerCase();
+  const type = (file.type || "").toLowerCase();
   try {
     if (type === "image/jpeg" || type === "image/jpg") {
       img = await doc.embedJpg(arrayBuffer);
@@ -14,15 +59,26 @@ export async function convertImageToPdfBytes(file) {
       throw new Error("Use canvas fallback");
     }
   } catch (e) { // eslint-disable-line no-unused-vars
-    const bitmap = await createImageBitmap(file);
+    // FileReader + <img> fallback — iPhone Safari can fail createImageBitmap for HEIC/odd formats.
+    const dataUrl = await fileToDataUrl(file);
+    const image = await dataUrlToImage(dataUrl);
     const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
+    canvas.width = image.naturalWidth || image.width;
+    canvas.height = image.naturalHeight || image.height;
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(bitmap, 0, 0);
-    const pngBuf = await new Promise(res => {
-      canvas.toBlob(async b => res(await b.arrayBuffer()), "image/png");
-    });
+    ctx.drawImage(image, 0, 0);
+
+    let pngBuf;
+    if (canvas.toBlob) {
+      pngBuf = await new Promise((resolve, reject) => {
+        canvas.toBlob(async blob => {
+          if (!blob) { reject(new Error("Could not convert image to PNG.")); return; }
+          try { resolve(await fileToArrayBuffer(blob)); } catch (err) { reject(err); }
+        }, "image/png");
+      });
+    } else {
+      pngBuf = dataUrlToArrayBuffer(canvas.toDataURL("image/png"));
+    }
     img = await doc.embedPng(pngBuf);
   }
   const { width, height } = img.scale(1);

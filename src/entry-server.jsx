@@ -1,3 +1,4 @@
+import "./polyfills.js";
 import { renderToString } from "react-dom/server";
 import App from "./App.jsx";
 export { SEO_PAGES } from "./seo.js";

@@ -128,6 +128,39 @@
       </footer>
     </noscript>
 
+    <script>
+      // iOS Safari polyfills — must run before any module (pdfjs-dist 5.x uses Promise.withResolvers)
+      if (typeof Promise.withResolvers !== "function") {
+        Promise.withResolvers = function withResolvers() {
+          var resolve;
+          var reject;
+          var promise = new Promise(function (res, rej) {
+            resolve = res;
+            reject = rej;
+          });
+          return { promise: promise, resolve: resolve, reject: reject };
+        };
+      }
+      if (!Array.prototype.toSorted) {
+        Array.prototype.toSorted = function (compareFn) {
+          return Array.prototype.slice.call(this).sort(compareFn);
+        };
+      }
+      if (!Array.prototype.toReversed) {
+        Array.prototype.toReversed = function () {
+          return Array.prototype.slice.call(this).reverse();
+        };
+      }
+      if (!Array.prototype.toSpliced) {
+        Array.prototype.toSpliced = function (start, deleteCount) {
+          var copy = Array.prototype.slice.call(this);
+          var items = Array.prototype.slice.call(arguments, 2);
+          copy.splice.apply(copy, [start, deleteCount].concat(items));
+          return copy;
+        };
+      }
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

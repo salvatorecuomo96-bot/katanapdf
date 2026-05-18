@@ -14,7 +14,7 @@ import FloatingShape from "./FloatingShape";
 import DownloadSupportPrompt from "./DownloadSupportPrompt";
 import HexColorInput from "./HexColorInput";
 import { GridIcon, RotateIcon } from "./PageSidebar";
-import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes } from "../utils/pdfLoadUtils";
+import { convertImageToPdfBytes, extractPagesAndTextFromPdfBytes, fileToArrayBuffer } from "../utils/pdfLoadUtils";
 import { pickPdfLibFont, hexToRgb, loadPdfForExport } from "../utils/pdfExportUtils";
 import { loadNotoFontBytes } from "../utils/fonts";
 import { makeTabId, pageWordsToTextBlocks, pdfjsLib, redrawPage } from "../utils/pdfUtils";
@@ -127,24 +127,46 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
       setTabsList(prev => [...prev, { id, fileName: newName }]);
       setActiveTabId(id);
     } catch (err) {
-      console.error("Failed to load PDF/Image:", err);
-      alert("Couldn't open this file: " + (err.message || err) + "\n\nTry a different file or refresh the page.");
+      console.error("Failed to load PDF/Image:", {
+        error: err,
+        message: err?.message,
+        stack: err?.stack,
+        name: err?.name,
+        userAgent: navigator.userAgent,
+        fileName: file?.name,
+        fileType: file?.type,
+        fileSize: file?.size,
+      });
+      alert(
+        "Couldn't open this file on this browser.\n\n" +
+        "Please try Safari/Chrome directly, or choose another PDF/image.\n\n" +
+        "Technical error: " + (err?.message || String(err))
+      );
     }
   }
 
   async function loadPdfFromFile(file) {
     let bytes;
     let name;
-    if (file.type === "application/pdf") {
-      name = file.name.match(/\.pdf$/i) ? file.name : file.name + ".pdf";
+    // iPhone Safari sometimes leaves file.type empty for PDFs from the Files app
+    // and for HEIC/HEIF photos. Inspect the extension as a fallback.
+    const lowerName = (file.name || "").toLowerCase();
+    const type = (file.type || "").toLowerCase();
+    const isPdf = type === "application/pdf" || lowerName.endsWith(".pdf");
+    const isImage =
+      type.startsWith("image/") ||
+      /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(lowerName);
+
+    if (isPdf) {
+      name = lowerName.endsWith(".pdf") ? file.name : file.name + ".pdf";
       setFileName(name);
-      bytes = new Uint8Array(await file.arrayBuffer());
-    } else if (file.type.startsWith("image/")) {
+      bytes = new Uint8Array(await fileToArrayBuffer(file));
+    } else if (isImage) {
       name = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
       setFileName(name);
       bytes = await convertImageToPdfBytes(file);
     } else {
-      throw new Error("Unsupported file type: " + file.type);
+      throw new Error("Unsupported file type: " + (file.type || file.name || "unknown"));
     }
     await loadPdfFromBytes(bytes);
     return { bytes, name };
@@ -1449,10 +1471,15 @@ function addFloatingBox(pageNum) {
     try {
       saveHistory();
       let bytes;
-      if (file.type.startsWith("image/")) {
+      const lowerName = (file.name || "").toLowerCase();
+      const type = (file.type || "").toLowerCase();
+      const isImage =
+        type.startsWith("image/") ||
+        /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(lowerName);
+      if (isImage) {
         bytes = await convertImageToPdfBytes(file);
       } else {
-        const buf = await file.arrayBuffer();
+        const buf = await fileToArrayBuffer(file);
         bytes = new Uint8Array(buf);
       }
             const startNum = pages.length + 1;
