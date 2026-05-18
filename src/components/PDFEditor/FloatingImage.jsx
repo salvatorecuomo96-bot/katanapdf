@@ -74,7 +74,7 @@ export default function FloatingImage({ fi, isSel, zoom = 1, onSelect, onStartDr
               ...pos,
               width: 14,
               height: 14,
-              background: "#8B1A1A",
+              background: "#ff2222",
               cursor,
               borderRadius: "50%",
               border: "2px solid #fff",

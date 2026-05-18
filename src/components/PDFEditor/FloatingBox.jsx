@@ -549,9 +549,9 @@ export default function FloatingBox({
         }}
       />
 
-      <div onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'both'); }} title="Drag to resize text" style={{ position: "absolute", bottom: -4, right: -4, width: 8, height: 8, background: "rgba(139,26,26,0.35)", cursor: "nwse-resize", borderRadius: "50%", border: "1px solid rgba(139,26,26,0.5)", zIndex: 20 }} />
-      <div onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'x'); }} title="Drag to resize text" style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, background: "rgba(139,26,26,0.25)", cursor: "ew-resize", borderRadius: "50%", border: "1px solid rgba(139,26,26,0.4)", zIndex: 20 }} />
-      <div onMouseDown={e => { e.stopPropagation(); onStartResize(e, '-x'); }} title="Drag to resize text" style={{ position: "absolute", left: -4, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, background: "rgba(139,26,26,0.25)", cursor: "ew-resize", borderRadius: "50%", border: "1px solid rgba(139,26,26,0.4)", zIndex: 20 }} />
+      <div onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'both'); }} title="Drag to resize text" style={{ position: "absolute", bottom: -4, right: -4, width: 8, height: 8, background: "#ff2222", cursor: "nwse-resize", borderRadius: "50%", border: "1px solid #fff", zIndex: 20 }} />
+      <div onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'x'); }} title="Drag to resize text" style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, background: "#ff2222", cursor: "ew-resize", borderRadius: "50%", border: "1px solid #fff", zIndex: 20 }} />
+      <div onMouseDown={e => { e.stopPropagation(); onStartResize(e, '-x'); }} title="Drag to resize text" style={{ position: "absolute", left: -4, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, background: "#ff2222", cursor: "ew-resize", borderRadius: "50%", border: "1px solid #fff", zIndex: 20 }} />
     </div>
   );
 }

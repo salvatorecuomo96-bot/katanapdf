@@ -148,7 +148,7 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
             onMouseDown={e => { e.stopPropagation(); onStartResize(e, 's'); }}
             style={{
               position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%)',
-              width: 22, height: 10, background: '#8B1A1A',
+              width: 22, height: 10, background: '#ff2222',
               cursor: 's-resize', borderRadius: 2, border: '2px solid #fff',
             }}
           />
@@ -157,7 +157,7 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
             onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'e'); }}
             style={{
               position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)',
-              width: 10, height: 22, background: '#8B1A1A',
+              width: 10, height: 22, background: '#ff2222',
               cursor: 'e-resize', borderRadius: 2, border: '2px solid #fff',
             }}
           />
@@ -166,7 +166,7 @@ export default function FloatingShape({ shape, isSel, zoom = 1, rotation = 0, on
             onMouseDown={e => { e.stopPropagation(); onStartResize(e, 'se'); }}
             style={{
               position: 'absolute', bottom: -8, right: -8,
-              width: 16, height: 16, background: '#8B1A1A',
+              width: 16, height: 16, background: '#ff2222',
               cursor: 'nwse-resize', borderRadius: '50%', border: '2px solid #fff',
             }}
           />
