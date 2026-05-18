@@ -351,7 +351,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
             padding: 20px 30px 14px;
             min-height: calc(100dvh - 54px);
           }
-          .hp-what-list { top: calc(100% + 6px); bottom: auto; max-height: none; overflow: visible; }
+          .hp-what-list { top: calc(100% + 6px); bottom: auto; width: 360px; display: flex; flex-wrap: wrap; max-height: none; overflow: visible; }
+          .hp-what-item { width: 50%; box-sizing: border-box; padding: 7px 10px; }
+          .hp-what-tooltip { display: none !important; }
           .hp-stage {
             max-width: min(1280px, calc(100vw - 60px));
             grid-template-columns: minmax(340px, 395px) minmax(0, 1fr);
