@@ -178,6 +178,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           background: rgba(255,253,248,0.97);
           box-shadow: 0 6px 22px rgba(40,24,8,0.10);
           backdrop-filter: blur(8px);
+          max-height: 55vh; overflow-y: auto;
         }
         .hp-what-item {
           display: flex; align-items: center; gap: 9px;
