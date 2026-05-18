@@ -761,10 +761,9 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
   // Close the editor entirely and return to the homepage. Wired to the
   // \'katanapdf\' wordmark in the editor toolbar - without this the link only
   // updates the URL hash and the editor still renders because pages.length > 0.
-  function doGoHome() {
-    tabSnapshots.current = {};
-    setTabsList([]);
-    setActiveTabId(null);
+  // Shared reset path used by doGoHome and closeTab's no-tabs-left branch so we
+  // don't drift on which state fields each clears.
+  function resetEditorState() {
     setPages([]);
     setPageOrder([]);
     setRotatedPages({});
@@ -785,6 +784,13 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
     setShowSupportPrompt(false);
   }
 
+  function doGoHome() {
+    tabSnapshots.current = {};
+    setTabsList([]);
+    setActiveTabId(null);
+    resetEditorState();
+  }
+
   function goHome() {
     if (pdfBytes) { setShowLeaveConfirm(true); return; }
     doGoHome();
@@ -792,33 +798,18 @@ export default function PDFEditor({ pendingFile, onPendingFileConsumed, navigate
 
   function closeTab(id) {
     delete tabSnapshots.current[id];
-    setTabsList(prev => {
-      const next = prev.filter(t => t.id !== id);
-      if (id === activeTabId) {
-        if (next.length) {
-          // Activate the first remaining tab
-          const newActive = next[0].id;
-          const snap = tabSnapshots.current[newActive];
-          if (snap) restoreSnapshot(snap);
-          setActiveTabId(newActive);
-        } else {
-          // No tabs left - return to homepage
-          setPages([]);
-          setPageOrder([]);
-          setRotatedPages({});
-          setDeletedPages(new Set());
-          setTextBlocks({});
-          setFloatingBoxes([]);
-          setFloatingImages([]);
-          setFloatingShapes([]);
-          setHistory([]);
-          setFileName("");
-          setPdfBytes(null);
-          setActiveTabId(null);
-        }
-      }
-      return next;
-    });
+    const remaining = tabsList.filter(t => t.id !== id);
+    setTabsList(remaining);
+    if (id !== activeTabId) return;
+    if (remaining.length) {
+      const newActive = remaining[0].id;
+      const snap = tabSnapshots.current[newActive];
+      if (snap) restoreSnapshot(snap);
+      setActiveTabId(newActive);
+    } else {
+      setActiveTabId(null);
+      resetEditorState();
+    }
   }
 
   function movePageTo(pageNum, targetDisplayIdx) {
@@ -1033,9 +1024,19 @@ function addFloatingBox(pageNum) {
   floatingIdCounter++;
 
   const id = `float-${floatingIdCounter}`;
-
-  const x = pg.width / 2;
-  const y = pg.height * 0.18;
+  const rot = rotatedPages[pageNum] || 0;
+  const swap = rot === 90 || rot === 270;
+  const visW = swap ? pg.height : pg.width;
+  const visH = swap ? pg.width : pg.height;
+  const visX = visW / 2;
+  const visY = Math.max(60, visH * 0.18);
+  const rad = -rot * Math.PI / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = visX - visW / 2;
+  const dy = visY - visH / 2;
+  const pageX = pg.width / 2 + dx * cos - dy * sin;
+  const pageY = pg.height / 2 + dx * sin + dy * cos;
 
   setFloatingBoxes(prev => [
     ...prev,
@@ -1043,8 +1044,8 @@ function addFloatingBox(pageNum) {
       id,
       page: pageNum,
       z: 50 + floatingIdCounter,
-      x,
-      y,
+      x: pageX,
+      y: pageY,
       text: "",
       fontSize: 14,
       fontFamily: "Arial, sans-serif",
@@ -1770,9 +1771,9 @@ function addFloatingBox(pageNum) {
     outCtx.drawImage(baseCanvas, 0, 0);
     outCtx.restore();
 
-    // 3. Draw floating items at their visual positions on the output canvas.
-    //    Text uses only fb.angle (user-explicit rotation) — NOT the page rotation —
-    //    so it stays visually upright, matching the editor view.
+    // 3. Draw floating items at their visual positions on the rotated output canvas.
+    //    Text, images and shapes all include pageRotation so the export matches the
+    //    editor view, where floating items live inside the CSS-rotated page container.
     const rasterItems = [
       ...floatingBoxes.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'box' })),
       ...floatingImages.filter(f => f.page === pg.num).map(f => ({ ...f, _kind: 'image' })),
@@ -1809,7 +1810,8 @@ function addFloatingBox(pageNum) {
           img.onload = () => {
             outCtx.save();
             outCtx.translate(visCX, visCY);
-             outCtx.rotate((pageRotation + (item.angle || 0)) * Math.PI / 180);            outCtx.drawImage(img, -item.w / 2, -item.h / 2, item.w, item.h);
+            outCtx.rotate((pageRotation + (item.angle || 0)) * Math.PI / 180);
+            outCtx.drawImage(img, -item.w / 2, -item.h / 2, item.w, item.h);
             outCtx.restore();
             resolve();
           };
@@ -1819,7 +1821,11 @@ function addFloatingBox(pageNum) {
         const cx = item.x + item.w / 2;
         const cy = item.y + item.h / 2;
         const [visCX, visCY] = toOut(cx, cy);
-        drawShapeOnCanvas(outCtx, { ...item, x: visCX - item.w / 2, y: visCY - item.h / 2 });
+        outCtx.save();
+        outCtx.translate(visCX, visCY);
+        outCtx.rotate(pageRotation * Math.PI / 180);
+        drawShapeOnCanvas(outCtx, { ...item, x: -item.w / 2, y: -item.h / 2 });
+        outCtx.restore();
       }
     }
     return outCanvas.toDataURL("image/png");
