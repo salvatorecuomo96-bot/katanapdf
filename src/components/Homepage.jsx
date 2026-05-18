@@ -12,6 +12,7 @@ const FEATURES = [
   { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>), label: "Add Images", detail: "Insert photos or logos directly on top of any page." },
   { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{transform:"rotate(180deg)"}}><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>), label: "Sign", detail: "Draw, type or upload your signature and place it on any page." },
   { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="M15 5l4 4"/></svg>), label: "Draw & Annotate", detail: "Freehand pen and highlighter for notes and annotations." },
+  { icon: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="5"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>), label: "Shapes",          detail: "Add circles, squares, lines and arrows to mark up any page." },
   { icon: "⇄", label: "Merge & Split",  detail: "Combine multiple PDFs or split a document into separate files." },
   { icon: "⊞", label: "Reorder Pages",  detail: "Drag pages into any order, rotate or delete them instantly." },
 ];
@@ -122,9 +123,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         }
         .hp-btn-primary {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 42px; padding: 0 28px;
+          height: 53px; padding: 0 35px;
           background: ${RED}; color: #fff;
-          font-family: ${CINZEL}; font-size: 10px; letter-spacing: 2px;
+          font-family: ${CINZEL}; font-size: 13px; letter-spacing: 2.5px;
           text-transform: uppercase; font-weight: 800;
           border: none; border-radius: 3px; cursor: pointer;
           box-shadow: 0 10px 22px rgba(139,26,26,0.22);
@@ -133,9 +134,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
         .hp-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 38px rgba(139,26,26,0.28); }
         .hp-btn-secondary {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 42px; padding: 0 22px;
+          height: 53px; padding: 0 28px;
           background: transparent; color: ${RED};
-          font-family: ${CINZEL}; font-size: 10px; letter-spacing: 2px;
+          font-family: ${CINZEL}; font-size: 13px; letter-spacing: 2.5px;
           text-transform: uppercase; font-weight: 800;
           border: 1.5px solid rgba(139,26,26,0.48); border-radius: 3px; cursor: pointer;
           transition: border-color .13s, background .13s;
@@ -307,9 +308,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-h1 { font-size: clamp(68px,3.6vw,92px); line-height: 1.02; margin-bottom: 22px; letter-spacing: -1.2px; }
           .hp-sub { font-size: 19px; line-height: 1.62; max-width: 560px; margin-bottom: 32px; }
           .hp-actions { gap: 15px; margin-bottom: 20px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 52px; font-size: 11px; letter-spacing: 2.3px; }
-          .hp-btn-primary { padding: 0 38px; }
-          .hp-btn-secondary { padding: 0 32px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 65px; font-size: 14px; letter-spacing: 3px; }
+          .hp-btn-primary { padding: 0 48px; }
+          .hp-btn-secondary { padding: 0 40px; }
           .hp-note { font-size: 15px; }
           .hp-what { margin-top: 26px; }
           .hp-what-btn { font-size: 9.8px; letter-spacing: 2.5px; }
@@ -338,7 +339,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-h1 { font-size: clamp(32px, 3vw, 46px); margin-bottom: 11px; line-height: 1.04; }
           .hp-sub { margin-bottom: 16px; font-size: 14px; line-height: 1.5; }
           .hp-actions { margin-bottom: 9px; gap: 8px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 38px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 48px; }
           .hp-note { font-size: 12px; }
           .hp-art img { max-height: calc(100dvh - 100px); }
         }
@@ -366,9 +367,9 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-sub { font-size: 13px; line-height: 1.48; margin-bottom: 8px; max-width: 360px; }
           .hp-actions { margin-bottom: 5px; gap: 7px; }
           .hp-what { margin-top: 8px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 34px; font-size: 9px; letter-spacing: 1.8px; }
-          .hp-btn-primary  { padding: 0 22px; }
-          .hp-btn-secondary { padding: 0 18px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 42px; font-size: 11px; letter-spacing: 2.2px; }
+          .hp-btn-primary  { padding: 0 28px; }
+          .hp-btn-secondary { padding: 0 22px; }
           .hp-note { font-size: 11px; }
           .hp-art-inner { transform: translateX(34px); }
           .hp-art img {
@@ -438,7 +439,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-h1 { font-size: clamp(38px, 12vw, 52px); line-height: 1.02; letter-spacing: -0.8px; margin: 0 0 16px; max-width: 350px; }
           .hp-sub { font-size: 14.5px; line-height: 1.58; max-width: 345px; margin: 0 0 24px; color: rgba(24,19,13,0.62); }
           .hp-actions { width: 100%; max-width: 345px; flex-direction: column; align-items: stretch; gap: 11px; margin-bottom: 13px; }
-          .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 52px; padding: 0 18px; font-size: 9.5px; letter-spacing: 1.9px; border-radius: 4px; }
+          .hp-btn-primary, .hp-btn-secondary { width: 100%; height: 65px; padding: 0 22px; font-size: 12px; letter-spacing: 2.4px; border-radius: 4px; }
           .hp-btn-primary { box-shadow: 0 14px 30px rgba(139,26,26,0.20); }
           .hp-note { font-size: 12.5px; margin: 0; color: rgba(24,19,13,0.48); }
           .hp-art { display: none !important; }
@@ -529,7 +530,7 @@ export default function Homepage({ onFile, onDropFile, onCreateBlank, navigate }
           .hp-hero { padding-left: 16px; padding-right: 16px; }
           .hp-h1 { font-size: 36px; }
           .hp-sub { font-size: 14px; }
-          .hp-btn-primary, .hp-btn-secondary { height: 50px; }
+          .hp-btn-primary, .hp-btn-secondary { height: 63px; }
         }
       `}</style>
 
