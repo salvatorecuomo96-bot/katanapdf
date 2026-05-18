@@ -34,6 +34,7 @@ export default function EditorToolbar({
   return (
     <div
       data-edit-toolbar
+      className="editor-top-toolbar"
       onClick={e => e.stopPropagation()}
       style={{
         display: "flex", alignItems: "center", gap: 8,
@@ -45,6 +46,7 @@ export default function EditorToolbar({
     >
       <button
         onClick={toggleSidebar}
+        className="editor-top-icon"
         title={sidebarOpen ? "Hide pages panel" : "Show pages panel"}
         style={{ ...iconBtn, display: "flex", alignItems: "center", justifyContent: "center" }}
       >
@@ -58,24 +60,24 @@ export default function EditorToolbar({
         onClick={e => { e.preventDefault(); goHome(); window.location.hash = "#home"; }}
         style={{ textDecoration: "none", display: "flex", alignItems: "center" }}
       >
-        <span style={{ fontFamily: CINZEL, fontSize: 15, letterSpacing: 3, fontWeight: 800, textTransform: "uppercase", userSelect: "none", color: INK }}>
+        <span className="editor-top-logo" style={{ fontFamily: CINZEL, fontSize: 15, letterSpacing: 3, fontWeight: 800, textTransform: "uppercase", userSelect: "none", color: INK }}>
           katana<span style={{ color: LACQUER }}>pdf</span>
         </span>
       </a>
 
       <div style={{ width: 1, height: 22, background: LINE, margin: "0 4px", flexShrink: 0 }} />
 
-      <label style={btn}>
+      <label className="editor-top-action" style={btn}>
         Open PDF/Image
         <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={hiddenFileInput} />
       </label>
 
-      <label style={btn} title="Add a PDF or Image at the end">
+      <label className="editor-top-action" style={btn} title="Add a PDF or Image at the end">
         Merge PDF
         <input type="file" accept="application/pdf,.pdf,image/*" onChange={handleAppendFile} style={hiddenFileInput} />
       </label>
 
-      <button onClick={openSplitModal} title="Split PDF into parts or extract pages" style={btn}>
+      <button onClick={openSplitModal} className="editor-top-action" title="Split PDF into parts or extract pages" style={btn}>
         Split PDF
       </button>
 
@@ -99,6 +101,7 @@ export default function EditorToolbar({
 
       <button
         onClick={handleDownloadImages}
+        className="editor-top-action editor-top-secondary"
         style={{
           ...btn,
           color: MUTED,
@@ -110,6 +113,7 @@ export default function EditorToolbar({
 
       <button
         onClick={handleDownload}
+        className="editor-top-download"
         style={{
           display: "inline-flex", alignItems: "center",
           padding: "7px 20px",

@@ -206,16 +206,72 @@ export default function LandingPage({ route, navigate, setPendingFile }) {
   if (!content) return null;
 
   return (
-    <div style={{ minHeight: "100dvh", background: `linear-gradient(to bottom, rgba(255,252,246,0.90), rgba(255,252,246,0.94)), url("/background.png") center top / cover no-repeat fixed`, color: INK, fontFamily: FELL, display: "flex", flexDirection: "column" }}>
+    <div className="lp" style={{ minHeight: "100dvh", background: `linear-gradient(to bottom, rgba(255,252,246,0.90), rgba(255,252,246,0.94)), url("/background.png") center top / cover no-repeat fixed`, color: INK, fontFamily: FELL, display: "flex", flexDirection: "column" }}>
+      <style>{`
+        @media (max-width: 580px) {
+          .lp {
+            min-height: 100dvh !important;
+            background:
+              linear-gradient(to bottom, rgba(255,252,246,0.96), rgba(255,252,246,0.985)),
+              url("/background.png") center top / cover no-repeat !important;
+            overflow-x: hidden;
+          }
+          .lp-header {
+            height: auto !important;
+            min-height: 64px !important;
+            padding: 14px 16px 10px !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            align-items: center !important;
+          }
+          .lp-logo { width: min(168px, 54vw) !important; }
+          .lp-nav {
+            width: 100%;
+            justify-content: center;
+            overflow-x: auto;
+            scrollbar-width: none;
+          }
+          .lp-nav::-webkit-scrollbar { display: none; }
+          .lp-nav a {
+            font-size: 7px !important;
+            letter-spacing: 1.3px !important;
+            padding: 0 8px !important;
+            white-space: nowrap;
+          }
+          .lp-main {
+            max-width: 430px !important;
+            padding: 36px 18px 52px !important;
+            text-align: center;
+          }
+          .lp-main h1 {
+            font-size: clamp(34px, 10vw, 46px) !important;
+            line-height: 1.05 !important;
+          }
+          .lp-main > p {
+            font-size: 14.5px !important;
+            line-height: 1.58 !important;
+          }
+          .lp-actions {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100%;
+            gap: 10px !important;
+          }
+          .lp-btn { width: 100% !important; height: 52px !important; }
+          .lp-benefits, .lp-steps, .lp-related { text-align: left; }
+          .lp-trust { text-align: left; }
+        }
+      `}</style>
+
       {/* Hidden file input */}
       <input ref={fileInputRef} type="file" accept="application/pdf,.pdf,image/*" onChange={handleFile} style={{ display: "none" }} />
 
       {/* Header */}
-      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,253,248,0.92)", backdropFilter: "blur(10px)", borderBottom: `1px solid ${LINE}`, height: 60, display: "flex", alignItems: "center", padding: "0 36px" }}>
+      <header className="lp-header" style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,253,248,0.92)", backdropFilter: "blur(10px)", borderBottom: `1px solid ${LINE}`, height: 60, display: "flex", alignItems: "center", padding: "0 36px" }}>
         <a href="/" onClick={e => { e.preventDefault(); navigate("/"); }} style={{ textDecoration: "none", marginRight: "auto" }}>
-          <img src="/logo.png" alt="katanapdf — Free PDF Editor" style={{ width: "min(180px,42vw)", height: "auto", display: "block" }} />
+          <img src="/logo.png" alt="katanapdf — Free PDF Editor" className="lp-logo" style={{ width: "min(180px,42vw)", height: "auto", display: "block" }} />
         </a>
-        <nav style={{ display: "flex", alignItems: "center" }}>
+        <nav className="lp-nav" style={{ display: "flex", alignItems: "center" }}>
           {NAV_LINKS.map(([label, href]) => (
             <a key={label} href={href}
               onClick={e => { e.preventDefault(); navigate(href); }}
@@ -228,7 +284,7 @@ export default function LandingPage({ route, navigate, setPendingFile }) {
       </header>
 
       {/* Hero */}
-      <section style={{ flex: 1, maxWidth: 820, margin: "0 auto", padding: "60px 32px 80px", width: "100%", boxSizing: "border-box" }}>
+      <section className="lp-main" style={{ flex: 1, maxWidth: 820, margin: "0 auto", padding: "60px 32px 80px", width: "100%", boxSizing: "border-box" }}>
         {/* Eyebrow */}
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: CINZEL, fontSize: 10, letterSpacing: 3.5, textTransform: "uppercase", color: RED, fontWeight: 700, marginBottom: 18 }}>
           <span style={{ display: "inline-block", width: 20, height: 1, background: RED }} />
@@ -245,9 +301,9 @@ export default function LandingPage({ route, navigate, setPendingFile }) {
         </p>
 
         {/* CTA */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
-          <button onClick={openFile} style={BTN_PRIMARY}>Open PDF or Image</button>
-          <a href="/" onClick={e => { e.preventDefault(); navigate("/"); }}
+        <div className="lp-actions" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
+          <button className="lp-btn" onClick={openFile} style={BTN_PRIMARY}>Open PDF or Image</button>
+          <a className="lp-btn" href="/" onClick={e => { e.preventDefault(); navigate("/"); }}
             style={{ ...BTN_PRIMARY, background: "transparent", color: RED, border: `1.5px solid rgba(139,26,26,0.45)`, boxShadow: "none", textDecoration: "none" }}>
             Go to Editor
           </a>
@@ -258,7 +314,7 @@ export default function LandingPage({ route, navigate, setPendingFile }) {
 
         {/* Benefits */}
         <h2 style={{ fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: RED, fontWeight: 800, margin: "0 0 14px" }}>What you can do</h2>
-        <ul style={{ margin: "0 0 48px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 9 }}>
+        <ul className="lp-benefits" style={{ margin: "0 0 48px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 9 }}>
           {content.benefits.map((b, i) => (
             <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 15, color: INK, lineHeight: 1.5 }}>
               <span style={{ color: RED, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>✓</span>
@@ -269,7 +325,7 @@ export default function LandingPage({ route, navigate, setPendingFile }) {
 
         {/* How it works */}
         <h2 style={{ fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: RED, fontWeight: 800, margin: "0 0 20px" }}>How it works</h2>
-        <ol style={{ margin: "0 0 48px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 16 }}>
+        <ol className="lp-steps" style={{ margin: "0 0 48px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 16 }}>
           {content.steps.map(step => (
             <li key={step.n} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
               <span style={STEP_NUM}>{step.n}</span>
@@ -282,13 +338,13 @@ export default function LandingPage({ route, navigate, setPendingFile }) {
         </ol>
 
         {/* Trust line */}
-        <div style={{ padding: "14px 20px", border: `1px solid rgba(116,86,44,0.2)`, borderLeft: `3px solid ${RED}`, borderRadius: 4, background: "rgba(255,253,248,0.88)", fontSize: 14, color: MUTED, lineHeight: 1.6, marginBottom: 48 }}>
+        <div className="lp-trust" style={{ padding: "14px 20px", border: `1px solid rgba(116,86,44,0.2)`, borderLeft: `3px solid ${RED}`, borderRadius: 4, background: "rgba(255,253,248,0.88)", fontSize: 14, color: MUTED, lineHeight: 1.6, marginBottom: 48 }}>
           Your PDF is processed entirely in your browser. No file is uploaded to any server. No account is required.
         </div>
 
         {/* Related tools */}
         <h2 style={{ fontFamily: CINZEL, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: RED, fontWeight: 800, margin: "0 0 14px" }}>Related tools</h2>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className="lp-related" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {content.related.map(r => (
             <a key={r.href} href={r.href}
               onClick={e => { e.preventDefault(); navigate(r.href); }}

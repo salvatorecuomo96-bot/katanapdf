@@ -7,6 +7,7 @@ export default function EditorHeader({ tabsList = [], activeTabId, switchTab, cl
 
   return (
     <div
+      className="editor-tabs-header"
       onClick={e => e.stopPropagation()}
       style={{
         background: "rgba(255,253,248,0.97)",
