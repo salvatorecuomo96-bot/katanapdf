@@ -109,9 +109,9 @@ export async function extractPagesAndTextFromPdfBytes(bytes, {
 }) {
   const pdf = await pdfjsLib.getDocument({
     data: bytes,
-    cMapUrl: "https://unpkg.com/pdfjs-dist@5.7.284/cmaps/",
+    cMapUrl: "https://unpkg.com/pdfjs-dist@4.10.38/cmaps/",
     cMapPacked: true,
-    standardFontDataUrl: "https://unpkg.com/pdfjs-dist@5.7.284/standard_fonts/"
+    standardFontDataUrl: "https://unpkg.com/pdfjs-dist@4.10.38/standard_fonts/"
   }).promise;
 
   const pageData = [];

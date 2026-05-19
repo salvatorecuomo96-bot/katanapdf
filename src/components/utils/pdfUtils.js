@@ -1,9 +1,15 @@
+// pdfjs-dist 4.10.38 legacy build. Legacy = transpiled for older Safari/iOS WebKit.
+// v5 calls Promise.withResolvers etc. that some iOS Safari versions lack; v4 doesn't.
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
 export { pdfjsLib };
 
-// Legacy build is transpiled for older Safari / iOS - improves cross-device compatibility.
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url).href;
+// new URL(..., import.meta.url) is Vite-friendly (bundles the worker as an asset) and
+// also resolves under Node for tests — unlike the ?url suffix which is Vite-only.
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+  import.meta.url
+).href;
 
 export function clusterWordsIntoLineClusters(pageWords) {
   const EPS_Y = 5;
