@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/react"
+
 import { useState, useEffect } from "react";
 import PDFEditor from "./components/PDFEditor";
 import StaticPage from "./components/StaticPage";
