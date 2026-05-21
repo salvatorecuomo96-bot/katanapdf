@@ -50,24 +50,35 @@ export default function App({ initialPath }) {
 
   const staticRoute = STATIC_ROUTES[currentPath];
   if (staticRoute) {
-    return <StaticPage route={staticRoute} navigate={navigate} />;
+    return (
+      <>
+        <StaticPage route={staticRoute} navigate={navigate} />
+        <Analytics />
+      </>
+    );
   }
 
   if (LANDING_ROUTES.includes(currentPath)) {
     return (
-      <LandingPage
-        route={currentPath}
-        navigate={navigate}
-        setPendingFile={setPendingFile}
-      />
+      <>
+        <LandingPage
+          route={currentPath}
+          navigate={navigate}
+          setPendingFile={setPendingFile}
+        />
+        <Analytics />
+      </>
     );
   }
 
   return (
-    <PDFEditor
-      pendingFile={pendingFile}
-      onPendingFileConsumed={() => setPendingFile(null)}
-      navigate={navigate}
-    />
+    <>
+      <PDFEditor
+        pendingFile={pendingFile}
+        onPendingFileConsumed={() => setPendingFile(null)}
+        navigate={navigate}
+      />
+      <Analytics />
+    </>
   );
 }
